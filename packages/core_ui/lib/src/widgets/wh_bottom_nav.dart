@@ -58,12 +58,6 @@ class WHBottomNav extends StatelessWidget {
                 label: 'ZONES',
                 index: 3,
               ),
-              _buildNavItem(
-                icon: Icons.output_outlined,
-                activeIcon: Icons.output,
-                label: 'OUTBOUND',
-                index: 3,
-              ),
             ],
           ),
         ),
