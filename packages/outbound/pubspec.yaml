@@ -1,0 +1,27 @@
+name: outbound
+description: "Outbound module for WareHaus - Sales Order, Picking, Packaging & Shipping."
+version: 0.0.1
+resolution: workspace
+homepage:
+
+environment:
+  sdk: ^3.8.1
+  flutter: ">=1.17.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+  flutter_bloc: ^9.1.1
+  core_ui:
+    path: ../core_ui
+  core_services:
+    path: ../core_services
+  dio: ^5.0.0
+  mobile_scanner: ^7.2.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0
+
+flutter:

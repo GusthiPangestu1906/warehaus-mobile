@@ -9,6 +9,7 @@ workspace:
   - packages/zone
   - packages/product
   - packages/dashboard
+  - packages/outbound
 
 environment:
   sdk: ^3.8.1
@@ -30,6 +31,8 @@ dependencies:
     path: packages/product
   dashboard:
     path: packages/dashboard
+  outbound:
+    path: ./packages/outbound
   flutter_dotenv: ^6.0.1
   percent_indicator: ^4.2.5
   mobile_scanner: ^7.2.0

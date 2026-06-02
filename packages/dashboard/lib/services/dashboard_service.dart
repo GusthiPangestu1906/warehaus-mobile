@@ -6,7 +6,7 @@ class DashboardService {
   DashboardService(this.dio);
 
   Future<int> getProductCount() async {
-    final response = await dio.get('/Product');
+    final response = await dio.get('/v1/Product');
     if (response.statusCode == 200) {
       final products = response.data as List;
       return products.length;
@@ -17,7 +17,7 @@ class DashboardService {
   Future<List<ActivityLog>> getRecentLogs({int limit = 10}) async {
     try {
       final response = await dio.get(
-        '/dashboard/recent-logs',
+        '/v1/Dashboard/recent-logs',
         queryParameters: {'limit': limit},
       );
       debugPrint('[DashboardService] Response: $response');
