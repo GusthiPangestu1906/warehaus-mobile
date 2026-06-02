@@ -189,6 +189,7 @@ class _ProductListPageState extends State<ProductListPage> with RouteAware {
         ),
       ),
       floatingActionButton: FloatingActionButton(
+        heroTag: 'product-create-fab',
         onPressed: () async {
           await Navigator.of(context).push(
             PageRouteBuilder(

@@ -1,6 +1,11 @@
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:inbound/data/datasources/purchase_order_api_datasource.dart';
+import 'package:inbound/data/repositories/purchase_order_repository_impl.dart';
+import 'package:inbound/domain/usecases/purchase_order/create_purchase_order.dart';
+import 'package:inbound/presentation/bloc/purchase_order/purchase_order_bloc.dart';
 import 'package:mobile/presentation/bloc/navigation_bloc.dart';
 import 'package:mobile/presentation/pages/main_page.dart';
 import 'package:product/presentation/bloc/product_bloc.dart';
@@ -24,6 +29,15 @@ class MyApp extends StatelessWidget {
     return MultiBlocProvider(
       providers: [
         BlocProvider<NavigationBloc>(create: (context) => NavigationBloc()),
+        BlocProvider<PurchaseOrderBloc>(
+          create: (context) => PurchaseOrderBloc(
+            createPurchaseOrderUsecase: CreatePurchaseOrder(
+              PurchaseOrderRepositoryImpl(
+                PurchaseOrderApiDatasource(getIt<Dio>()),
+              ),
+            ),
+          ),
+        ),
         BlocProvider<ProductBloc>(create: (context) => getIt<ProductBloc>()),
         BlocProvider<ZoneBloc>(create: (context) => getIt<ZoneBloc>()),
       ],

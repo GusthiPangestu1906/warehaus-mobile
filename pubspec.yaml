@@ -1,7 +1,7 @@
 name: mobile
 description: "Warehouse Management System — Platform operasional gudang: inbound, put-away, picking, packing, shipping, dan utilisasi ruang gudang."
 publish_to: "none"
-version: 1.0.0+3
+version: 1.0.0+4
 
 workspace:
   - packages/core_ui
@@ -9,6 +9,7 @@ workspace:
   - packages/zone
   - packages/product
   - packages/dashboard
+  - packages/inbound
 
 environment:
   sdk: ^3.8.1
@@ -30,6 +31,8 @@ dependencies:
     path: packages/product
   dashboard:
     path: packages/dashboard
+  inbound:
+    path: packages/inbound
   flutter_dotenv: ^6.0.1
   percent_indicator: ^4.2.5
   mobile_scanner: ^7.2.0
@@ -37,13 +40,13 @@ dependencies:
   flutter_bloc: ^9.1.1
   gal: ^2.3.2
   path_provider: ^2.1.5
+  get_it: ^9.2.1
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
   flutter_lints: ^6.0.0
   melos: ^7.5.1
-  get_it: ^9.2.1
   flutter_staggered_grid_view: ^0.6.2
 
 flutter:
