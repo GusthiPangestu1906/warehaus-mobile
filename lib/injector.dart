@@ -1,20 +1,24 @@
 import 'package:core_services/api/api_client.dart';
+import 'package:dashboard/services/dashboard_service.dart';
 import 'package:dio/dio.dart';
 import 'package:get_it/get_it.dart';
-import 'package:dashboard/services/dashboard_service.dart';
+import 'package:inbound/data/datasources/purchase_order_api_datasource.dart';
+import 'package:inbound/data/repositories/purchase_order_repository_impl.dart';
+import 'package:inbound/domain/usecases/purchase_order/create_purchase_order.dart';
+import 'package:inbound/presentation/bloc/purchase_order/purchase_order_bloc.dart';
 import 'package:product/data/datasources/product_api_datasource.dart';
 import 'package:product/data/repositories/product_repository_impl.dart';
 import 'package:product/domain/usecases/add_stock_location.dart';
-import 'package:product/domain/usecases/move_stock_location.dart';
-import 'package:product/domain/usecases/update_stock_location.dart';
 import 'package:product/domain/usecases/create_product.dart';
 import 'package:product/domain/usecases/delete_product.dart';
 import 'package:product/domain/usecases/get_product_detail.dart';
 import 'package:product/domain/usecases/get_products.dart';
+import 'package:product/domain/usecases/move_stock_location.dart';
 import 'package:product/domain/usecases/update_product.dart';
+import 'package:product/domain/usecases/update_stock_location.dart';
 import 'package:product/presentation/bloc/product_bloc.dart';
-import 'package:zone/domain/usecases/get_zone_by_aisle.dart';
 import 'package:zone/domain/usecases/get_shelf_details.dart';
+import 'package:zone/domain/usecases/get_zone_by_aisle.dart';
 import 'package:zone/presentation/bloc/zone_bloc.dart';
 import 'package:zone/zone.dart';
 
@@ -86,7 +90,18 @@ void setupInjector() {
     () => DashboardService(getIt<Dio>()),
   );
 
-  // ZoneBloc Factory
+  getIt.registerLazySingleton<PurchaseOrderApiDatasource>(
+    () => PurchaseOrderApiDatasource(getIt<Dio>()),
+  );
+
+  getIt.registerLazySingleton<PurchaseOrderRepositoryImpl>(
+    () => PurchaseOrderRepositoryImpl(getIt<PurchaseOrderApiDatasource>()),
+  );
+
+  getIt.registerLazySingleton(
+    () => CreatePurchaseOrder(getIt<PurchaseOrderRepositoryImpl>()),
+  );
+
   getIt.registerFactory(
     () => ZoneBloc(
       getZonesUsecase: getIt<GetZones>(),
@@ -96,6 +111,12 @@ void setupInjector() {
       updateZoneUsecase: getIt<UpdateZone>(),
       deleteZoneUsecase: getIt<DeleteZone>(),
       getShelfDetailsUsecase: getIt<GetShelfDetails>(),
+    ),
+  );
+
+  getIt.registerFactory(
+    () => PurchaseOrderBloc(
+      createPurchaseOrderUsecase: getIt<CreatePurchaseOrder>(),
     ),
   );
 
