@@ -4,10 +4,10 @@ class DeleteProductStockLocation {
   final ProductRepository repository;
   DeleteProductStockLocation(this.repository);
 
-  Future<void> call({required String productId, required int shelfId}) {
-    return repository.deleteProductStockLocation(
-      productId: productId,
-      shelfId: shelfId,
-    );
-  }
+  // Future<void> call({required String productId, required int shelfId}) {
+  //   return repository.deleteProductStockLocation(
+  //     productId: productId,
+  //     shelfId: shelfId,
+  //   );
+  // }
 }

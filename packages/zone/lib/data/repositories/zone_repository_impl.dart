@@ -1,7 +1,6 @@
 import 'package:zone/data/datasources/zone_api_datasource.dart';
 import 'package:zone/data/models/zone_model.dart';
 import 'package:zone/domain/entities/zone.dart';
-import 'package:zone/domain/entities/shelf_detail.dart';
 import 'package:zone/domain/repositories/zone_repository.dart';
 
 class ZoneRepositoryImpl implements ZoneRepository {
@@ -74,9 +73,10 @@ class ZoneRepositoryImpl implements ZoneRepository {
     await apiDatasource.deleteZone(id);
   }
 
-  @override
-  Future<ShelfDetail> getShelfDetails(int shelfId) async {
-    final data = await apiDatasource.getShelfDetails(shelfId);
-    return ShelfDetail.fromJson(data);
-  }
+  // TODO: /v1/Zone/shelves/{shelfId} belum ada di backend
+  // @override
+  // Future<ShelfDetail> getShelfDetails(int shelfId) async {
+  //   final data = await apiDatasource.getShelfDetails(shelfId);
+  //   return ShelfDetail.fromJson(data);
+  // }
 }
