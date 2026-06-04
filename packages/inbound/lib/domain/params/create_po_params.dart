@@ -29,7 +29,7 @@ class CreatePoParams {
 
   Map<String, dynamic> toJson() => {
     "supplierName": supplierName,
-    "eta": eta.toIso8601String(),
+    "eta": eta.toIso8601String().split('T').first,
     "carrier": carrier,
     "items": List<dynamic>.from(items.map((x) => x.toJson())),
   };

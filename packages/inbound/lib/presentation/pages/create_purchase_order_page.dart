@@ -7,6 +7,9 @@ import 'package:inbound/presentation/bloc/purchase_order/purchase_order_event.da
 import 'package:inbound/presentation/bloc/purchase_order/purchase_order_state.dart';
 import 'package:inbound/presentation/widgets/product_form_card.dart';
 import 'package:product/domain/entities/product.dart';
+import 'package:product/presentation/bloc/product_bloc.dart';
+import 'package:product/presentation/bloc/product_event.dart';
+import 'package:product/presentation/bloc/product_state.dart';
 
 class CreatePurchaseOrderPage extends StatefulWidget {
   const CreatePurchaseOrderPage({super.key});
@@ -22,11 +25,13 @@ class _CreatePurchaseOrderPageState extends State<CreatePurchaseOrderPage> {
   final _eta = TextEditingController();
   final _carrier = TextEditingController();
 
-  // Array utama penyimpan form produk dinamis
   final List<CreatePoItemParams> _selectedItems = [];
 
-  // Gunakan tipe data Entity Product dari package sebelah, jangan dynamic raw map
-  final List<Product> _masterProducts = [];
+  @override
+  void initState() {
+    super.initState();
+    context.read<ProductBloc>().add(GetProductsEvent());
+  }
 
   @override
   void dispose() {
@@ -45,11 +50,19 @@ class _CreatePurchaseOrderPageState extends State<CreatePurchaseOrderPage> {
         return;
       }
 
-      // Validasi tambahan agar tidak ada produk kosong (id == 0) yang terkirim
       if (_selectedItems.any((item) => item.productId == 0)) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('Harap pilih produk pada semua form list!'),
+          ),
+        );
+        return;
+      }
+
+      if (_selectedItems.any((item) => item.qtyExpected <= 0)) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Qty expected harus lebih dari 0.'),
           ),
         );
         return;
@@ -125,7 +138,7 @@ class _CreatePurchaseOrderPageState extends State<CreatePurchaseOrderPage> {
                         : DateTime.tryParse(_eta.text),
                     onDateSelected: (date) {
                       setState(() {
-                        _eta.text = date.toIso8601String();
+                        _eta.text = date.toIso8601String().split('T').first;
                       });
                     },
                   ),
@@ -144,54 +157,81 @@ class _CreatePurchaseOrderPageState extends State<CreatePurchaseOrderPage> {
                   ),
                   const SizedBox(height: 8),
 
-                  ListView.builder(
-                    shrinkWrap: true,
-                    physics: const NeverScrollableScrollPhysics(),
-                    itemCount: _selectedItems.length,
-                    itemBuilder: (context, index) {
-                      final currentItem = _selectedItems[index];
+                  BlocBuilder<ProductBloc, ProductState>(
+                    builder: (context, productState) {
+                      final masterProducts = productState is ProductLoaded
+                          ? productState.products
+                          : const <Product>[];
 
-                      return ProductFormCard(
-                        masterProducts: _masterProducts,
-                        selectedProductId: currentItem.productId == 0
-                            ? null
-                            : currentItem.productId,
-                        quantity: currentItem.qtyExpected,
-                        onProductChanged: (productId) {
-                          setState(() {
-                            _selectedItems[index] = CreatePoItemParams(
-                              productId: productId ?? 0,
-                              qtyExpected: currentItem.qtyExpected,
-                            );
-                          });
-                        },
-                        onQtyChanged: (value) {
-                          setState(() {
-                            _selectedItems[index] = CreatePoItemParams(
-                              productId: currentItem.productId,
-                              qtyExpected: value,
-                            );
-                          });
-                        },
-                        onDelete: () {
-                          setState(() {
-                            _selectedItems.removeAt(index);
-                          });
-                        },
+                      return Column(
+                        children: [
+                          if (productState is ProductLoading)
+                            const Padding(
+                              padding: EdgeInsets.only(bottom: 12),
+                              child: LinearProgressIndicator(),
+                            ),
+                          if (productState is ProductError)
+                            Padding(
+                              padding: const EdgeInsets.only(bottom: 12),
+                              child: Text(
+                                'Failed to load products: ${productState.message}',
+                                style: const TextStyle(color: Colors.red),
+                              ),
+                            ),
+                          ListView.builder(
+                            shrinkWrap: true,
+                            physics: const NeverScrollableScrollPhysics(),
+                            itemCount: _selectedItems.length,
+                            itemBuilder: (context, index) {
+                              final currentItem = _selectedItems[index];
+
+                              return ProductFormCard(
+                                masterProducts: masterProducts,
+                                selectedProductId: currentItem.productId == 0
+                                    ? null
+                                    : currentItem.productId,
+                                quantity: currentItem.qtyExpected,
+                                onProductChanged: (productId) {
+                                  setState(() {
+                                    _selectedItems[index] = CreatePoItemParams(
+                                      productId: productId ?? 0,
+                                      qtyExpected: currentItem.qtyExpected,
+                                    );
+                                  });
+                                },
+                                onQtyChanged: (value) {
+                                  setState(() {
+                                    _selectedItems[index] = CreatePoItemParams(
+                                      productId: currentItem.productId,
+                                      qtyExpected: value,
+                                    );
+                                  });
+                                },
+                                onDelete: () {
+                                  setState(() {
+                                    _selectedItems.removeAt(index);
+                                  });
+                                },
+                              );
+                            },
+                          ),
+                          const SizedBox(height: 8),
+                          WHOutlinedButton(
+                            label: 'Product',
+                            icon: Icons.add,
+                            onPressed: () {
+                              setState(() {
+                                _selectedItems.add(
+                                  CreatePoItemParams(
+                                    productId: 0,
+                                    qtyExpected: 0,
+                                  ),
+                                );
+                              });
+                            },
+                          ),
+                        ],
                       );
-                    },
-                  ),
-                  const SizedBox(height: 8),
-
-                  WHOutlinedButton(
-                    label: 'Product',
-                    icon: Icons.add,
-                    onPressed: () {
-                      setState(() {
-                        _selectedItems.add(
-                          CreatePoItemParams(productId: 0, qtyExpected: 0),
-                        );
-                      });
                     },
                   ),
                 ],

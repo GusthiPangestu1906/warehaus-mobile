@@ -1,3 +1,5 @@
+import 'package:inbound/domain/entities/purchase_order.dart';
+
 abstract class PurchaseOrderState {
   const PurchaseOrderState();
 }
@@ -5,6 +7,18 @@ abstract class PurchaseOrderState {
 class PurchaseOrderInitial extends PurchaseOrderState {}
 
 class PurchaseOrderLoading extends PurchaseOrderState {}
+
+class PurchaseOrderLoaded extends PurchaseOrderState {
+  final List<PurchaseOrder> purchaseOrders;
+
+  const PurchaseOrderLoaded(this.purchaseOrders);
+}
+
+class PurchaseOrderDetailLoaded extends PurchaseOrderState {
+  final PurchaseOrder purchaseOrder;
+
+  const PurchaseOrderDetailLoaded(this.purchaseOrder);
+}
 
 class CreatePurchaseOrderSuccess extends PurchaseOrderState {}
 

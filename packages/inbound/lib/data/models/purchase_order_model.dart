@@ -14,8 +14,11 @@ class PurchaseOrderModel extends PurchaseOrder {
     required super.poNumber,
     required super.supplierName,
     required super.status,
+    required super.eta,
+    required super.carrier,
     required super.totalQtyExpected,
     required super.totalQtyReceived,
+    required super.createdAt,
     required List<ItemModel> super.items,
   });
 
@@ -25,8 +28,11 @@ class PurchaseOrderModel extends PurchaseOrder {
         poNumber: json["poNumber"],
         supplierName: json["supplierName"],
         status: json["status"],
+        eta: DateTime.parse(json["eta"]),
+        carrier: json["carrier"],
         totalQtyExpected: json["totalQtyExpected"],
         totalQtyReceived: json["totalQtyReceived"],
+        createdAt: DateTime.parse(json["createdAt"]),
         items: List<ItemModel>.from(
           json["items"].map((x) => ItemModel.fromJson(x)),
         ),
@@ -39,6 +45,9 @@ class ItemModel extends PoItem {
     required super.productId,
     required super.qtyExpected,
     required super.qtyReceived,
+    super.productCode,
+    super.productName,
+    super.qcStatus,
   });
 
   factory ItemModel.fromJson(Map<String, dynamic> json) => ItemModel(
@@ -46,5 +55,8 @@ class ItemModel extends PoItem {
     productId: json["productId"],
     qtyExpected: json["qtyExpected"],
     qtyReceived: json["qtyReceived"],
+    productCode: json["productCode"],
+    productName: json["productName"],
+    qcStatus: json["qcStatus"],
   );
 }

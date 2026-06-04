@@ -1,0 +1,259 @@
+import 'package:core_ui/core_ui.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:inbound/domain/entities/po_item.dart';
+import 'package:inbound/domain/entities/purchase_order.dart';
+import 'package:inbound/presentation/bloc/purchase_order/purchase_order_bloc.dart';
+import 'package:inbound/presentation/bloc/purchase_order/purchase_order_event.dart';
+import 'package:inbound/presentation/bloc/purchase_order/purchase_order_state.dart';
+import 'package:inbound/presentation/widgets/purchase_order_detail/po_detail_header.dart';
+import 'package:inbound/presentation/widgets/purchase_order_detail/po_info_cards.dart';
+import 'package:inbound/presentation/widgets/purchase_order_detail/po_invoice_input_card.dart';
+import 'package:inbound/presentation/widgets/purchase_order_detail/po_product_list_section.dart';
+
+class PurchaseOrderDetailPage extends StatefulWidget {
+  const PurchaseOrderDetailPage({super.key, required this.purchaseOrderId});
+
+  final int purchaseOrderId;
+
+  @override
+  State<PurchaseOrderDetailPage> createState() =>
+      _PurchaseOrderDetailPageState();
+}
+
+class _PurchaseOrderDetailPageState extends State<PurchaseOrderDetailPage> {
+  final TextEditingController _invoiceController = TextEditingController();
+  bool _isInvoiceInputVisible = false;
+  String? _invoiceNumber;
+  String? _localStatus;
+  List<PoItem>? _localItems;
+
+  @override
+  void initState() {
+    super.initState();
+    context.read<PurchaseOrderBloc>().add(
+      GetPurchaseOrderDetailEvent(widget.purchaseOrderId),
+    );
+  }
+
+  @override
+  void dispose() {
+    _invoiceController.dispose();
+    super.dispose();
+  }
+
+  void _showInvoiceInput() {
+    setState(() => _isInvoiceInputVisible = true);
+  }
+
+  void _saveInvoice() {
+    final invoiceNumber = _invoiceController.text.trim();
+    if (invoiceNumber.isEmpty) {
+      _showSnackBar('Invoice number is required.');
+      return;
+    }
+
+    setState(() {
+      _invoiceNumber = invoiceNumber;
+      _localStatus = 'Active';
+      _isInvoiceInputVisible = false;
+    });
+  }
+
+  void _completeQualityControl(PurchaseOrder purchaseOrder) {
+    setState(() {
+      _localStatus = 'Completed';
+      _localItems = purchaseOrder.items.asMap().entries.map((entry) {
+        return entry.value.copyWith(qcStatus: _qcStatusForIndex(entry.key));
+      }).toList();
+    });
+  }
+
+  void _showSnackBar(String message) {
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(message)));
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: WHColors.background,
+      appBar: const WHAppbar(title: 'Detail Purchase Order'),
+      body: SafeArea(
+        child: BlocBuilder<PurchaseOrderBloc, PurchaseOrderState>(
+          builder: (context, state) {
+            if (state is PurchaseOrderLoading) {
+              return const Center(child: CircularProgressIndicator());
+            }
+
+            if (state is PurchaseOrderError) {
+              return Center(child: Text('Error: ${state.message}'));
+            }
+
+            if (state is PurchaseOrderDetailLoaded) {
+              final purchaseOrder = state.purchaseOrder;
+              return _buildDetailContent(purchaseOrder);
+            }
+
+            return const SizedBox.shrink();
+          },
+        ),
+      ),
+      bottomNavigationBar: BlocBuilder<PurchaseOrderBloc, PurchaseOrderState>(
+        builder: (context, state) {
+          if (state is! PurchaseOrderDetailLoaded)
+            return const SizedBox.shrink();
+          return _buildBottomAction(state.purchaseOrder);
+        },
+      ),
+    );
+  }
+
+  Widget _buildDetailContent(PurchaseOrder purchaseOrder) {
+    final status = _effectiveStatus(purchaseOrder);
+    final isQueued = _isQueued(status);
+    final isCompleted = _isCompleted(status);
+    final items = _localItems ?? purchaseOrder.items;
+
+    return ListView(
+      padding: const EdgeInsets.all(16),
+      children: [
+        PoDetailHeader(
+          poNumber: purchaseOrder.poNumber,
+          status: status,
+          supplierName: purchaseOrder.supplierName,
+          carrier: purchaseOrder.carrier,
+          showActions: isQueued && !_isInvoiceInputVisible,
+          onDelete: () => _showSnackBar('Delete purchase order.'),
+          onEdit: () => _showSnackBar('Edit purchase order.'),
+        ),
+        const SizedBox(height: 12),
+        if (isCompleted) ...[
+          WHButton(
+            label: 'Print Label Purchase Order',
+            icon: Icons.print_outlined,
+            backgroundColor: WHColors.primary3,
+            onPressed: () => _showSnackBar('Printing purchase order label.'),
+          ),
+          const SizedBox(height: 12),
+        ],
+        if (_isInvoiceInputVisible) ...[
+          PoInvoiceInputCard(
+            controller: _invoiceController,
+            onSave: _saveInvoice,
+          ),
+          const SizedBox(height: 12),
+        ] else ...[
+          PoInfoCards(
+            etaLabel: _formatDate(purchaseOrder.eta),
+            invoiceNumber: _invoiceNumber,
+          ),
+          const SizedBox(height: 16),
+        ],
+        PoProductListSection(
+          products: items,
+          isCompleted: isCompleted,
+          onProductTap: _showQcResult,
+        ),
+      ],
+    );
+  }
+
+  Widget _buildBottomAction(PurchaseOrder purchaseOrder) {
+    final status = _effectiveStatus(purchaseOrder);
+
+    if (_isQueued(status) && !_isInvoiceInputVisible) {
+      return _BottomAction(
+        child: WHButton(
+          label: 'Arrived',
+          icon: Icons.local_shipping_outlined,
+          backgroundColor: WHColors.secondary3,
+          onPressed: _showInvoiceInput,
+        ),
+      );
+    }
+
+    if (_isActive(status)) {
+      return _BottomAction(
+        child: WHButton(
+          label: 'Start Quality Control',
+          icon: Icons.fact_check_outlined,
+          backgroundColor: WHColors.secondary3,
+          onPressed: () => _completeQualityControl(purchaseOrder),
+        ),
+      );
+    }
+
+    return const SizedBox.shrink();
+  }
+
+  void _showQcResult(PoItem item) {
+    if (item.qcStatus == null) return;
+
+    final productCode =
+        item.productCode ?? 'PRD-${item.productId.toString().padLeft(4, '0')}';
+    _showSnackBar('$productCode: ${_qcStatusLabel(item.qcStatus!)}');
+  }
+
+  String _effectiveStatus(PurchaseOrder purchaseOrder) {
+    return _localStatus ?? purchaseOrder.status;
+  }
+
+  bool _isQueued(String status) {
+    final normalized = status.trim().toLowerCase();
+    return normalized == 'pending' || normalized == 'queued';
+  }
+
+  bool _isActive(String status) {
+    return status.trim().toLowerCase() == 'active';
+  }
+
+  bool _isCompleted(String status) {
+    return status.trim().toLowerCase() == 'completed';
+  }
+
+  String _formatDate(DateTime value) {
+    final day = value.day.toString().padLeft(2, '0');
+    final month = value.month.toString().padLeft(2, '0');
+    final year = value.year.toString();
+    return '$day/$month/$year';
+  }
+
+  String _qcStatusForIndex(int index) {
+    switch (index % 3) {
+      case 1:
+        return 'damage';
+      case 2:
+        return 'less';
+      default:
+        return 'success';
+    }
+  }
+
+  String _qcStatusLabel(String status) {
+    switch (status.trim().toLowerCase()) {
+      case 'damage':
+        return 'Damage';
+      case 'less':
+        return 'Less';
+      case 'success':
+      default:
+        return 'Success';
+    }
+  }
+}
+
+class _BottomAction extends StatelessWidget {
+  const _BottomAction({required this.child});
+
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    return SafeArea(
+      minimum: const EdgeInsets.fromLTRB(16, 10, 16, 16),
+      child: child,
+    );
+  }
+}

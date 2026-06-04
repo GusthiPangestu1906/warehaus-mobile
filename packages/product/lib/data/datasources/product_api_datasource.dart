@@ -6,7 +6,7 @@ class ProductApiDatasource {
   final Dio dio;
   ProductApiDatasource(this.dio);
 
-  static const String _productPath = '/Product';
+  static const String _productPath = '/products';
   static const String _stockLocationsPath = '/product/stock-locations';
 
   Future<List<ProductModel>> getProducts() async {

@@ -5,6 +5,8 @@ import 'package:get_it/get_it.dart';
 import 'package:inbound/data/datasources/purchase_order_api_datasource.dart';
 import 'package:inbound/data/repositories/purchase_order_repository_impl.dart';
 import 'package:inbound/domain/usecases/purchase_order/create_purchase_order.dart';
+import 'package:inbound/domain/usecases/purchase_order/get_purchase_order_detail.dart';
+import 'package:inbound/domain/usecases/purchase_order/get_purchase_orders.dart';
 import 'package:inbound/presentation/bloc/purchase_order/purchase_order_bloc.dart';
 import 'package:product/data/datasources/product_api_datasource.dart';
 import 'package:product/data/repositories/product_repository_impl.dart';
@@ -24,27 +26,31 @@ import 'package:zone/zone.dart';
 
 final getIt = GetIt.instance;
 
-void setupInjector() {
+Future<void> setupInjector() async {
+  // 1. SOLUSI HOT RESTART: Bersihkan semua instance lama sebelum mendaftar ulang
+  await getIt.reset();
+
+  // ===========================================================================
+  // CORE & DRIVER SERVICES
+  // ===========================================================================
   getIt.registerLazySingleton<ApiClient>(() => ApiClient());
   getIt.registerLazySingleton<Dio>(() => getIt<ApiClient>().dio);
-
-  getIt.registerLazySingleton<ProductApiDatasource>(
-    () => ProductApiDatasource(getIt<Dio>()),
+  getIt.registerLazySingleton<DashboardService>(
+    () => DashboardService(getIt<Dio>()),
   );
 
-  getIt.registerLazySingleton<ProductRepositoryImpl>(
-    () => ProductRepositoryImpl(getIt<ProductApiDatasource>()),
-  );
-
+  // ===========================================================================
+  // FEATURE: ZONE
+  // ===========================================================================
+  // Datasource & Repository
   getIt.registerLazySingleton<ZoneApiDatasource>(
     () => ZoneApiDatasource(getIt<Dio>()),
   );
-
   getIt.registerLazySingleton<ZoneRepositoryImpl>(
     () => ZoneRepositoryImpl(getIt<ZoneApiDatasource>()),
   );
 
-  // Use Case
+  // Use Cases
   getIt.registerLazySingleton(() => GetZones(getIt<ZoneRepositoryImpl>()));
   getIt.registerLazySingleton(
     () => GetZoneByAisle(getIt<ZoneRepositoryImpl>()),
@@ -59,7 +65,31 @@ void setupInjector() {
   getIt.registerLazySingleton(() => UpdateZone(getIt<ZoneRepositoryImpl>()));
   getIt.registerLazySingleton(() => DeleteZone(getIt<ZoneRepositoryImpl>()));
 
-  // Product use cases
+  // BLoC (Menggunakan registerFactory karena state BLoC harus di-recreate setiap pindah page)
+  getIt.registerFactory(
+    () => ZoneBloc(
+      getZonesUsecase: getIt<GetZones>(),
+      getZoneByAisleUsecase: getIt<GetZoneByAisle>(),
+      getZoneDetailsUsecase: getIt<GetZoneDetails>(),
+      createZoneUsecase: getIt<CreateZone>(),
+      updateZoneUsecase: getIt<UpdateZone>(),
+      deleteZoneUsecase: getIt<DeleteZone>(),
+      getShelfDetailsUsecase: getIt<GetShelfDetails>(),
+    ),
+  );
+
+  // ===========================================================================
+  // FEATURE: PRODUCT
+  // ===========================================================================
+  // Datasource & Repository
+  getIt.registerLazySingleton<ProductApiDatasource>(
+    () => ProductApiDatasource(getIt<Dio>()),
+  );
+  getIt.registerLazySingleton<ProductRepositoryImpl>(
+    () => ProductRepositoryImpl(getIt<ProductApiDatasource>()),
+  );
+
+  // Use Cases
   getIt.registerLazySingleton(
     () => GetProducts(getIt<ProductRepositoryImpl>()),
   );
@@ -85,41 +115,7 @@ void setupInjector() {
     () => MoveStockLocation(getIt<ProductRepositoryImpl>()),
   );
 
-  // Dashboard
-  getIt.registerLazySingleton<DashboardService>(
-    () => DashboardService(getIt<Dio>()),
-  );
-
-  getIt.registerLazySingleton<PurchaseOrderApiDatasource>(
-    () => PurchaseOrderApiDatasource(getIt<Dio>()),
-  );
-
-  getIt.registerLazySingleton<PurchaseOrderRepositoryImpl>(
-    () => PurchaseOrderRepositoryImpl(getIt<PurchaseOrderApiDatasource>()),
-  );
-
-  getIt.registerLazySingleton(
-    () => CreatePurchaseOrder(getIt<PurchaseOrderRepositoryImpl>()),
-  );
-
-  getIt.registerFactory(
-    () => ZoneBloc(
-      getZonesUsecase: getIt<GetZones>(),
-      getZoneByAisleUsecase: getIt<GetZoneByAisle>(),
-      getZoneDetailsUsecase: getIt<GetZoneDetails>(),
-      createZoneUsecase: getIt<CreateZone>(),
-      updateZoneUsecase: getIt<UpdateZone>(),
-      deleteZoneUsecase: getIt<DeleteZone>(),
-      getShelfDetailsUsecase: getIt<GetShelfDetails>(),
-    ),
-  );
-
-  getIt.registerFactory(
-    () => PurchaseOrderBloc(
-      createPurchaseOrderUsecase: getIt<CreatePurchaseOrder>(),
-    ),
-  );
-
+  // BLoC
   getIt.registerFactory(
     () => ProductBloc(
       getProductsUsecase: getIt<GetProducts>(),
@@ -130,6 +126,37 @@ void setupInjector() {
       addStockLocationUsecase: getIt<AddStockLocation>(),
       updateStockLocationUsecase: getIt<UpdateStockLocation>(),
       moveStockLocationUsecase: getIt<MoveStockLocation>(),
+    ),
+  );
+
+  // ===========================================================================
+  // FEATURE: INBOUND / PURCHASE ORDER
+  // ===========================================================================
+  // Datasource & Repository (DUPLIKASI DI SINI SUDAH DIHAPUS)
+  getIt.registerLazySingleton<PurchaseOrderApiDatasource>(
+    () => PurchaseOrderApiDatasource(getIt<Dio>()),
+  );
+  getIt.registerLazySingleton<PurchaseOrderRepositoryImpl>(
+    () => PurchaseOrderRepositoryImpl(getIt<PurchaseOrderApiDatasource>()),
+  );
+
+  // Use Cases
+  getIt.registerLazySingleton(
+    () => GetPurchaseOrders(getIt<PurchaseOrderRepositoryImpl>()),
+  );
+  getIt.registerLazySingleton(
+    () => GetPurchaseOrderDetail(getIt<PurchaseOrderRepositoryImpl>()),
+  );
+  getIt.registerLazySingleton(
+    () => CreatePurchaseOrder(getIt<PurchaseOrderRepositoryImpl>()),
+  );
+
+  // BLoC
+  getIt.registerFactory(
+    () => PurchaseOrderBloc(
+      getPurchaseOrdersUsecase: getIt<GetPurchaseOrders>(),
+      getPurchaseOrderDetailUsecase: getIt<GetPurchaseOrderDetail>(),
+      createPurchaseOrderUsecase: getIt<CreatePurchaseOrder>(),
     ),
   );
 }

@@ -39,10 +39,8 @@ class ProductBloc extends Bloc<ProductEvent, ProductState> {
       emit(ProductLoading());
       try {
         final products = await getProductsUsecase();
-        debugPrint('[ProductBloc] GetProductsEvent success: ${products.length}');
         emit(ProductLoaded(products));
       } catch (e) {
-        debugPrint('[ProductBloc] GetProductsEvent error: $e');
         emit(ProductError(e.toString()));
       }
     });
@@ -51,7 +49,9 @@ class ProductBloc extends Bloc<ProductEvent, ProductState> {
       emit(ProductLoading());
       try {
         final product = await getProductDetailUsecase(event.id);
-        debugPrint('[ProductBloc] GetProductDetailsEvent success: ${product.id}');
+        debugPrint(
+          '[ProductBloc] GetProductDetailsEvent success: ${product.id}',
+        );
         emit(ProductDetailLoaded(product));
       } catch (e) {
         debugPrint('[ProductBloc] GetProductDetailsEvent error: $e');
