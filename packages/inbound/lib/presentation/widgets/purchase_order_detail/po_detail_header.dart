@@ -52,18 +52,6 @@ class PoDetailHeader extends StatelessWidget {
               _StatusBadge(style: badgeStyle),
             ],
           ),
-          const SizedBox(height: 14),
-          Row(
-            children: [
-              Expanded(
-                child: _InfoText(label: 'Supplier', value: supplierName),
-              ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: _InfoText(label: 'Carrier', value: carrier),
-              ),
-            ],
-          ),
           if (showActions) ...[
             const SizedBox(height: 16),
             Row(
@@ -194,7 +182,7 @@ class _StatusBadgeStyle {
           backgroundColor: WHColors.warning4,
           textColor: WHColors.warning1,
         );
-      case 'completed':
+      case 'success':
         return const _StatusBadgeStyle(
           label: 'Completed',
           backgroundColor: WHColors.success4,

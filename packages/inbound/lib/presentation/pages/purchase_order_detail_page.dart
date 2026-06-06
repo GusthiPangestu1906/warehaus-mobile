@@ -11,6 +11,8 @@ import 'package:inbound/presentation/widgets/purchase_order_detail/po_info_cards
 import 'package:inbound/presentation/widgets/purchase_order_detail/po_invoice_input_card.dart';
 import 'package:inbound/presentation/widgets/purchase_order_detail/po_product_list_section.dart';
 
+enum PurchaseOrderDetailResult { deleted, invoiceUpdated }
+
 class PurchaseOrderDetailPage extends StatefulWidget {
   const PurchaseOrderDetailPage({super.key, required this.purchaseOrderId});
 
@@ -46,20 +48,6 @@ class _PurchaseOrderDetailPageState extends State<PurchaseOrderDetailPage> {
     setState(() => _isInvoiceInputVisible = true);
   }
 
-  void _saveInvoice() {
-    final invoiceNumber = _invoiceController.text.trim();
-    if (invoiceNumber.isEmpty) {
-      _showSnackBar('Invoice number is required.');
-      return;
-    }
-
-    setState(() {
-      _invoiceNumber = invoiceNumber;
-      _localStatus = 'Active';
-      _isInvoiceInputVisible = false;
-    });
-  }
-
   void _completeQualityControl(PurchaseOrder purchaseOrder) {
     setState(() {
       _localStatus = 'Completed';
@@ -67,6 +55,38 @@ class _PurchaseOrderDetailPageState extends State<PurchaseOrderDetailPage> {
         return entry.value.copyWith(qcStatus: _qcStatusForIndex(entry.key));
       }).toList();
     });
+  }
+
+  Future<void> _saveInvoice() async {
+    final invoiceNumber = _invoiceController.text.trim();
+    final confirmed = await WHInfoDialog.show(
+      context: context,
+      title: 'Are you sure want the entered invoice number is correct?',
+      identifier: invoiceNumber,
+      confirmLabel: 'Save',
+      cancelLabel: 'Cancel',
+    );
+
+    if (!mounted || confirmed != true) return;
+
+    context.read<PurchaseOrderBloc>().add(
+      UpdateInvoiceEvent(widget.purchaseOrderId, invoiceNumber),
+    );
+  }
+
+  Future<void> _showDeleteModal(PurchaseOrder purchaseOrder) async {
+    final confirmed = await WHDeleteDialog.show(
+      context: context,
+      title: 'Are you sure want to delete this Purchase Order?',
+      identifier: purchaseOrder.poNumber,
+      barrierDismissible: false,
+    );
+
+    if (!mounted || confirmed != true) return;
+
+    context.read<PurchaseOrderBloc>().add(
+      DeletePurchaseOrderEvent(purchaseOrder.id),
+    );
   }
 
   void _showSnackBar(String message) {
@@ -77,35 +97,47 @@ class _PurchaseOrderDetailPageState extends State<PurchaseOrderDetailPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: WHColors.background,
-      appBar: const WHAppbar(title: 'Detail Purchase Order'),
-      body: SafeArea(
-        child: BlocBuilder<PurchaseOrderBloc, PurchaseOrderState>(
+    return BlocListener<PurchaseOrderBloc, PurchaseOrderState>(
+      listener: (context, state) {
+        if (state is DeletePurchaseOrderSuccess) {
+          Navigator.of(context).pop(PurchaseOrderDetailResult.deleted);
+        }
+
+        if (state is UpdateInvoiceSuccess) {
+          Navigator.of(context).pop(PurchaseOrderDetailResult.invoiceUpdated);
+        }
+      },
+      child: Scaffold(
+        backgroundColor: WHColors.background,
+        appBar: const WHAppbar(title: 'Detail Purchase Order'),
+        body: SafeArea(
+          child: BlocBuilder<PurchaseOrderBloc, PurchaseOrderState>(
+            builder: (context, state) {
+              if (state is PurchaseOrderLoading) {
+                return const Center(child: CircularProgressIndicator());
+              }
+
+              if (state is PurchaseOrderError) {
+                return Center(child: Text('Error: ${state.message}'));
+              }
+
+              if (state is PurchaseOrderDetailLoaded) {
+                final purchaseOrder = state.purchaseOrder;
+                return _buildDetailContent(purchaseOrder);
+              }
+
+              return const SizedBox.shrink();
+            },
+          ),
+        ),
+        bottomNavigationBar: BlocBuilder<PurchaseOrderBloc, PurchaseOrderState>(
           builder: (context, state) {
-            if (state is PurchaseOrderLoading) {
-              return const Center(child: CircularProgressIndicator());
+            if (state is! PurchaseOrderDetailLoaded) {
+              return const SizedBox.shrink();
             }
-
-            if (state is PurchaseOrderError) {
-              return Center(child: Text('Error: ${state.message}'));
-            }
-
-            if (state is PurchaseOrderDetailLoaded) {
-              final purchaseOrder = state.purchaseOrder;
-              return _buildDetailContent(purchaseOrder);
-            }
-
-            return const SizedBox.shrink();
+            return _buildBottomAction(state.purchaseOrder);
           },
         ),
-      ),
-      bottomNavigationBar: BlocBuilder<PurchaseOrderBloc, PurchaseOrderState>(
-        builder: (context, state) {
-          if (state is! PurchaseOrderDetailLoaded)
-            return const SizedBox.shrink();
-          return _buildBottomAction(state.purchaseOrder);
-        },
       ),
     );
   }
@@ -125,7 +157,7 @@ class _PurchaseOrderDetailPageState extends State<PurchaseOrderDetailPage> {
           supplierName: purchaseOrder.supplierName,
           carrier: purchaseOrder.carrier,
           showActions: isQueued && !_isInvoiceInputVisible,
-          onDelete: () => _showSnackBar('Delete purchase order.'),
+          onDelete: () => _showDeleteModal(purchaseOrder),
           onEdit: () => _showSnackBar('Edit purchase order.'),
         ),
         const SizedBox(height: 12),
@@ -147,6 +179,8 @@ class _PurchaseOrderDetailPageState extends State<PurchaseOrderDetailPage> {
         ] else ...[
           PoInfoCards(
             etaLabel: _formatDate(purchaseOrder.eta),
+            supplierName: purchaseOrder.supplierName,
+            carrier: purchaseOrder.carrier,
             invoiceNumber: _invoiceNumber,
           ),
           const SizedBox(height: 16),
@@ -167,7 +201,7 @@ class _PurchaseOrderDetailPageState extends State<PurchaseOrderDetailPage> {
       return _BottomAction(
         child: WHButton(
           label: 'Arrived',
-          icon: Icons.local_shipping_outlined,
+          icon: Icons.check_circle_outlined,
           backgroundColor: WHColors.secondary3,
           onPressed: _showInvoiceInput,
         ),

@@ -2,37 +2,69 @@ import 'package:core_ui/core_ui.dart';
 import 'package:flutter/material.dart';
 
 class PoInfoCards extends StatelessWidget {
-  const PoInfoCards({super.key, required this.etaLabel, this.invoiceNumber});
+  const PoInfoCards({
+    super.key,
+    required this.etaLabel,
+    required this.supplierName,
+    required this.carrier,
+    this.invoiceNumber,
+  });
 
   final String etaLabel;
+  final String supplierName;
+  final String carrier;
   final String? invoiceNumber;
 
   @override
   Widget build(BuildContext context) {
-    if (invoiceNumber == null) {
-      return _InfoCard(
-        icon: Icons.event_available_outlined,
-        label: 'ETA',
-        value: etaLabel,
-      );
-    }
-
-    return Row(
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Expanded(
-          child: _InfoCard(
-            icon: Icons.event_available_outlined,
-            label: 'ETA',
-            value: etaLabel,
-          ),
+        Row(
+          children: [
+            Expanded(
+              child: _InfoCard(
+                icon: Icons.event_available_outlined,
+                label: 'ETA',
+                value: etaLabel,
+                backgroundColor: WHColors.primary3,
+              ),
+            ),
+            const SizedBox(width: 12),
+            if (invoiceNumber != null)
+              Expanded(
+                child: _InfoCard(
+                  icon: Icons.description_outlined,
+                  label: 'Invoice Number',
+                  value: invoiceNumber!,
+                  backgroundColor: WHColors.secondary3,
+                ),
+              ),
+          ],
         ),
-        const SizedBox(width: 12),
-        Expanded(
-          child: _InfoCard(
-            icon: Icons.receipt_long_outlined,
-            label: 'Invoice Number',
-            value: invoiceNumber!,
-          ),
+        const SizedBox(height: 12),
+        Row(
+          children: [
+            Expanded(
+              child: _InfoCard(
+                icon: Icons.storefront_outlined,
+                label: 'Supplier',
+                value: supplierName,
+                backgroundColor: WHColors.secondary3,
+              ),
+            ),
+
+            const SizedBox(width: 12),
+
+            Expanded(
+              child: _InfoCard(
+                icon: Icons.local_shipping_outlined,
+                label: 'Carrier',
+                value: carrier,
+                backgroundColor: WHColors.grey3,
+              ),
+            ),
+          ],
         ),
       ],
     );
@@ -44,11 +76,13 @@ class _InfoCard extends StatelessWidget {
     required this.icon,
     required this.label,
     required this.value,
+    required this.backgroundColor,
   });
 
   final IconData icon;
   final String label;
   final String value;
+  final Color backgroundColor;
 
   @override
   Widget build(BuildContext context) {
@@ -61,7 +95,14 @@ class _InfoCard extends StatelessWidget {
       ),
       child: Row(
         children: [
-          Icon(icon, color: WHColors.primary3, size: 22),
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: backgroundColor,
+              borderRadius: BorderRadius.circular(6),
+            ),
+            child: Icon(icon, color: WHColors.surface, size: 22),
+          ),
           const SizedBox(width: 10),
           Expanded(
             child: Column(

@@ -71,8 +71,8 @@ class _WHDropdownFieldState<T> extends State<WHDropdownField<T>> {
   static const _colorLabelDisabled = WHColors.grey4;
 
   static const _colorText = WHColors.textPrimary;
-  static const _colorHint = WHColors.grey4;
-  static const _colorIcon = WHColors.grey4;
+  static const _colorHint = WHColors.grey3;
+  static const _colorIcon = WHColors.grey3;
   static const _colorIconFocused = WHColors.primary3;
   static const _colorIconError = WHColors.error2;
   static const _colorIconDisabled = WHColors.grey5;

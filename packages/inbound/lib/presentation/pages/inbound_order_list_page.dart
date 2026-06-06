@@ -166,13 +166,30 @@ class _InboundOrderListPageState extends State<InboundOrderListPage>
                               carrierOrCourier: order.carrier,
                             ),
                             onTap: () {
-                              Navigator.of(context).push(
+                              Navigator.of(context)
+                                  .push<PurchaseOrderDetailResult>(
                                 MaterialPageRoute(
                                   builder: (_) => PurchaseOrderDetailPage(
                                     purchaseOrderId: order.id,
                                   ),
                                 ),
-                              );
+                              )
+                                  .then((result) {
+                                if (!context.mounted || result == null) {
+                                  return;
+                                }
+
+                                context.read<PurchaseOrderBloc>().add(
+                                  GetPurchaseOrdersEvent(),
+                                );
+
+                                final message =
+                                    result == PurchaseOrderDetailResult.deleted
+                                    ? 'Purchase Order has been successfully deleted.'
+                                    : 'Invoice has been successfully saved.';
+
+                                WHSnackBar.showSuccess(context, message);
+                              });
                             },
                           );
                         },
@@ -207,7 +224,7 @@ class _InboundOrderListPageState extends State<InboundOrderListPage>
     switch (status.trim().toLowerCase()) {
       case 'active':
         return OrderStatus.active;
-      case 'completed':
+      case 'success':
         return OrderStatus.completed;
       case 'pending':
       case 'queued':

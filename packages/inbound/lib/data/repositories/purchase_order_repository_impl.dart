@@ -21,4 +21,14 @@ class PurchaseOrderRepositoryImpl extends PurchaseOrderRepository {
   Future<void> createPurchaseOrder(CreatePoParams params) async {
     await apiDatasource.createPurchaseOrder(params.toJson());
   }
+
+  @override
+  Future<void> invoiceUpdate(int id, String invoiceNumber) async {
+    await apiDatasource.invoiceUpdate(id, invoiceNumber);
+  }
+
+  @override
+  Future<void> deletePurchaseOrder(int id) async {
+    await apiDatasource.deletePurchaseOrder(id);
+  }
 }

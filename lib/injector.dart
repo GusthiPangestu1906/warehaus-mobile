@@ -5,8 +5,10 @@ import 'package:get_it/get_it.dart';
 import 'package:inbound/data/datasources/purchase_order_api_datasource.dart';
 import 'package:inbound/data/repositories/purchase_order_repository_impl.dart';
 import 'package:inbound/domain/usecases/purchase_order/create_purchase_order.dart';
+import 'package:inbound/domain/usecases/purchase_order/delete_purchase_order.dart';
 import 'package:inbound/domain/usecases/purchase_order/get_purchase_order_detail.dart';
 import 'package:inbound/domain/usecases/purchase_order/get_purchase_orders.dart';
+import 'package:inbound/domain/usecases/purchase_order/invoice_update.dart';
 import 'package:inbound/presentation/bloc/purchase_order/purchase_order_bloc.dart';
 import 'package:product/data/datasources/product_api_datasource.dart';
 import 'package:product/data/repositories/product_repository_impl.dart';
@@ -150,6 +152,12 @@ Future<void> setupInjector() async {
   getIt.registerLazySingleton(
     () => CreatePurchaseOrder(getIt<PurchaseOrderRepositoryImpl>()),
   );
+  getIt.registerLazySingleton(
+    () => InvoiceUpdate(repository: getIt<PurchaseOrderRepositoryImpl>()),
+  );
+  getIt.registerLazySingleton(
+    () => DeletePurchaseOrder(getIt<PurchaseOrderRepositoryImpl>()),
+  );
 
   // BLoC
   getIt.registerFactory(
@@ -157,6 +165,8 @@ Future<void> setupInjector() async {
       getPurchaseOrdersUsecase: getIt<GetPurchaseOrders>(),
       getPurchaseOrderDetailUsecase: getIt<GetPurchaseOrderDetail>(),
       createPurchaseOrderUsecase: getIt<CreatePurchaseOrder>(),
+      invoiceUpdateUsecase: getIt<InvoiceUpdate>(),
+      deletePurchaseOrderUsecase: getIt<DeletePurchaseOrder>(),
     ),
   );
 }

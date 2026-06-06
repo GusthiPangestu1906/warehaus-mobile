@@ -5,4 +5,6 @@ abstract class PurchaseOrderRepository {
   Future<List<PurchaseOrder>> getPurchaseOrders();
   Future<PurchaseOrder> getPurchaseOrderDetail(int id);
   Future<void> createPurchaseOrder(CreatePoParams params);
+  Future<void> invoiceUpdate(int id, String invoiceNumber);
+  Future<void> deletePurchaseOrder(int id);
 }

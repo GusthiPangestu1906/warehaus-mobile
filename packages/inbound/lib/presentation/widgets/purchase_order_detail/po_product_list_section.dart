@@ -21,12 +21,9 @@ class PoProductListSection extends StatelessWidget {
       children: [
         Text('Product List', style: WHTypography.heading2),
         const SizedBox(height: 4),
-        Text(
-          isCompleted
-              ? 'Click to see QC result.'
-              : 'Products included in this purchase order.',
-          style: WHTypography.caption,
-        ),
+        isCompleted
+            ? Text('Click to see QC result.', style: WHTypography.caption)
+            : const SizedBox.shrink(),
         const SizedBox(height: 10),
         ...products.map(
           (product) => Padding(
@@ -58,8 +55,7 @@ class _ProductTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final qcStyle = _QcTileStyle.fromStatus(product.qcStatus);
     final productCode =
-        product.productCode ??
-        'PRD-${product.productId.toString().padLeft(4, '0')}';
+        product.sku ?? 'PRD-${product.productId.toString().padLeft(4, '0')}';
     final productName = product.productName ?? 'Product #${product.productId}';
 
     return Material(

@@ -91,8 +91,8 @@ class OrderCard extends StatelessWidget {
         );
       case OrderStatus.active:
         return const _StatusStyle(
-          bg: WHColors.warning1,
-          text: WHColors.warning2,
+          bg: WHColors.warning2,
+          text: WHColors.warning1,
           label: 'Active',
         );
       case OrderStatus.completed:
@@ -101,6 +101,17 @@ class OrderCard extends StatelessWidget {
           text: WHColors.success4,
           label: 'Completed',
         );
+    }
+  }
+
+  Color get _statusColor {
+    switch (data.status) {
+      case OrderStatus.queued:
+        return WHColors.grey3;
+      case OrderStatus.active:
+        return WHColors.warning2;
+      case OrderStatus.completed:
+        return WHColors.success2;
     }
   }
 
@@ -119,7 +130,7 @@ class OrderCard extends StatelessWidget {
         decoration: BoxDecoration(
           color: _cardBg,
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: _cardBorder, width: 1),
+          border: Border(left: BorderSide(color: _statusColor, width: 6)),
         ),
         padding: const EdgeInsets.all(14),
         child: Column(

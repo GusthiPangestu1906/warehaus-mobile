@@ -1,7 +1,9 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:inbound/domain/usecases/purchase_order/create_purchase_order.dart';
+import 'package:inbound/domain/usecases/purchase_order/delete_purchase_order.dart';
 import 'package:inbound/domain/usecases/purchase_order/get_purchase_order_detail.dart';
 import 'package:inbound/domain/usecases/purchase_order/get_purchase_orders.dart';
+import 'package:inbound/domain/usecases/purchase_order/invoice_update.dart';
 import 'package:inbound/presentation/bloc/purchase_order/purchase_order_event.dart';
 import 'package:inbound/presentation/bloc/purchase_order/purchase_order_state.dart';
 
@@ -9,11 +11,15 @@ class PurchaseOrderBloc extends Bloc<PurchaseOrderEvent, PurchaseOrderState> {
   final CreatePurchaseOrder createPurchaseOrderUsecase;
   final GetPurchaseOrderDetail getPurchaseOrderDetailUsecase;
   final GetPurchaseOrders getPurchaseOrdersUsecase;
+  final InvoiceUpdate invoiceUpdateUsecase;
+  final DeletePurchaseOrder deletePurchaseOrderUsecase;
 
   PurchaseOrderBloc({
     required this.createPurchaseOrderUsecase,
     required this.getPurchaseOrderDetailUsecase,
     required this.getPurchaseOrdersUsecase,
+    required this.invoiceUpdateUsecase,
+    required this.deletePurchaseOrderUsecase,
   }) : super(PurchaseOrderInitial()) {
     on<GetPurchaseOrdersEvent>((event, emit) async {
       emit(PurchaseOrderLoading());
@@ -33,11 +39,29 @@ class PurchaseOrderBloc extends Bloc<PurchaseOrderEvent, PurchaseOrderState> {
         emit(PurchaseOrderError(e.toString()));
       }
     });
+    on<UpdateInvoiceEvent>((event, emit) async {
+      emit(PurchaseOrderLoading());
+      try {
+        await invoiceUpdateUsecase(event.id, event.invoiceNumber);
+        emit(UpdateInvoiceSuccess());
+      } catch (e) {
+        emit(PurchaseOrderError(e.toString()));
+      }
+    });
     on<CreatePurchaseOrderEvent>((event, emit) async {
       emit(PurchaseOrderLoading());
       try {
         await createPurchaseOrderUsecase(event.params);
         emit(CreatePurchaseOrderSuccess());
+      } catch (e) {
+        emit(PurchaseOrderError(e.toString()));
+      }
+    });
+    on<DeletePurchaseOrderEvent>((event, emit) async {
+      emit(PurchaseOrderLoading());
+      try {
+        await deletePurchaseOrderUsecase(event.id);
+        emit(DeletePurchaseOrderSuccess());
       } catch (e) {
         emit(PurchaseOrderError(e.toString()));
       }

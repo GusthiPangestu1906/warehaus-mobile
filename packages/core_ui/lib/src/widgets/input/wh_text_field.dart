@@ -64,9 +64,9 @@ class _WHTextFieldState extends State<WHTextField> {
   static const _colorLabelError = WHColors.error2; // 0xFFBA1A1A
   static const _colorLabelDisabled = WHColors.grey4; // 0xFF879798
 
-  static const _colorHint = WHColors.grey4; // 0xFF879798
+  static const _colorHint = WHColors.grey3; // 0xFF879798
   static const _colorText = WHColors.textPrimary; // 0xFF121E1F
-  static const _colorIcon = WHColors.grey4; // 0xFF879798
+  static const _colorIcon = WHColors.grey3; // 0xFF879798
   static const _colorIconFocused = WHColors.primary3; // 0xFF005BBF
   static const _colorIconError = WHColors.error2; // 0xFFBA1A1A
   static const _colorIconDisabled = WHColors.grey5; // 0xFFD8E5E6

@@ -5,7 +5,8 @@ import 'package:inbound/domain/params/create_po_params.dart';
 import 'package:inbound/presentation/bloc/purchase_order/purchase_order_bloc.dart';
 import 'package:inbound/presentation/bloc/purchase_order/purchase_order_event.dart';
 import 'package:inbound/presentation/bloc/purchase_order/purchase_order_state.dart';
-import 'package:inbound/presentation/widgets/product_form_card.dart';
+import 'package:inbound/presentation/widgets/create_purchase_order/arrival_form_card.dart';
+import 'package:inbound/presentation/widgets/create_purchase_order/product_form_card.dart';
 import 'package:product/domain/entities/product.dart';
 import 'package:product/presentation/bloc/product_bloc.dart';
 import 'package:product/presentation/bloc/product_event.dart';
@@ -61,9 +62,7 @@ class _CreatePurchaseOrderPageState extends State<CreatePurchaseOrderPage> {
 
       if (_selectedItems.any((item) => item.qtyExpected <= 0)) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Qty expected harus lebih dari 0.'),
-          ),
+          const SnackBar(content: Text('Qty expected harus lebih dari 0.')),
         );
         return;
       }
@@ -124,29 +123,10 @@ class _CreatePurchaseOrderPageState extends State<CreatePurchaseOrderPage> {
               child: ListView(
                 padding: const EdgeInsets.all(16),
                 children: [
-                  WHTextField(
-                    label: 'Supplier Name',
-                    hintText: 'e.g., Mayora',
-                    controller: _supplierName,
-                  ),
-                  const SizedBox(height: 16),
-                  WHDateField(
-                    label: 'Expected Arrival Date (ETA):',
-                    hintText: '01/01/2026',
-                    selectedDate: _eta.text.isEmpty
-                        ? null
-                        : DateTime.tryParse(_eta.text),
-                    onDateSelected: (date) {
-                      setState(() {
-                        _eta.text = date.toIso8601String().split('T').first;
-                      });
-                    },
-                  ),
-                  const SizedBox(height: 16),
-                  WHTextField(
-                    label: 'Carrier',
-                    hintText: 'e.g., JNE Cargo',
-                    controller: _carrier,
+                  ArrivalFormCard(
+                    supplierNameController: _supplierName,
+                    etaController: _eta,
+                    carrierController: _carrier,
                   ),
                   const SizedBox(height: 24),
 

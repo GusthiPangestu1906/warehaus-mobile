@@ -5,6 +5,7 @@ class PoItem {
   final int qtyReceived;
   final String? productCode;
   final String? productName;
+  final String? sku;
   final String? qcStatus;
 
   const PoItem({
@@ -14,6 +15,7 @@ class PoItem {
     required this.qtyReceived,
     this.productCode,
     this.productName,
+    this.sku,
     this.qcStatus,
   });
 
@@ -24,6 +26,7 @@ class PoItem {
     int? qtyReceived,
     String? productCode,
     String? productName,
+    String? sku,
     String? qcStatus,
   }) {
     return PoItem(
@@ -33,6 +36,7 @@ class PoItem {
       qtyReceived: qtyReceived ?? this.qtyReceived,
       productCode: productCode ?? this.productCode,
       productName: productName ?? this.productName,
+      sku: sku ?? this.sku,
       qcStatus: qcStatus ?? this.qcStatus,
     );
   }

@@ -22,4 +22,15 @@ class PurchaseOrderApiDatasource {
   Future<void> createPurchaseOrder(Map<String, dynamic> data) async {
     await dio.post(_purchaseOrderPath, data: data);
   }
+
+  Future<void> invoiceUpdate(int id, String invoiceNumber) async {
+    await dio.put(
+      '$_purchaseOrderPath/$id/invoice',
+      data: {'invoiceNumber': invoiceNumber},
+    );
+  }
+
+  Future<void> deletePurchaseOrder(int id) async {
+    await dio.delete('$_purchaseOrderPath/$id');
+  }
 }

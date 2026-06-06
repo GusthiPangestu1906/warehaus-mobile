@@ -46,6 +46,7 @@ class ItemModel extends PoItem {
     required super.qtyExpected,
     required super.qtyReceived,
     super.productCode,
+    super.sku,
     super.productName,
     super.qcStatus,
   });
@@ -57,6 +58,7 @@ class ItemModel extends PoItem {
     qtyReceived: json["qtyReceived"],
     productCode: json["productCode"],
     productName: json["productName"],
+    sku: json["sku"],
     qcStatus: json["qcStatus"],
   );
 }
