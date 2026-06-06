@@ -6,6 +6,8 @@ import 'package:inbound/data/datasources/purchase_order_api_datasource.dart';
 import 'package:inbound/data/repositories/purchase_order_repository_impl.dart';
 import 'package:inbound/domain/usecases/purchase_order/create_purchase_order.dart';
 import 'package:inbound/presentation/bloc/purchase_order/purchase_order_bloc.dart';
+import 'package:outbound/data/datasources/outbound_product_api_datasource.dart';
+import 'package:outbound/data/datasources/region_api_datasource.dart';
 import 'package:outbound/data/datasources/sales_order_api_datasource.dart';
 import 'package:outbound/data/repositories/sales_order_repository_impl.dart';
 import 'package:outbound/domain/usecases/create_sales_order.dart';
@@ -19,6 +21,10 @@ import 'package:product/domain/usecases/delete_product.dart';
 import 'package:product/domain/usecases/get_product_detail.dart';
 import 'package:product/domain/usecases/get_products.dart';
 import 'package:product/domain/usecases/update_product.dart';
+import 'package:product/domain/usecases/add_stock_location.dart';
+import 'package:product/domain/usecases/update_stock_location.dart';
+import 'package:product/domain/usecases/move_stock_location.dart';
+import 'package:product/domain/usecases/delete_product_stock_location.dart';
 import 'package:product/presentation/bloc/product_bloc.dart';
 import 'package:zone/data/datasources/zone_api_datasource.dart';
 import 'package:zone/data/repositories/zone_repository_impl.dart';
@@ -28,6 +34,7 @@ import 'package:zone/domain/usecases/get_zone_by_aisle.dart';
 import 'package:zone/domain/usecases/get_zone_details.dart';
 import 'package:zone/domain/usecases/get_zones.dart';
 import 'package:zone/domain/usecases/update_zone.dart';
+import 'package:zone/domain/usecases/get_shelf_details.dart';
 import 'package:zone/presentation/bloc/zone_bloc.dart';
 
 final getIt = GetIt.instance;
@@ -63,6 +70,9 @@ void setupInjector() {
   getIt.registerLazySingleton(() => CreateZone(getIt<ZoneRepositoryImpl>()));
   getIt.registerLazySingleton(() => UpdateZone(getIt<ZoneRepositoryImpl>()));
   getIt.registerLazySingleton(() => DeleteZone(getIt<ZoneRepositoryImpl>()));
+  getIt.registerLazySingleton(
+    () => GetShelfDetails(getIt<ZoneRepositoryImpl>()),
+  );
 
   // Product use cases
   getIt.registerLazySingleton(
@@ -80,10 +90,19 @@ void setupInjector() {
   getIt.registerLazySingleton(
     () => DeleteProduct(getIt<ProductRepositoryImpl>()),
   );
-  // TODO: /v1/product/stock-locations belum ada di backend
-  // getIt.registerLazySingleton(() => AddStockLocation(getIt<ProductRepositoryImpl>()));
-  // getIt.registerLazySingleton(() => UpdateStockLocation(getIt<ProductRepositoryImpl>()));
-  // getIt.registerLazySingleton(() => MoveStockLocation(getIt<ProductRepositoryImpl>()));
+  // Stock location use cases — sekarang sudah ada di backend
+  getIt.registerLazySingleton(
+    () => AddStockLocation(getIt<ProductRepositoryImpl>()),
+  );
+  getIt.registerLazySingleton(
+    () => UpdateStockLocation(getIt<ProductRepositoryImpl>()),
+  );
+  getIt.registerLazySingleton(
+    () => MoveStockLocation(getIt<ProductRepositoryImpl>()),
+  );
+  getIt.registerLazySingleton(
+    () => DeleteProductStockLocation(getIt<ProductRepositoryImpl>()),
+  );
 
   // Dashboard
   getIt.registerLazySingleton<DashboardService>(
@@ -105,6 +124,12 @@ void setupInjector() {
   // ── Outbound ──────────────────────────────────────────────────
   getIt.registerLazySingleton<SalesOrderApiDatasource>(
     () => SalesOrderApiDatasource(getIt<Dio>()),
+  );
+  getIt.registerLazySingleton<RegionApiDatasource>(
+    () => RegionApiDatasource(getIt<Dio>()),
+  );
+  getIt.registerLazySingleton<OutboundProductApiDatasource>(
+    () => OutboundProductApiDatasource(getIt<Dio>()),
   );
 
   getIt.registerLazySingleton<SalesOrderRepositoryImpl>(
@@ -138,7 +163,7 @@ void setupInjector() {
       createZoneUsecase: getIt<CreateZone>(),
       updateZoneUsecase: getIt<UpdateZone>(),
       deleteZoneUsecase: getIt<DeleteZone>(),
-      // getShelfDetailsUsecase: getIt<GetShelfDetails>(), // TODO: belum ada di backend
+      getShelfDetailsUsecase: getIt<GetShelfDetails>(),
     ),
   );
 
@@ -155,9 +180,9 @@ void setupInjector() {
       createProductUsecase: getIt<CreateProduct>(),
       updateProductUsecase: getIt<UpdateProduct>(),
       deleteProductUsecase: getIt<DeleteProduct>(),
-      // addStockLocationUsecase: getIt<AddStockLocation>(), // TODO: belum ada di backend
-      // updateStockLocationUsecase: getIt<UpdateStockLocation>(),
-      // moveStockLocationUsecase: getIt<MoveStockLocation>(),
+      addStockLocationUsecase: getIt<AddStockLocation>(),
+      updateStockLocationUsecase: getIt<UpdateStockLocation>(),
+      moveStockLocationUsecase: getIt<MoveStockLocation>(),
     ),
   );
 }

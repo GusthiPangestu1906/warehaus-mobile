@@ -5,8 +5,15 @@ abstract class SalesOrderRepository {
   Future<SalesOrder> getSalesOrderById(int id);
   Future<void> createSalesOrder({
     required String customerName,
+    required String companyName,
+    required String contactPerson,
+    required String phoneNumber,
     required String shippingAddress,
-    required String courier,
+    required String provinceCode,
+    required String cityCode,
+    required String districtCode,
+    required String postalCode,
+    required int courierId,
     required String requiredDeliveryDate,
     required List<Map<String, dynamic>> items,
   });

@@ -6,15 +6,29 @@ class CreateSalesOrder {
 
   Future<void> call({
     required String customerName,
+    required String companyName,
+    required String contactPerson,
+    required String phoneNumber,
     required String shippingAddress,
-    required String courier,
+    required String provinceCode,
+    required String cityCode,
+    required String districtCode,
+    required String postalCode,
+    required int courierId,
     required String requiredDeliveryDate,
     required List<Map<String, dynamic>> items,
   }) =>
       repository.createSalesOrder(
         customerName: customerName,
+        companyName: companyName,
+        contactPerson: contactPerson,
+        phoneNumber: phoneNumber,
         shippingAddress: shippingAddress,
-        courier: courier,
+        provinceCode: provinceCode,
+        cityCode: cityCode,
+        districtCode: districtCode,
+        postalCode: postalCode,
+        courierId: courierId,
         requiredDeliveryDate: requiredDeliveryDate,
         items: items,
       );

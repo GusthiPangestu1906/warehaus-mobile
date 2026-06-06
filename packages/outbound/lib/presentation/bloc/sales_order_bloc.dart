@@ -35,8 +35,15 @@ class SalesOrderBloc extends Bloc<SalesOrderEvent, SalesOrderState> {
       try {
         await createSalesOrderUsecase(
           customerName: event.customerName,
+          companyName: event.companyName,
+          contactPerson: event.contactPerson,
+          phoneNumber: event.phoneNumber,
           shippingAddress: event.shippingAddress,
-          courier: event.courier,
+          provinceCode: event.provinceCode,
+          cityCode: event.cityCode,
+          districtCode: event.districtCode,
+          postalCode: event.postalCode,
+          courierId: event.courierId,
           requiredDeliveryDate: event.requiredDeliveryDate,
           items: event.items,
         );
