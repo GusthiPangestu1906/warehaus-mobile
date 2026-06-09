@@ -25,9 +25,7 @@ class _CreateZonePageState extends State<CreateZonePage> {
   /// Guard mencegah double-submit saat menunggu respons bloc.
   bool _isSubmitting = false;
 
-  static const _primaryOrange = Color(0xFFD94F1E);
-  static const _borderColor = Color(0xFFDDDDDD);
-  static const _hintColor = WHColors.grey;
+  // Use shared styles from core_ui
 
   @override
   void dispose() {
@@ -65,21 +63,21 @@ class _CreateZonePageState extends State<CreateZonePage> {
 
   InputDecoration _inputDecoration(String hint) => InputDecoration(
     hintText: hint,
-    hintStyle: const TextStyle(color: _hintColor, fontSize: 13),
-    contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+    hintStyle: TextStyle(color: WHStyles.hint, fontSize: 13),
+    contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
     filled: true,
-    fillColor: WHColors.surface,
-    border: const OutlineInputBorder(
-      borderRadius: BorderRadius.zero,
-      borderSide: BorderSide(color: _borderColor, width: 1.5),
+    fillColor: WHStyles.inputFill,
+    border: OutlineInputBorder(
+      borderRadius: BorderRadius.circular(WHStyles.inputRadius),
+      borderSide: BorderSide(color: WHStyles.border, width: 1.2),
     ),
-    enabledBorder: const OutlineInputBorder(
-      borderRadius: BorderRadius.zero,
-      borderSide: BorderSide(color: _borderColor, width: 1.5),
+    enabledBorder: OutlineInputBorder(
+      borderRadius: BorderRadius.circular(WHStyles.inputRadius),
+      borderSide: BorderSide(color: WHStyles.border, width: 1.2),
     ),
-    focusedBorder: const OutlineInputBorder(
-      borderRadius: BorderRadius.zero,
-      borderSide: BorderSide(color: _hintColor, width: 1.5),
+    focusedBorder: OutlineInputBorder(
+      borderRadius: BorderRadius.circular(WHStyles.inputRadius),
+      borderSide: BorderSide(color: WHStyles.primary, width: 1.5),
     ),
   );
 
@@ -96,74 +94,86 @@ class _CreateZonePageState extends State<CreateZonePage> {
   );
 
   Widget _numericInput(String label, TextEditingController controller) {
-    return Row(
-      children: [
-        Expanded(child: _label(label)),
-        const SizedBox(width: 16),
-        Container(
-          decoration: BoxDecoration(
-            border: Border.all(color: _borderColor, width: 1.5),
-            color: Colors.white,
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              _stepperButton('−', () {
-                int val = int.tryParse(controller.text) ?? 0;
-                controller.text = (val - 1).clamp(0, 999999).toString();
-              }),
-              Container(
-                width: 80,
-                height: 38,
-                alignment: Alignment.center,
-                decoration: const BoxDecoration(
-                  border: Border.symmetric(
-                    vertical: BorderSide(color: _borderColor),
-                  ),
-                ),
-                child: TextFormField(
-                  controller: controller,
-                  style: const TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w500,
-                  ),
-                  keyboardType: TextInputType.number,
-                  textAlign: TextAlign.center,
-                  decoration: const InputDecoration(
-                    border: InputBorder.none,
-                    contentPadding: EdgeInsets.symmetric(horizontal: 4),
-                  ),
-                  validator: (v) {
-                    if (v == null || v.isEmpty) return null;
-                    if (int.tryParse(v) == null) return 'Invalid number';
-                    return null;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: WHStyles.border, width: 1.0),
+      ),
+      child: Row(
+        children: [
+          Expanded(child: _label(label)),
+          const SizedBox(width: 12),
+          // numeric control
+          Container(
+            decoration: BoxDecoration(
+              border: Border.all(color: WHStyles.border, width: 1.0),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                InkWell(
+                  onTap: () {
+                    int val = int.tryParse(controller.text) ?? 0;
+                    controller.text = (val - 1).clamp(0, 999999).toString();
                   },
+                  child: Container(
+                    width: 36,
+                    height: 38,
+                    alignment: Alignment.center,
+                    child: Text('−', style: TextStyle(fontSize: 20, color: WHStyles.stepperText)),
+                  ),
                 ),
-              ),
-              _stepperButton('+', () {
-                int val = int.tryParse(controller.text) ?? 0;
-                controller.text = (val + 1).toString();
-              }),
-            ],
+                Container(
+                  width: 88,
+                  height: 38,
+                  alignment: Alignment.center,
+                  decoration: BoxDecoration(
+                    color: WHStyles.inputFill,
+                    border: Border.symmetric(vertical: BorderSide(color: WHStyles.border)),
+                  ),
+                  child: TextFormField(
+                    controller: controller,
+                    style: const TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w500,
+                    ),
+                    keyboardType: TextInputType.number,
+                    textAlign: TextAlign.center,
+                    decoration: const InputDecoration(
+                      border: InputBorder.none,
+                      contentPadding: EdgeInsets.symmetric(horizontal: 4),
+                    ),
+                    validator: (v) {
+                      if (v == null || v.isEmpty) return null;
+                      if (int.tryParse(v) == null) return 'Invalid number';
+                      return null;
+                    },
+                  ),
+                ),
+                InkWell(
+                  onTap: () {
+                    int val = int.tryParse(controller.text) ?? 0;
+                    controller.text = (val + 1).toString();
+                  },
+                  child: Container(
+                    width: 36,
+                    height: 38,
+                    alignment: Alignment.center,
+                    child: Text('+', style: TextStyle(fontSize: 20, color: WHStyles.stepperText)),
+                  ),
+                ),
+              ],
+            ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 
-  Widget _stepperButton(String label, VoidCallback onTap) => InkWell(
-    onTap: onTap,
-    child: SizedBox(
-      width: 36,
-      height: 38,
-      child: Center(
-        child: Text(
-          label,
-          style: const TextStyle(fontSize: 20, color: Color(0xFF555555)),
-        ),
-      ),
-    ),
-  );
+  // steppers are inline widgets now; helper removed
 
   @override
   Widget build(BuildContext context) {
@@ -199,29 +209,56 @@ class _CreateZonePageState extends State<CreateZonePage> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         _label('Zone Code'),
-                        TextFormField(
-                          controller: _zoneCodeController,
-                          style: const TextStyle(fontSize: 13),
-                          decoration: _inputDecoration('e.g., ELC'),
+                        const SizedBox(height: 6),
+                        Container(
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(16),
+                            border: Border.all(color: WHStyles.border, width: 1.0),
+                          ),
+                          child: TextFormField(
+                            controller: _zoneCodeController,
+                            style: const TextStyle(fontSize: 13),
+                            decoration: _inputDecoration('e.g., ELC'),
+                          ),
                         ),
                         const SizedBox(height: 16),
 
                         _label('Zone Name'),
-                        TextFormField(
-                          controller: _zoneNameController,
-                          style: const TextStyle(fontSize: 13),
-                          decoration: _inputDecoration('e.g., Electronic'),
-                          validator: (v) => (v == null || v.trim().isEmpty)
-                              ? 'Zone name required'
-                              : null,
+                        const SizedBox(height: 6),
+                        Container(
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(16),
+                            border: Border.all(color: WHStyles.border, width: 1.0),
+                          ),
+                          child: TextFormField(
+                            controller: _zoneNameController,
+                            style: const TextStyle(fontSize: 13),
+                            decoration: _inputDecoration('e.g., Electronic'),
+                            validator: (v) => (v == null || v.trim().isEmpty)
+                                ? 'Zone name required'
+                                : null,
+                          ),
                         ),
                         const SizedBox(height: 16),
 
                         _label('Zone Category'),
-                        TextFormField(
-                          controller: _categoryController,
-                          style: const TextStyle(fontSize: 13),
-                          decoration: _inputDecoration('e.g., Electronic'),
+                        const SizedBox(height: 6),
+                        Container(
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(16),
+                            border: Border.all(color: WHStyles.border, width: 1.0),
+                          ),
+                          child: TextFormField(
+                            controller: _categoryController,
+                            style: const TextStyle(fontSize: 13),
+                            decoration: _inputDecoration('e.g., Electronic'),
+                          ),
                         ),
                         const SizedBox(height: 16),
 
@@ -241,28 +278,37 @@ class _CreateZonePageState extends State<CreateZonePage> {
                         const SizedBox(height: 16),
 
                         _label('Description'),
-                        Stack(
-                          children: [
-                            TextFormField(
-                              controller: _descriptionController,
-                              style: const TextStyle(fontSize: 13),
-                              decoration: _inputDecoration(
-                                'Add description here ....',
+                        const SizedBox(height: 6),
+                        Container(
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(16),
+                            border: Border.all(color: WHStyles.border, width: 1.0),
+                          ),
+                          child: Stack(
+                            children: [
+                              TextFormField(
+                                controller: _descriptionController,
+                                style: const TextStyle(fontSize: 13),
+                                decoration: _inputDecoration(
+                                  'Add description here ....',
+                                ),
+                                maxLines: 4,
                               ),
-                              maxLines: 4,
-                            ),
-                            const Positioned(
-                              right: 10,
-                              top: 10,
-                              child: Text(
-                                '(Optional)',
-                                style: TextStyle(
-                                  fontSize: 10,
-                                  color: Color(0xFFB0B0B0),
+                              const Positioned(
+                                right: 10,
+                                top: 10,
+                                child: Text(
+                                  '(Optional)',
+                                  style: TextStyle(
+                                    fontSize: 10,
+                                    color: Color(0xFFB0B0B0),
+                                  ),
                                 ),
                               ),
-                            ),
-                          ],
+                            ],
+                          ),
                         ),
                       ],
                     ),
@@ -301,11 +347,11 @@ class _CreateZonePageState extends State<CreateZonePage> {
                     ),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: isLoading
-                          ? _primaryOrange.withOpacity(0.6)
-                          : _primaryOrange,
+                          ? WHStyles.primaryFaded
+                          : WHStyles.primary,
                       padding: const EdgeInsets.symmetric(vertical: 14),
-                      shape: const RoundedRectangleBorder(
-                        borderRadius: BorderRadius.zero,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(WHStyles.buttonRadius),
                       ),
                       elevation: 0,
                     ),

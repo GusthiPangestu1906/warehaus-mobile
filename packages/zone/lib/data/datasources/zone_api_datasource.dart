@@ -5,7 +5,7 @@ class ZoneApiDatasource {
   final Dio dio;
   ZoneApiDatasource(this.dio);
 
-  static const String _zonePath = '/Zone';
+  static const String _zonePath = '/api/Zones';
 
   Future<List<ZoneModel>> getZones() async {
     final response = await dio.get(_zonePath);
