@@ -3,146 +3,314 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:outbound/domain/entities/sales_order.dart';
 import 'package:outbound/presentation/bloc/sales_order_bloc.dart';
+import 'package:outbound/presentation/bloc/sales_order_event.dart';
 import 'package:outbound/presentation/bloc/sales_order_state.dart';
+import 'package:outbound/presentation/pages/sales_order_detail_page.dart';
 
-class SalesOrderListPage extends StatelessWidget {
+enum _OrderFilter { all, queued, active, completed }
+
+class SalesOrderListPage extends StatefulWidget {
   const SalesOrderListPage({super.key});
 
   @override
+  State<SalesOrderListPage> createState() => _SalesOrderListPageState();
+}
+
+class _SalesOrderListPageState extends State<SalesOrderListPage> {
+  final TextEditingController _searchController = TextEditingController();
+  String _searchQuery = '';
+  _OrderFilter _filter = _OrderFilter.all;
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _refresh() async {
+    context.read<SalesOrderBloc>().add(GetSalesOrdersEvent());
+    await Future<void>.delayed(const Duration(milliseconds: 250));
+  }
+
+  @override
   Widget build(BuildContext context) {
-    return BlocBuilder<SalesOrderBloc, SalesOrderState>(
-      builder: (context, state) {
-        if (state is SalesOrderLoading) {
-          return const Center(child: CircularProgressIndicator());
-        }
-        if (state is SalesOrderError) {
-          return WHEmptyState(message: state.message);
-        }
-        if (state is SalesOrderLoaded) {
-          if (state.salesOrders.isEmpty) {
-            return const WHEmptyState(
-              message: 'Belum ada Sales Order.\nTap + untuk membuat baru.',
-            );
-          }
-          return ListView.builder(
-            padding: const EdgeInsets.all(16),
-            itemCount: state.salesOrders.length,
+    return Column(
+      children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(24, 24, 24, 0),
+          child: WHSearch(
+            controller: _searchController,
+            hintText: 'Search...',
+            onChanged: (value) => setState(() => _searchQuery = value),
+          ),
+        ),
+        const SizedBox(height: 16),
+        SizedBox(
+          height: 28,
+          child: ListView.separated(
+            padding: const EdgeInsets.symmetric(horizontal: 24),
+            scrollDirection: Axis.horizontal,
+            itemCount: _OrderFilter.values.length,
+            separatorBuilder: (_, _) => const SizedBox(width: 8),
             itemBuilder: (context, index) {
-              return _SalesOrderCard(order: state.salesOrders[index]);
+              final filter = _OrderFilter.values[index];
+              return _FilterChip(
+                label: _filterLabel(filter),
+                isSelected: _filter == filter,
+                onTap: () => setState(() => _filter = filter),
+              );
             },
-          );
-        }
-        return const SizedBox.shrink();
-      },
+          ),
+        ),
+        const SizedBox(height: 16),
+        Expanded(
+          child: BlocBuilder<SalesOrderBloc, SalesOrderState>(
+            builder: (context, state) {
+              if (state is SalesOrderLoading) {
+                return const Center(child: CircularProgressIndicator());
+              }
+
+              if (state is SalesOrderError) {
+                return _RefreshableEmpty(
+                  onRefresh: _refresh,
+                  message: state.message,
+                );
+              }
+
+              if (state is SalesOrderLoaded) {
+                final orders = _filteredOrders(state.salesOrders);
+
+                if (state.salesOrders.isEmpty) {
+                  return _RefreshableEmpty(
+                    onRefresh: _refresh,
+                    message:
+                        'Belum ada Sales Order.\nTap + untuk membuat baru.',
+                  );
+                }
+
+                if (orders.isEmpty) {
+                  return _RefreshableEmpty(
+                    onRefresh: _refresh,
+                    message: 'Sales Order tidak ditemukan.',
+                  );
+                }
+
+                return WHRefresh(
+                  onRefresh: _refresh,
+                  child: ListView.separated(
+                    physics: const AlwaysScrollableScrollPhysics(),
+                    padding: const EdgeInsets.fromLTRB(24, 0, 24, 96),
+                    itemCount: orders.length,
+                    separatorBuilder: (_, _) => const SizedBox(height: 24),
+                    itemBuilder: (context, index) {
+                      final order = orders[index];
+                      return OrderCard(
+                        data: _toCardData(order),
+                        onTap: () => Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (_) => SalesOrderDetailPage(order: order),
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                );
+              }
+
+              return _RefreshableEmpty(
+                onRefresh: _refresh,
+                message: 'Belum ada Sales Order.\nTap + untuk membuat baru.',
+              );
+            },
+          ),
+        ),
+      ],
+    );
+  }
+
+  List<SalesOrder> _filteredOrders(List<SalesOrder> orders) {
+    final query = _searchQuery.trim().toLowerCase();
+
+    final filtered = orders.where((order) {
+      final status = _mapOrderStatus(order);
+      final matchesFilter =
+          _filter == _OrderFilter.all ||
+          (_filter == _OrderFilter.queued && status == OrderStatus.queued) ||
+          (_filter == _OrderFilter.active && status == OrderStatus.active) ||
+          (_filter == _OrderFilter.completed &&
+              status == OrderStatus.completed);
+
+      if (!matchesFilter) return false;
+      if (query.isEmpty) return true;
+
+      final searchable = [
+        order.soNumber,
+        order.customerName,
+        order.companyName,
+        order.contactPerson,
+        order.courierName,
+        order.status,
+      ].whereType<String>().join(' ').toLowerCase();
+
+      return searchable.contains(query);
+    }).toList();
+
+    filtered.sort((a, b) => a.id.compareTo(b.id));
+    return filtered;
+  }
+
+  OrderCardData _toCardData(SalesOrder order) {
+    final status = _mapOrderStatus(order);
+    final total = order.totalOrderedQuantity > 0
+        ? order.totalOrderedQuantity
+        : order.items.fold<int>(0, (sum, item) => sum + item.qtyOrdered);
+    final processStage = _processStage(order);
+    final processValue = processStage == OrderProcessStage.packing
+        ? order.totalVerifiedItems
+        : order.totalPickedItems;
+
+    return OrderCardData(
+      orderNumber: _formatSalesOrderNumber(order),
+      type: OrderType.outbound,
+      status: status,
+      createdAt: _formatDate(order.orderDate),
+      carrierOrCourier: _shortCourierName(order.courierName),
+      processStage: status == OrderStatus.active ? processStage : null,
+      processValue: processValue,
+      processTotal: total,
+      processUnit: 'Pallets',
+    );
+  }
+
+  OrderStatus _mapOrderStatus(SalesOrder order) {
+    if (order.isCompleted) return OrderStatus.completed;
+
+    switch (order.status.trim().toLowerCase()) {
+      case 'completed':
+      case 'complete':
+      case 'success':
+      case 'done':
+        return OrderStatus.completed;
+      case 'active':
+      case 'processing':
+      case 'picking':
+      case 'picking up':
+      case 'packing':
+      case 'in progress':
+        return OrderStatus.active;
+      case 'queued':
+      case 'pending':
+      default:
+        return OrderStatus.queued;
+    }
+  }
+
+  OrderProcessStage _processStage(SalesOrder order) {
+    final status = order.status.trim().toLowerCase();
+    if (status.contains('pack')) return OrderProcessStage.packing;
+    if (order.totalVerifiedItems > 0) return OrderProcessStage.packing;
+    return OrderProcessStage.pickingUp;
+  }
+
+  String _formatDate(String value) {
+    final parsed = DateTime.tryParse(value);
+    if (parsed == null) return '-';
+    final local = parsed.toLocal();
+    final day = local.day.toString().padLeft(2, '0');
+    final month = local.month.toString().padLeft(2, '0');
+    return '$day/$month/${local.year}';
+  }
+
+  String _formatSalesOrderNumber(SalesOrder order) {
+    final parsed = DateTime.tryParse(order.orderDate);
+    if (parsed == null) return order.soNumber;
+
+    final local = parsed.toLocal();
+    final day = local.day.toString().padLeft(2, '0');
+    final month = local.month.toString().padLeft(2, '0');
+    final sequence = order.id.toString().padLeft(2, '0');
+
+    return 'SO-$day$month${local.year}-$sequence';
+  }
+
+  String _shortCourierName(String? value) {
+    final courier = value?.trim();
+    if (courier == null || courier.isEmpty) return '-';
+    return courier.split(' ').first;
+  }
+
+  String _filterLabel(_OrderFilter filter) {
+    switch (filter) {
+      case _OrderFilter.all:
+        return 'All';
+      case _OrderFilter.queued:
+        return 'Queued';
+      case _OrderFilter.active:
+        return 'Active';
+      case _OrderFilter.completed:
+        return 'Completed';
+    }
+  }
+}
+
+class _FilterChip extends StatelessWidget {
+  const _FilterChip({
+    required this.label,
+    required this.isSelected,
+    required this.onTap,
+  });
+
+  final String label;
+  final bool isSelected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(18),
+        child: Container(
+          height: 28,
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          decoration: BoxDecoration(
+            color: isSelected ? WHColors.primary1 : WHColors.primary6,
+            borderRadius: BorderRadius.circular(18),
+            border: Border.all(
+              color: isSelected ? WHColors.primary1 : WHColors.primary5,
+            ),
+          ),
+          alignment: Alignment.center,
+          child: Text(
+            label,
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w700,
+              color: isSelected ? WHColors.surface : WHColors.grey1,
+            ),
+          ),
+        ),
+      ),
     );
   }
 }
 
-class _SalesOrderCard extends StatelessWidget {
-  final SalesOrder order;
-  const _SalesOrderCard({required this.order});
+class _RefreshableEmpty extends StatelessWidget {
+  const _RefreshableEmpty({required this.onRefresh, required this.message});
 
-  Color _statusColor(String status) {
-    switch (status.toLowerCase()) {
-      case 'pending':
-        return WHColors.warning2;
-      case 'processing':
-        return WHColors.primary3;
-      case 'completed':
-        return WHColors.success2;
-      case 'cancelled':
-        return WHColors.error2;
-      default:
-        return WHColors.grey3;
-    }
-  }
+  final Future<void> Function() onRefresh;
+  final String message;
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      decoration: BoxDecoration(
-        color: WHColors.surface,
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
-            blurRadius: 6,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Expanded(
-                  child: Text(
-                    order.customerName,
-                    style: const TextStyle(
-                      fontWeight: FontWeight.w700,
-                      fontSize: 15,
-                      color: WHColors.grey1,
-                    ),
-                  ),
-                ),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: _statusColor(order.status).withValues(alpha: 0.15),
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                  child: Text(
-                    order.status,
-                    style: TextStyle(
-                      color: _statusColor(order.status),
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 8),
-            Row(
-              children: [
-                const Icon(Icons.location_on_outlined, size: 14, color: WHColors.grey3),
-                const SizedBox(width: 4),
-                Expanded(
-                  child: Text(
-                    order.shippingAddress,
-                    style: const TextStyle(color: WHColors.grey3, fontSize: 13),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 4),
-            Row(
-              children: [
-                const Icon(Icons.local_shipping_outlined, size: 14, color: WHColors.grey3),
-                const SizedBox(width: 4),
-                Text(
-                  order.courier,
-                  style: const TextStyle(color: WHColors.grey3, fontSize: 13),
-                ),
-                const Spacer(),
-                Text(
-                  '${order.items.length} item',
-                  style: const TextStyle(
-                    color: WHColors.primary3,
-                    fontSize: 13,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ],
-            ),
-          ],
+    return WHRefresh(
+      onRefresh: onRefresh,
+      child: SingleChildScrollView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        child: SizedBox(
+          height: MediaQuery.of(context).size.height * 0.52,
+          child: WHEmptyState(message: message),
         ),
       ),
     );

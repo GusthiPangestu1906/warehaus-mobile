@@ -9,7 +9,14 @@ class SalesOrderApiDatasource {
 
   Future<List<SalesOrderModel>> getSalesOrders() async {
     final response = await dio.get(_salesOrderPath);
-    return (response.data as List)
+    final data = response.data;
+    final rawList = data is List
+        ? data
+        : (data is Map<String, dynamic>
+                  ? data['value'] as List<dynamic>?
+                  : null) ??
+              const [];
+    return rawList
         .map((e) => SalesOrderModel.fromJson(e as Map<String, dynamic>))
         .toList();
   }

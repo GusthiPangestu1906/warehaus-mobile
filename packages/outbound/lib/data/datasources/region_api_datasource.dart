@@ -7,13 +7,13 @@ class RegionApiDatasource {
   /// GET /api/couriers
   Future<List<Map<String, dynamic>>> getCouriers() async {
     final response = await dio.get('/api/couriers');
-    return (response.data as List).cast<Map<String, dynamic>>();
+    return _asMapList(response.data);
   }
 
   /// GET /api/regions/province
   Future<List<Map<String, dynamic>>> getProvinces() async {
     final response = await dio.get('/api/regions/province');
-    return (response.data as List).cast<Map<String, dynamic>>();
+    return _asMapList(response.data);
   }
 
   /// GET /api/regions/city?provinceCode=X
@@ -22,7 +22,7 @@ class RegionApiDatasource {
       '/api/regions/city',
       queryParameters: {'provinceCode': provinceCode},
     );
-    return (response.data as List).cast<Map<String, dynamic>>();
+    return _asMapList(response.data);
   }
 
   /// GET /api/regions/district?cityCode=X
@@ -31,6 +31,20 @@ class RegionApiDatasource {
       '/api/regions/district',
       queryParameters: {'cityCode': cityCode},
     );
-    return (response.data as List).cast<Map<String, dynamic>>();
+    return _asMapList(response.data);
+  }
+
+  List<Map<String, dynamic>> _asMapList(dynamic data) {
+    final rawList = data is List
+        ? data
+        : data is Map<String, dynamic>
+        ? data['value'] ?? data['data'] ?? data['items'] ?? data['result']
+        : null;
+
+    if (rawList is! List) {
+      return const [];
+    }
+
+    return rawList.whereType<Map<String, dynamic>>().toList();
   }
 }

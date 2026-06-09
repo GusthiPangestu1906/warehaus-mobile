@@ -5,6 +5,7 @@ export 'src/widgets/button/wh_button_primary.dart';
 export 'src/widgets/button/wh_button_secondary.dart';
 export 'src/widgets/button/wh_button_tersiery.dart';
 export 'src/widgets/button/wh_outlined_button.dart';
+export 'src/widgets/flows/order_card.dart';
 export 'src/widgets/input/wh_date_field.dart';
 export 'src/widgets/input/wh_dropdown.dart';
 export 'src/widgets/input/wh_stepper_field.dart';

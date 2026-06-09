@@ -13,4 +13,5 @@ export 'presentation/bloc/sales_order_event.dart';
 export 'presentation/bloc/sales_order_state.dart';
 export 'presentation/pages/create_sales_order_page.dart';
 export 'presentation/pages/outbound_list_page.dart';
+export 'presentation/pages/sales_order_detail_page.dart';
 export 'presentation/pages/sales_order_list_page.dart';

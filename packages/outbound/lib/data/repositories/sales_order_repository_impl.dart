@@ -9,29 +9,39 @@ class SalesOrderRepositoryImpl implements SalesOrderRepository {
   SalesOrderRepositoryImpl(this.apiDatasource);
 
   SalesOrder _toEntity(SalesOrderModel m) => SalesOrder(
-        id: m.id,
-        customerName: m.customerName,
-        companyName: m.companyName,
-        contactPerson: m.contactPerson,
-        phoneNumber: m.phoneNumber,
-        shippingAddress: m.shippingAddress,
-        provinceCode: m.provinceCode,
-        cityCode: m.cityCode,
-        districtCode: m.districtCode,
-        postalCode: m.postalCode,
-        courierId: m.courierId,
-        courierName: m.courierName,
-        courierServiceType: m.courierServiceType,
-        requiredDeliveryDate: m.requiredDeliveryDate,
-        status: m.status,
-        items: m.items
-            .map((e) => SoItem(
-                  productId: e.productId,
-                  qtyOrdered: e.qtyOrdered,
-                  productName: e.productName,
-                ))
-            .toList(),
-      );
+    id: m.id,
+    soNumber: m.soNumber,
+    customerName: m.customerName,
+    companyName: m.companyName,
+    contactPerson: m.contactPerson,
+    phoneNumber: m.phoneNumber,
+    shippingAddress: m.shippingAddress,
+    provinceCode: m.provinceCode,
+    cityCode: m.cityCode,
+    districtCode: m.districtCode,
+    postalCode: m.postalCode,
+    courierId: m.courierId,
+    courierName: m.courierName,
+    courierServiceType: m.courierServiceType,
+    trackingNumber: m.trackingNumber,
+    requiredDeliveryDate: m.requiredDeliveryDate,
+    orderDate: m.orderDate,
+    status: m.status,
+    totalOrderedQuantity: m.totalOrderedQuantity,
+    totalPickedItems: m.totalPickedItems,
+    totalVerifiedItems: m.totalVerifiedItems,
+    progressPercentage: m.progressPercentage,
+    isCompleted: m.isCompleted,
+    items: m.items
+        .map(
+          (e) => SoItem(
+            productId: e.productId,
+            qtyOrdered: e.qtyOrdered,
+            productName: e.productName,
+          ),
+        )
+        .toList(),
+  );
 
   @override
   Future<List<SalesOrder>> getSalesOrders() async {
