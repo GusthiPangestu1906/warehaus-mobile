@@ -1,4 +1,5 @@
 import 'package:inbound/domain/params/create_po_params.dart';
+import 'package:inbound/domain/params/submit_qc_params.dart';
 
 abstract class PurchaseOrderEvent {}
 
@@ -23,4 +24,14 @@ class UpdateInvoiceEvent extends PurchaseOrderEvent {
 class DeletePurchaseOrderEvent extends PurchaseOrderEvent {
   final int id;
   DeletePurchaseOrderEvent(this.id);
+}
+
+class GetQcNextItemEvent extends PurchaseOrderEvent {
+  final int poId;
+  GetQcNextItemEvent(this.poId);
+}
+
+class SubmitQcEvent extends PurchaseOrderEvent {
+  final SubmitQcParams params;
+  SubmitQcEvent(this.params);
 }

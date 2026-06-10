@@ -6,6 +6,7 @@ import 'package:inbound/domain/entities/purchase_order.dart';
 import 'package:inbound/presentation/bloc/purchase_order/purchase_order_bloc.dart';
 import 'package:inbound/presentation/bloc/purchase_order/purchase_order_event.dart';
 import 'package:inbound/presentation/bloc/purchase_order/purchase_order_state.dart';
+import 'package:inbound/presentation/pages/quality_control_page.dart';
 import 'package:inbound/presentation/widgets/purchase_order_detail/po_detail_header.dart';
 import 'package:inbound/presentation/widgets/purchase_order_detail/po_info_cards.dart';
 import 'package:inbound/presentation/widgets/purchase_order_detail/po_invoice_input_card.dart';
@@ -46,15 +47,6 @@ class _PurchaseOrderDetailPageState extends State<PurchaseOrderDetailPage> {
 
   void _showInvoiceInput() {
     setState(() => _isInvoiceInputVisible = true);
-  }
-
-  void _completeQualityControl(PurchaseOrder purchaseOrder) {
-    setState(() {
-      _localStatus = 'Completed';
-      _localItems = purchaseOrder.items.asMap().entries.map((entry) {
-        return entry.value.copyWith(qcStatus: _qcStatusForIndex(entry.key));
-      }).toList();
-    });
   }
 
   Future<void> _saveInvoice() async {
@@ -214,7 +206,23 @@ class _PurchaseOrderDetailPageState extends State<PurchaseOrderDetailPage> {
           label: 'Start Quality Control',
           icon: Icons.fact_check_outlined,
           backgroundColor: WHColors.secondary3,
-          onPressed: () => _completeQualityControl(purchaseOrder),
+          onPressed: () {
+            Navigator.of(context)
+                .push(
+                  MaterialPageRoute(
+                    builder: (_) => QualityControlPage(
+                      purchaseOrderId: purchaseOrder.id,
+                      purchaseOrderNumber: purchaseOrder.poNumber,
+                    ),
+                  ),
+                )
+                .then((_) {
+                  if (!context.mounted) return;
+                  context.read<PurchaseOrderBloc>().add(
+                    GetPurchaseOrderDetailEvent(purchaseOrder.id),
+                  );
+                });
+          },
         ),
       );
     }

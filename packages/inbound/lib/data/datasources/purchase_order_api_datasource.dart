@@ -1,11 +1,13 @@
 import 'package:dio/dio.dart';
 import 'package:inbound/data/models/purchase_order_model.dart';
+import 'package:inbound/data/models/qc_next_item_model.dart';
 
 class PurchaseOrderApiDatasource {
   final Dio dio;
   PurchaseOrderApiDatasource(this.dio);
 
   static const String _purchaseOrderPath = '/purchase-orders';
+  static const String _inboundPath = '/inbound';
 
   Future<List<PurchaseOrderModel>> getPurchaseOrders() async {
     final response = await dio.get(_purchaseOrderPath);
@@ -32,5 +34,20 @@ class PurchaseOrderApiDatasource {
 
   Future<void> deletePurchaseOrder(int id) async {
     await dio.delete('$_purchaseOrderPath/$id');
+  }
+
+  Future<QcNextItemModel> getQcNextItem(int poId) async {
+    final response = await dio.get('$_purchaseOrderPath/$poId/qc-next');
+    return QcNextItemModel.fromJson(response.data as Map<String, dynamic>);
+  }
+
+  Future<void> submitQc(Map<String, dynamic> data) async {
+    final formData = FormData.fromMap(data);
+
+    await dio.post(
+      _inboundPath,
+      data: formData,
+      options: Options(headers: {'Content-Type': 'multipart/form-data'}),
+    );
   }
 }

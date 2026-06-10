@@ -8,7 +8,9 @@ import 'package:inbound/domain/usecases/purchase_order/create_purchase_order.dar
 import 'package:inbound/domain/usecases/purchase_order/delete_purchase_order.dart';
 import 'package:inbound/domain/usecases/purchase_order/get_purchase_order_detail.dart';
 import 'package:inbound/domain/usecases/purchase_order/get_purchase_orders.dart';
+import 'package:inbound/domain/usecases/purchase_order/get_qc_next_item.dart';
 import 'package:inbound/domain/usecases/purchase_order/invoice_update.dart';
+import 'package:inbound/domain/usecases/purchase_order/submit_qc.dart';
 import 'package:inbound/presentation/bloc/purchase_order/purchase_order_bloc.dart';
 import 'package:product/data/datasources/product_api_datasource.dart';
 import 'package:product/data/repositories/product_repository_impl.dart';
@@ -158,6 +160,12 @@ Future<void> setupInjector() async {
   getIt.registerLazySingleton(
     () => DeletePurchaseOrder(getIt<PurchaseOrderRepositoryImpl>()),
   );
+  getIt.registerLazySingleton(
+    () => GetQcNextItem(getIt<PurchaseOrderRepositoryImpl>()),
+  );
+  getIt.registerLazySingleton(
+    () => SubmitQc(getIt<PurchaseOrderRepositoryImpl>()),
+  );
 
   // BLoC
   getIt.registerFactory(
@@ -167,6 +175,8 @@ Future<void> setupInjector() async {
       createPurchaseOrderUsecase: getIt<CreatePurchaseOrder>(),
       invoiceUpdateUsecase: getIt<InvoiceUpdate>(),
       deletePurchaseOrderUsecase: getIt<DeletePurchaseOrder>(),
+      getQcNextItemUsecase: getIt<GetQcNextItem>(),
+      submitQcUsecase: getIt<SubmitQc>(),
     ),
   );
 }

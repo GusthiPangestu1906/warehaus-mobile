@@ -1,4 +1,5 @@
 import 'package:inbound/domain/entities/purchase_order.dart';
+import 'package:inbound/domain/entities/qc_next_item.dart';
 
 abstract class PurchaseOrderState {
   const PurchaseOrderState();
@@ -25,6 +26,14 @@ class CreatePurchaseOrderSuccess extends PurchaseOrderState {}
 class UpdateInvoiceSuccess extends PurchaseOrderState {}
 
 class DeletePurchaseOrderSuccess extends PurchaseOrderState {}
+
+class SubmitQcSuccess extends PurchaseOrderState {}
+
+class QcNextItemLoaded extends PurchaseOrderState {
+  final QcNextItem item;
+
+  const QcNextItemLoaded(this.item);
+}
 
 class PurchaseOrderError extends PurchaseOrderState {
   final String message;

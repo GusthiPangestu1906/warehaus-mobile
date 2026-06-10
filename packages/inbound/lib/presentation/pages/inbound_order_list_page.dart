@@ -84,7 +84,10 @@ class _InboundOrderListPageState extends State<InboundOrderListPage>
                   }
 
                   if (state is PurchaseOrderError) {
-                    return Center(child: Text('Error: ${state.message}'));
+                    return Align(
+                      alignment: Alignment.topCenter,
+                      child: WHError(message: state.message),
+                    );
                   }
 
                   if (state is PurchaseOrderLoaded) {
@@ -168,28 +171,29 @@ class _InboundOrderListPageState extends State<InboundOrderListPage>
                             onTap: () {
                               Navigator.of(context)
                                   .push<PurchaseOrderDetailResult>(
-                                MaterialPageRoute(
-                                  builder: (_) => PurchaseOrderDetailPage(
-                                    purchaseOrderId: order.id,
-                                  ),
-                                ),
-                              )
+                                    MaterialPageRoute(
+                                      builder: (_) => PurchaseOrderDetailPage(
+                                        purchaseOrderId: order.id,
+                                      ),
+                                    ),
+                                  )
                                   .then((result) {
-                                if (!context.mounted || result == null) {
-                                  return;
-                                }
+                                    if (!context.mounted || result == null) {
+                                      return;
+                                    }
 
-                                context.read<PurchaseOrderBloc>().add(
-                                  GetPurchaseOrdersEvent(),
-                                );
+                                    context.read<PurchaseOrderBloc>().add(
+                                      GetPurchaseOrdersEvent(),
+                                    );
 
-                                final message =
-                                    result == PurchaseOrderDetailResult.deleted
-                                    ? 'Purchase Order has been successfully deleted.'
-                                    : 'Invoice has been successfully saved.';
+                                    final message =
+                                        result ==
+                                            PurchaseOrderDetailResult.deleted
+                                        ? 'Purchase Order has been successfully deleted.'
+                                        : 'Invoice has been successfully saved.';
 
-                                WHSnackBar.showSuccess(context, message);
-                              });
+                                    WHSnackBar.showSuccess(context, message);
+                                  });
                             },
                           );
                         },

@@ -1,3 +1,5 @@
+import 'package:core_services/core_services.dart';
+import 'package:dartz/dartz.dart';
 import 'package:inbound/domain/repositories/purchase_order_repository.dart';
 
 class DeletePurchaseOrder {
@@ -5,7 +7,7 @@ class DeletePurchaseOrder {
 
   DeletePurchaseOrder(this.repository);
 
-  Future<void> call(int id) async {
-    await repository.deletePurchaseOrder(id);
+  Future<Either<Failure, void>> call(int id) async {
+    return await repository.deletePurchaseOrder(id);
   }
 }
