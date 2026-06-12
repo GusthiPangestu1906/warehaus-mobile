@@ -5,6 +5,7 @@ import 'package:outbound/domain/entities/sales_order.dart';
 import 'package:outbound/presentation/bloc/sales_order_bloc.dart';
 import 'package:outbound/presentation/bloc/sales_order_event.dart';
 import 'package:outbound/presentation/bloc/sales_order_state.dart';
+import 'package:outbound/presentation/models/sales_order_status_view.dart';
 import 'package:outbound/presentation/pages/sales_order_detail_page.dart';
 
 enum _OrderFilter { all, queued, active, completed }
@@ -106,11 +107,17 @@ class _SalesOrderListPageState extends State<SalesOrderListPage> {
                       final order = orders[index];
                       return OrderCard(
                         data: _toCardData(order),
-                        onTap: () => Navigator.of(context).push(
-                          MaterialPageRoute(
-                            builder: (_) => SalesOrderDetailPage(order: order),
-                          ),
-                        ),
+                        onTap: () {
+                          final bloc = context.read<SalesOrderBloc>();
+                          Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (_) => BlocProvider.value(
+                                value: bloc,
+                                child: SalesOrderDetailPage(order: order),
+                              ),
+                            ),
+                          );
+                        },
                       );
                     },
                   ),
@@ -132,7 +139,7 @@ class _SalesOrderListPageState extends State<SalesOrderListPage> {
     final query = _searchQuery.trim().toLowerCase();
 
     final filtered = orders.where((order) {
-      final status = _mapOrderStatus(order);
+      final status = salesOrderViewStatus(order);
       final matchesFilter =
           _filter == _OrderFilter.all ||
           (_filter == _OrderFilter.queued && status == OrderStatus.queued) ||
@@ -160,11 +167,11 @@ class _SalesOrderListPageState extends State<SalesOrderListPage> {
   }
 
   OrderCardData _toCardData(SalesOrder order) {
-    final status = _mapOrderStatus(order);
+    final status = salesOrderViewStatus(order);
     final total = order.totalOrderedQuantity > 0
         ? order.totalOrderedQuantity
         : order.items.fold<int>(0, (sum, item) => sum + item.qtyOrdered);
-    final processStage = _processStage(order);
+    final processStage = salesOrderProcessStage(order);
     final processValue = processStage == OrderProcessStage.packing
         ? order.totalVerifiedItems
         : order.totalPickedItems;
@@ -180,36 +187,6 @@ class _SalesOrderListPageState extends State<SalesOrderListPage> {
       processTotal: total,
       processUnit: 'Pallets',
     );
-  }
-
-  OrderStatus _mapOrderStatus(SalesOrder order) {
-    if (order.isCompleted) return OrderStatus.completed;
-
-    switch (order.status.trim().toLowerCase()) {
-      case 'completed':
-      case 'complete':
-      case 'success':
-      case 'done':
-        return OrderStatus.completed;
-      case 'active':
-      case 'processing':
-      case 'picking':
-      case 'picking up':
-      case 'packing':
-      case 'in progress':
-        return OrderStatus.active;
-      case 'queued':
-      case 'pending':
-      default:
-        return OrderStatus.queued;
-    }
-  }
-
-  OrderProcessStage _processStage(SalesOrder order) {
-    final status = order.status.trim().toLowerCase();
-    if (status.contains('pack')) return OrderProcessStage.packing;
-    if (order.totalVerifiedItems > 0) return OrderProcessStage.packing;
-    return OrderProcessStage.pickingUp;
   }
 
   String _formatDate(String value) {

@@ -1,6 +1,12 @@
 import 'package:core_ui/core_ui.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:outbound/domain/entities/sales_order.dart';
+import 'package:outbound/presentation/bloc/sales_order_bloc.dart';
+import 'package:outbound/presentation/bloc/sales_order_event.dart';
+import 'package:outbound/presentation/models/pick_flow_item.dart';
+import 'package:outbound/presentation/models/sales_order_status_view.dart';
+import 'package:outbound/presentation/pages/picking_page.dart';
 import 'package:outbound/presentation/widgets/sales_order_detail/so_detail_header.dart';
 import 'package:outbound/presentation/widgets/sales_order_detail/so_info_cards.dart';
 import 'package:outbound/presentation/widgets/sales_order_detail/so_product_list_section.dart';
@@ -35,25 +41,13 @@ class _SalesOrderDetailPageState extends State<SalesOrderDetailPage> {
   }
 
   String get _status {
-    if (_trackingNumber != null || _startedFromTracking) return 'Active';
-    if (widget.order.isCompleted) return 'Completed';
-
-    switch (widget.order.status.trim().toLowerCase()) {
-      case 'completed':
-      case 'complete':
-      case 'success':
-      case 'done':
-        return 'Completed';
-      case 'active':
-      case 'processing':
-      case 'picking':
-      case 'picking up':
-      case 'packing':
-      case 'in progress':
-        return 'Active';
-      default:
-        return 'Queued';
+    if (salesOrderViewStatus(widget.order) == OrderStatus.completed) {
+      return 'Completed';
     }
+    if (_trackingNumber != null || _startedFromTracking) {
+      return 'Active';
+    }
+    return salesOrderStatusLabel(salesOrderViewStatus(widget.order));
   }
 
   bool get _isQueued => _status == 'Queued';
@@ -78,6 +72,9 @@ class _SalesOrderDetailPageState extends State<SalesOrderDetailPage> {
       _isEditingTracking = false;
       _startedFromTracking = true;
     });
+    context.read<SalesOrderBloc>().add(
+      UpdateSalesOrderTrackingEvent(id: widget.order.id, trackingNumber: value),
+    );
   }
 
   @override
@@ -160,7 +157,19 @@ class _SalesOrderDetailPageState extends State<SalesOrderDetailPage> {
       return _StickyActionButton(
         label: 'Start Picking',
         icon: Icons.check_circle_outline,
-        onPressed: () {},
+        onPressed: () {
+          Navigator.of(context).push(
+            PageRouteBuilder(
+              pageBuilder: (_, _, _) => PickingPage(
+                orderId: widget.order.id,
+                soNumber: _formatSalesOrderNumber(widget.order),
+                items: _pickItems(widget.order),
+              ),
+              transitionDuration: Duration.zero,
+              reverseTransitionDuration: Duration.zero,
+            ),
+          );
+        },
       );
     }
 
@@ -301,24 +310,8 @@ class _StickyActionButton extends StatelessWidget {
         border: Border(top: BorderSide(color: WHColors.grey5)),
       ),
       child: SizedBox(
-        height: 50,
-        child: ElevatedButton.icon(
-          onPressed: onPressed,
-          icon: Icon(icon, size: 22),
-          label: Text(label),
-          style: ElevatedButton.styleFrom(
-            backgroundColor: WHColors.secondary3,
-            foregroundColor: WHColors.surface,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(25),
-              side: const BorderSide(color: Colors.black),
-            ),
-            textStyle: WHTypography.bodyText.copyWith(
-              fontSize: 16,
-              fontWeight: FontWeight.w800,
-            ),
-          ),
-        ),
+        height: 56,
+        child: WhPrimaryButton(text: label, icon: icon, onPressed: onPressed),
       ),
     );
   }
@@ -371,4 +364,61 @@ String? _clean(String? value) {
   final text = value?.trim();
   if (text == null || text.isEmpty) return null;
   return text;
+}
+
+List<PickItem> _pickItems(SalesOrder order) {
+  if (order.items.isEmpty) {
+    return const [
+      PickItem(
+        sku: '395-9823',
+        productName: 'White pepper',
+        expectedQty: 100,
+        locations: [
+          PickLocation(
+            zone: 'ZONE B',
+            aisle: 'AISLE 02',
+            shelf: 'SHELF 03',
+            requiredQty: 100,
+          ),
+          PickLocation(
+            zone: 'ZONE B',
+            aisle: 'AISLE 02',
+            shelf: 'SHELF 04',
+            requiredQty: 5,
+          ),
+        ],
+      ),
+    ];
+  }
+
+  return order.items.asMap().entries.map((entry) {
+    final index = entry.key;
+    final item = entry.value;
+    final shelfNumber = (index + 3).toString().padLeft(2, '0');
+    final qty = item.qtyOrdered;
+
+    return PickItem(
+      sku: _clean(item.sku) ?? item.productId.toString(),
+      productName: _clean(item.productName) ?? 'Product ${item.productId}',
+      expectedQty: qty,
+      unitOfMeasure: _clean(item.unitOfMeasure) ?? 'Box',
+      locations: [
+        PickLocation(
+          zone: 'ZONE B',
+          aisle: 'AISLE 02',
+          shelf: 'SHELF $shelfNumber',
+          requiredQty: qty,
+          unit: _clean(item.unitOfMeasure) ?? 'Box',
+        ),
+        if (qty > 1)
+          PickLocation(
+            zone: 'ZONE B',
+            aisle: 'AISLE 02',
+            shelf: 'SHELF ${(index + 4).toString().padLeft(2, '0')}',
+            requiredQty: (qty / 20).ceil().clamp(1, qty),
+            unit: _clean(item.unitOfMeasure) ?? 'Box',
+          ),
+      ],
+    );
+  }).toList();
 }

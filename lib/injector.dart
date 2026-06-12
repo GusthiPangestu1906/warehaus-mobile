@@ -13,6 +13,7 @@ import 'package:outbound/data/repositories/sales_order_repository_impl.dart';
 import 'package:outbound/domain/usecases/create_sales_order.dart';
 import 'package:outbound/domain/usecases/delete_sales_order.dart';
 import 'package:outbound/domain/usecases/get_sales_orders.dart';
+import 'package:outbound/domain/usecases/update_sales_order_tracking.dart';
 import 'package:outbound/presentation/bloc/sales_order_bloc.dart';
 import 'package:product/data/datasources/product_api_datasource.dart';
 import 'package:product/data/repositories/product_repository_impl.dart';
@@ -145,12 +146,16 @@ void setupInjector() {
   getIt.registerLazySingleton(
     () => DeleteSalesOrder(getIt<SalesOrderRepositoryImpl>()),
   );
+  getIt.registerLazySingleton(
+    () => UpdateSalesOrderTracking(getIt<SalesOrderRepositoryImpl>()),
+  );
 
   getIt.registerFactory(
     () => SalesOrderBloc(
       getSalesOrdersUsecase: getIt<GetSalesOrders>(),
       createSalesOrderUsecase: getIt<CreateSalesOrder>(),
       deleteSalesOrderUsecase: getIt<DeleteSalesOrder>(),
+      updateSalesOrderTrackingUsecase: getIt<UpdateSalesOrderTracking>(),
     ),
   );
 

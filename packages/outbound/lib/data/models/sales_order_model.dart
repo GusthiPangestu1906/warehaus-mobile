@@ -55,7 +55,7 @@ class SalesOrderModel {
 
   factory SalesOrderModel.fromJson(Map<String, dynamic> json) {
     return SalesOrderModel(
-      id: json['id'] as int,
+      id: _asInt(json['id']),
       soNumber: json['soNumber'] as String? ?? 'SO-${json['id']}',
       customerName: json['customerName'] as String? ?? '',
       companyName: json['companyName'] as String?,
@@ -66,7 +66,7 @@ class SalesOrderModel {
       cityCode: json['cityCode'] as String?,
       districtCode: json['districtCode'] as String?,
       postalCode: json['postalCode'] as String?,
-      courierId: json['courierId'] as int?,
+      courierId: json['courierId'] == null ? null : _asInt(json['courierId']),
       courierName: json['courierName'] as String?,
       courierServiceType: json['courierServiceType'] as String?,
       trackingNumber: json['trackingNumber'] as String?,
@@ -77,10 +77,10 @@ class SalesOrderModel {
           json['requiredDeliveryDate'] as String? ??
           '',
       status: json['status'] as String? ?? 'Pending',
-      totalOrderedQuantity: json['totalOrderedQuantity'] as int? ?? 0,
-      totalPickedItems: json['totalPickedItems'] as int? ?? 0,
-      totalVerifiedItems: json['totalVerifiedItems'] as int? ?? 0,
-      progressPercentage: (json['progressPercentage'] as num?)?.toDouble() ?? 0,
+      totalOrderedQuantity: _asInt(json['totalOrderedQuantity']),
+      totalPickedItems: _asInt(json['totalPickedItems']),
+      totalVerifiedItems: _asInt(json['totalVerifiedItems']),
+      progressPercentage: _asDouble(json['progressPercentage']),
       isCompleted: json['isCompleted'] as bool? ?? false,
       items:
           (json['items'] as List<dynamic>?)
@@ -106,4 +106,18 @@ class SalesOrderModel {
       'items': items.map((e) => e.toJson()).toList(),
     };
   }
+}
+
+int _asInt(Object? value) {
+  if (value is int) return value;
+  if (value is num) return value.toInt();
+  if (value is String) return int.tryParse(value) ?? 0;
+  return 0;
+}
+
+double _asDouble(Object? value) {
+  if (value is double) return value;
+  if (value is num) return value.toDouble();
+  if (value is String) return double.tryParse(value) ?? 0;
+  return 0;
 }

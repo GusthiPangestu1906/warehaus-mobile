@@ -38,6 +38,11 @@ class SalesOrderRepositoryImpl implements SalesOrderRepository {
             productId: e.productId,
             qtyOrdered: e.qtyOrdered,
             productName: e.productName,
+            sku: e.sku,
+            barcode: e.barcode,
+            unitOfMeasure: e.unitOfMeasure,
+            qtyPicked: e.qtyPicked,
+            qtyVerified: e.qtyVerified,
           ),
         )
         .toList(),
@@ -89,5 +94,10 @@ class SalesOrderRepositoryImpl implements SalesOrderRepository {
   @override
   Future<void> deleteSalesOrder(int id) async {
     await apiDatasource.deleteSalesOrder(id);
+  }
+
+  @override
+  Future<void> updateTrackingNumber(int id, String trackingNumber) async {
+    await apiDatasource.updateTrackingNumber(id, trackingNumber);
   }
 }

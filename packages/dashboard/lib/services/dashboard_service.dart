@@ -6,7 +6,7 @@ class DashboardService {
   DashboardService(this.dio);
 
   Future<int> getProductCount() async {
-    final response = await dio.get('/v1/Product');
+    final response = await dio.get('/api/products');
     if (response.statusCode == 200) {
       final products = response.data as List;
       return products.length;
@@ -17,7 +17,7 @@ class DashboardService {
   Future<List<ActivityLog>> getRecentLogs({int limit = 10}) async {
     try {
       final response = await dio.get(
-        '/v1/Dashboard/recent-logs',
+        '/api/dashboard/recent-logs',
         queryParameters: {'limit': limit},
       );
       debugPrint('[DashboardService] Response: $response');
@@ -29,6 +29,9 @@ class DashboardService {
           .toList();
     } catch (e) {
       debugPrint('[DashboardService] Error: $e');
+      if (e is DioException && e.response?.statusCode == 404) {
+        return const [];
+      }
       rethrow;
     }
   }

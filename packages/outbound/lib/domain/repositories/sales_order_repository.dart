@@ -18,4 +18,5 @@ abstract class SalesOrderRepository {
     required List<Map<String, dynamic>> items,
   });
   Future<void> deleteSalesOrder(int id);
+  Future<void> updateTrackingNumber(int id, String trackingNumber);
 }

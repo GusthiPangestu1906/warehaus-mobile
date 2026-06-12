@@ -33,4 +33,11 @@ class SalesOrderApiDatasource {
   Future<void> deleteSalesOrder(int id) async {
     await dio.delete('$_salesOrderPath/$id');
   }
+
+  Future<void> updateTrackingNumber(int id, String trackingNumber) async {
+    await dio.patch(
+      '$_salesOrderPath/$id/tracking',
+      data: {'trackingNumber': trackingNumber},
+    );
+  }
 }

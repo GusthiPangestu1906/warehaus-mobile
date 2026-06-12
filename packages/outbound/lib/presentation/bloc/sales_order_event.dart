@@ -36,3 +36,31 @@ class DeleteSalesOrderEvent extends SalesOrderEvent {
   final int id;
   DeleteSalesOrderEvent(this.id);
 }
+
+class UpdateSalesOrderLocalStatusEvent extends SalesOrderEvent {
+  final int id;
+  final String status;
+  final String? trackingNumber;
+  final int? totalPickedItems;
+  final int? totalVerifiedItems;
+  final bool? isCompleted;
+
+  UpdateSalesOrderLocalStatusEvent({
+    required this.id,
+    required this.status,
+    this.trackingNumber,
+    this.totalPickedItems,
+    this.totalVerifiedItems,
+    this.isCompleted,
+  });
+}
+
+class UpdateSalesOrderTrackingEvent extends SalesOrderEvent {
+  final int id;
+  final String trackingNumber;
+
+  UpdateSalesOrderTrackingEvent({
+    required this.id,
+    required this.trackingNumber,
+  });
+}
