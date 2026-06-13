@@ -1,11 +1,13 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:inbound/domain/usecases/inbound/get_pa_next_item.dart';
+import 'package:inbound/domain/usecases/inbound/get_qc_next_item.dart';
+import 'package:inbound/domain/usecases/inbound/submit_pa.dart';
+import 'package:inbound/domain/usecases/inbound/submit_qc.dart';
 import 'package:inbound/domain/usecases/purchase_order/create_purchase_order.dart';
 import 'package:inbound/domain/usecases/purchase_order/delete_purchase_order.dart';
 import 'package:inbound/domain/usecases/purchase_order/get_purchase_order_detail.dart';
 import 'package:inbound/domain/usecases/purchase_order/get_purchase_orders.dart';
-import 'package:inbound/domain/usecases/purchase_order/get_qc_next_item.dart';
 import 'package:inbound/domain/usecases/purchase_order/invoice_update.dart';
-import 'package:inbound/domain/usecases/purchase_order/submit_qc.dart';
 import 'package:inbound/presentation/bloc/purchase_order/purchase_order_event.dart';
 import 'package:inbound/presentation/bloc/purchase_order/purchase_order_state.dart';
 
@@ -17,6 +19,8 @@ class PurchaseOrderBloc extends Bloc<PurchaseOrderEvent, PurchaseOrderState> {
   final DeletePurchaseOrder deletePurchaseOrderUsecase;
   final GetQcNextItem getQcNextItemUsecase;
   final SubmitQc submitQcUsecase;
+  final GetPaNextItem getPaNextItem;
+  final SubmitPa submitPaUsecase;
 
   PurchaseOrderBloc({
     required this.createPurchaseOrderUsecase,
@@ -26,6 +30,8 @@ class PurchaseOrderBloc extends Bloc<PurchaseOrderEvent, PurchaseOrderState> {
     required this.deletePurchaseOrderUsecase,
     required this.getQcNextItemUsecase,
     required this.submitQcUsecase,
+    required this.getPaNextItem,
+    required this.submitPaUsecase,
   }) : super(PurchaseOrderInitial()) {
     on<GetPurchaseOrdersEvent>((event, emit) async {
       emit(PurchaseOrderLoading());
@@ -81,6 +87,22 @@ class PurchaseOrderBloc extends Bloc<PurchaseOrderEvent, PurchaseOrderState> {
       result.fold(
         (failure) => emit(PurchaseOrderError(failure.message)),
         (_) => emit(SubmitQcSuccess()),
+      );
+    });
+    on<GetPaNextItemEvent>((event, emit) async {
+      emit(PurchaseOrderLoading());
+      final result = await getPaNextItem(event.poId);
+      result.fold(
+        (failure) => emit(PurchaseOrderError(failure.message)),
+        (item) => emit(PaNextItemLoaded(item)),
+      );
+    });
+    on<SubmitPaEvent>((event, emit) async {
+      emit(PurchaseOrderLoading());
+      final result = await submitPaUsecase(event.params, event.receivingLogId);
+      result.fold(
+        (failure) => emit(PurchaseOrderError(failure.message)),
+        (_) => emit(SubmitPaSuccess()),
       );
     });
   }

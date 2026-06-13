@@ -164,11 +164,11 @@ class _QualityControlPageState extends State<QualityControlPage> {
   String _conditionLabel(QcCondition condition) {
     switch (condition) {
       case QcCondition.good:
-        return 'GOOD';
+        return 'Good';
       case QcCondition.damaged:
-        return 'DAMAGED';
+        return 'Damaged';
       case QcCondition.less:
-        return 'LESS';
+        return 'Less';
     }
   }
 
@@ -194,6 +194,7 @@ class _QualityControlPageState extends State<QualityControlPage> {
 
         if (state is PurchaseOrderError) {
           setState(() => _isSubmitting = false);
+          WHSnackBar.showError(context, state.message);
         }
       },
       child: Scaffold(
@@ -210,6 +211,9 @@ class _QualityControlPageState extends State<QualityControlPage> {
               child: WHButton(
                 label: state.item.nextItem == null ? 'Finish QC' : 'Next Item',
                 backgroundColor: WHColors.secondary3,
+                icon: state.item.nextItem == null
+                    ? Icons.check_circle_outline_outlined
+                    : null,
                 isLoading: _isSubmitting,
                 onPressed: _isSubmitting
                     ? null
@@ -302,7 +306,7 @@ class _QualityControlContent extends StatelessWidget {
           currentItem: item.currentItemNumber,
           totalItems: item.totalItems,
         ),
-        const SizedBox(height: 18),
+        const SizedBox(height: 16),
         QcProductCard(
           sku: item.sku,
           productName: item.productName,

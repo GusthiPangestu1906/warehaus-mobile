@@ -380,42 +380,55 @@ class _CameraView extends StatelessWidget {
           ),
 
         // ── Top bar ──────────────────────────────────────────
-        SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-            child: Row(
-              children: [
-                _IconBtn(icon: Icons.arrow_back_rounded, onTap: onBack),
-                const Spacer(),
-                Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      title,
-                      style: WHTypography.heading2.copyWith(
-                        color: Colors.white,
-                      ),
-                    ),
-                    if (subtitle != null)
-                      Text(
-                        subtitle!,
-                        style: WHTypography.caption.copyWith(
-                          color: Colors.white70,
+        Positioned(
+          top: 0,
+          left: 0,
+          right: 0,
+          child: SafeArea(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              child: Row(
+                children: [
+                  _IconBtn(icon: Icons.arrow_back_rounded, onTap: onBack),
+                  const Spacer(),
+                  Flexible(
+                    flex: 4,
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          title,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: WHTypography.heading2.copyWith(
+                            color: Colors.white,
+                          ),
                         ),
-                      ),
-                  ],
-                ),
-                const Spacer(),
-                // Torch (hanya kamera belakang)
-                if (!isFrontCamera)
-                  _IconBtn(
-                    icon: isTorchOn
-                        ? Icons.flash_on_rounded
-                        : Icons.flash_off_rounded,
-                    activeColor: isTorchOn ? WHColors.secondary3 : null,
-                    onTap: onToggleTorch,
+                        if (subtitle != null)
+                          Text(
+                            subtitle!,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: WHTypography.caption.copyWith(
+                              color: Colors.white70,
+                            ),
+                          ),
+                      ],
+                    ),
                   ),
-              ],
+                  const Spacer(),
+                  if (!isFrontCamera)
+                    _IconBtn(
+                      icon: isTorchOn
+                          ? Icons.flash_on_rounded
+                          : Icons.flash_off_rounded,
+                      activeColor: isTorchOn ? WHColors.secondary3 : null,
+                      onTap: onToggleTorch,
+                    )
+                  else
+                    const SizedBox(width: 44, height: 44),
+                ],
+              ),
             ),
           ),
         ),

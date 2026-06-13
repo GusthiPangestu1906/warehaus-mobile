@@ -4,13 +4,15 @@ import 'package:dio/dio.dart';
 import 'package:get_it/get_it.dart';
 import 'package:inbound/data/datasources/purchase_order_api_datasource.dart';
 import 'package:inbound/data/repositories/purchase_order_repository_impl.dart';
+import 'package:inbound/domain/usecases/inbound/get_pa_next_item.dart';
+import 'package:inbound/domain/usecases/inbound/get_qc_next_item.dart';
+import 'package:inbound/domain/usecases/inbound/submit_pa.dart';
+import 'package:inbound/domain/usecases/inbound/submit_qc.dart';
 import 'package:inbound/domain/usecases/purchase_order/create_purchase_order.dart';
 import 'package:inbound/domain/usecases/purchase_order/delete_purchase_order.dart';
 import 'package:inbound/domain/usecases/purchase_order/get_purchase_order_detail.dart';
 import 'package:inbound/domain/usecases/purchase_order/get_purchase_orders.dart';
-import 'package:inbound/domain/usecases/purchase_order/get_qc_next_item.dart';
 import 'package:inbound/domain/usecases/purchase_order/invoice_update.dart';
-import 'package:inbound/domain/usecases/purchase_order/submit_qc.dart';
 import 'package:inbound/presentation/bloc/purchase_order/purchase_order_bloc.dart';
 import 'package:product/data/datasources/product_api_datasource.dart';
 import 'package:product/data/repositories/product_repository_impl.dart';
@@ -166,6 +168,12 @@ Future<void> setupInjector() async {
   getIt.registerLazySingleton(
     () => SubmitQc(getIt<PurchaseOrderRepositoryImpl>()),
   );
+  getIt.registerLazySingleton(
+    () => GetPaNextItem(getIt<PurchaseOrderRepositoryImpl>()),
+  );
+  getIt.registerLazySingleton(
+    () => SubmitPa(getIt<PurchaseOrderRepositoryImpl>()),
+  );
 
   // BLoC
   getIt.registerFactory(
@@ -177,6 +185,8 @@ Future<void> setupInjector() async {
       deletePurchaseOrderUsecase: getIt<DeletePurchaseOrder>(),
       getQcNextItemUsecase: getIt<GetQcNextItem>(),
       submitQcUsecase: getIt<SubmitQc>(),
+      getPaNextItem: getIt<GetPaNextItem>(),
+      submitPaUsecase: getIt<SubmitPa>(),
     ),
   );
 }

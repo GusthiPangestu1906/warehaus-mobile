@@ -1,4 +1,5 @@
 import 'package:dio/dio.dart';
+import 'package:inbound/data/models/pa_next_item_model.dart';
 import 'package:inbound/data/models/purchase_order_model.dart';
 import 'package:inbound/data/models/qc_next_item_model.dart';
 
@@ -49,5 +50,14 @@ class PurchaseOrderApiDatasource {
       data: formData,
       options: Options(headers: {'Content-Type': 'multipart/form-data'}),
     );
+  }
+
+  Future<PaNextItemModel> getPaNextItem(int poId) async {
+    final response = await dio.get('$_inboundPath/put-away/next/$poId');
+    return PaNextItemModel.fromJson(response.data as Map<String, dynamic>);
+  }
+
+  Future<void> submitPa(Map<String, dynamic> data, int receivingLogId) async {
+    await dio.post('$_inboundPath/$receivingLogId/put-away', data: data);
   }
 }

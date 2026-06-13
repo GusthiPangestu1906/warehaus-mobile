@@ -1,3 +1,4 @@
+import 'package:inbound/domain/entities/pa_next_item.dart';
 import 'package:inbound/domain/entities/purchase_order.dart';
 import 'package:inbound/domain/entities/qc_next_item.dart';
 
@@ -27,13 +28,21 @@ class UpdateInvoiceSuccess extends PurchaseOrderState {}
 
 class DeletePurchaseOrderSuccess extends PurchaseOrderState {}
 
-class SubmitQcSuccess extends PurchaseOrderState {}
-
 class QcNextItemLoaded extends PurchaseOrderState {
   final QcNextItem item;
 
   const QcNextItemLoaded(this.item);
 }
+
+class SubmitQcSuccess extends PurchaseOrderState {}
+
+class PaNextItemLoaded extends PurchaseOrderState {
+  final PaNextItem item;
+
+  const PaNextItemLoaded(this.item);
+}
+
+class SubmitPaSuccess extends PurchaseOrderState {}
 
 class PurchaseOrderError extends PurchaseOrderState {
   final String message;

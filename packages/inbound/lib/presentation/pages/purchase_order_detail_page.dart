@@ -6,6 +6,7 @@ import 'package:inbound/domain/entities/purchase_order.dart';
 import 'package:inbound/presentation/bloc/purchase_order/purchase_order_bloc.dart';
 import 'package:inbound/presentation/bloc/purchase_order/purchase_order_event.dart';
 import 'package:inbound/presentation/bloc/purchase_order/purchase_order_state.dart';
+import 'package:inbound/presentation/pages/put_away_page.dart';
 import 'package:inbound/presentation/pages/quality_control_page.dart';
 import 'package:inbound/presentation/widgets/purchase_order_detail/po_detail_header.dart';
 import 'package:inbound/presentation/widgets/purchase_order_detail/po_info_cards.dart';
@@ -201,30 +202,57 @@ class _PurchaseOrderDetailPageState extends State<PurchaseOrderDetailPage> {
     }
 
     if (_isActive(status)) {
-      return _BottomAction(
-        child: WHButton(
-          label: 'Start Quality Control',
-          icon: Icons.fact_check_outlined,
-          backgroundColor: WHColors.secondary3,
-          onPressed: () {
-            Navigator.of(context)
-                .push(
-                  MaterialPageRoute(
-                    builder: (_) => QualityControlPage(
-                      purchaseOrderId: purchaseOrder.id,
-                      purchaseOrderNumber: purchaseOrder.poNumber,
+      if (!purchaseOrder.isQcCompleted) {
+        return _BottomAction(
+          child: WHButton(
+            label: 'Start Quality Control',
+            icon: Icons.fact_check_outlined,
+            backgroundColor: WHColors.secondary3,
+            onPressed: () {
+              Navigator.of(context)
+                  .push(
+                    MaterialPageRoute(
+                      builder: (_) => QualityControlPage(
+                        purchaseOrderId: purchaseOrder.id,
+                        purchaseOrderNumber: purchaseOrder.poNumber,
+                      ),
                     ),
-                  ),
-                )
-                .then((_) {
-                  if (!context.mounted) return;
-                  context.read<PurchaseOrderBloc>().add(
-                    GetPurchaseOrderDetailEvent(purchaseOrder.id),
-                  );
-                });
-          },
-        ),
-      );
+                  )
+                  .then((_) {
+                    if (!context.mounted) return;
+                    context.read<PurchaseOrderBloc>().add(
+                      GetPurchaseOrderDetailEvent(purchaseOrder.id),
+                    );
+                  });
+            },
+          ),
+        );
+      } else {
+        return _BottomAction(
+          child: WHButton(
+            label: 'Start Put Away',
+            icon: Icons.local_shipping_outlined,
+            backgroundColor: WHColors.secondary3,
+            onPressed: () {
+              Navigator.of(context)
+                  .push(
+                    MaterialPageRoute(
+                      builder: (_) => PutAwayPage(
+                        purchaseOrderId: purchaseOrder.id,
+                        purchaseOrderNumber: purchaseOrder.poNumber,
+                      ),
+                    ),
+                  )
+                  .then((_) {
+                    if (!context.mounted) return;
+                    context.read<PurchaseOrderBloc>().add(
+                      GetPurchaseOrderDetailEvent(purchaseOrder.id),
+                    );
+                  });
+            },
+          ),
+        );
+      }
     }
 
     return const SizedBox.shrink();
@@ -265,11 +293,11 @@ class _PurchaseOrderDetailPageState extends State<PurchaseOrderDetailPage> {
   String _qcStatusForIndex(int index) {
     switch (index % 3) {
       case 1:
-        return 'damage';
+        return 'Damage';
       case 2:
-        return 'less';
+        return 'Less';
       default:
-        return 'success';
+        return 'Good';
     }
   }
 
@@ -279,9 +307,9 @@ class _PurchaseOrderDetailPageState extends State<PurchaseOrderDetailPage> {
         return 'Damage';
       case 'less':
         return 'Less';
-      case 'success':
+      case 'good':
       default:
-        return 'Success';
+        return 'Good';
     }
   }
 }
