@@ -5,6 +5,8 @@ import 'package:inbound/domain/usecases/inbound/submit_pa.dart';
 import 'package:inbound/domain/usecases/inbound/submit_qc.dart';
 import 'package:inbound/domain/usecases/purchase_order/create_purchase_order.dart';
 import 'package:inbound/domain/usecases/purchase_order/delete_purchase_order.dart';
+import 'package:inbound/domain/usecases/purchase_order/download_purchase_order_pdf.dart';
+import 'package:inbound/domain/usecases/purchase_order/get_carriers.dart';
 import 'package:inbound/domain/usecases/purchase_order/get_purchase_order_detail.dart';
 import 'package:inbound/domain/usecases/purchase_order/get_purchase_orders.dart';
 import 'package:inbound/domain/usecases/purchase_order/invoice_update.dart';
@@ -17,10 +19,12 @@ class PurchaseOrderBloc extends Bloc<PurchaseOrderEvent, PurchaseOrderState> {
   final GetPurchaseOrders getPurchaseOrdersUsecase;
   final InvoiceUpdate invoiceUpdateUsecase;
   final DeletePurchaseOrder deletePurchaseOrderUsecase;
+  final DownloadPurchaseOrderPdf downloadPurchaseOrderPdfUsecase;
   final GetQcNextItem getQcNextItemUsecase;
   final SubmitQc submitQcUsecase;
   final GetPaNextItem getPaNextItem;
   final SubmitPa submitPaUsecase;
+  final GetCarriers getCarriers;
 
   PurchaseOrderBloc({
     required this.createPurchaseOrderUsecase,
@@ -28,10 +32,12 @@ class PurchaseOrderBloc extends Bloc<PurchaseOrderEvent, PurchaseOrderState> {
     required this.getPurchaseOrdersUsecase,
     required this.invoiceUpdateUsecase,
     required this.deletePurchaseOrderUsecase,
+    required this.downloadPurchaseOrderPdfUsecase,
     required this.getQcNextItemUsecase,
     required this.submitQcUsecase,
     required this.getPaNextItem,
     required this.submitPaUsecase,
+    required this.getCarriers,
   }) : super(PurchaseOrderInitial()) {
     on<GetPurchaseOrdersEvent>((event, emit) async {
       emit(PurchaseOrderLoading());
@@ -73,6 +79,20 @@ class PurchaseOrderBloc extends Bloc<PurchaseOrderEvent, PurchaseOrderState> {
         (_) => emit(DeletePurchaseOrderSuccess()),
       );
     });
+    on<DownloadPurchaseOrderPdfEvent>((event, emit) async {
+      final currentState = state;
+      final result = await downloadPurchaseOrderPdfUsecase(
+        event.id,
+        event.poNumber,
+      );
+      result.fold(
+        (failure) => emit(PurchaseOrderActionError(failure.message)),
+        (filePath) => emit(DownloadPurchaseOrderPdfSuccess(filePath)),
+      );
+      if (currentState is PurchaseOrderDetailLoaded) {
+        emit(currentState);
+      }
+    });
     on<GetQcNextItemEvent>((event, emit) async {
       emit(PurchaseOrderLoading());
       final result = await getQcNextItemUsecase(event.poId);
@@ -103,6 +123,14 @@ class PurchaseOrderBloc extends Bloc<PurchaseOrderEvent, PurchaseOrderState> {
       result.fold(
         (failure) => emit(PurchaseOrderError(failure.message)),
         (_) => emit(SubmitPaSuccess()),
+      );
+    });
+    on<GetCarriersEvent>((event, emit) async {
+      emit(PurchaseOrderLoading());
+      final result = await getCarriers();
+      result.fold(
+        (failure) => emit(PurchaseOrderError(failure.message)),
+        (carriers) => emit(CarriersLoaded(carriers)),
       );
     });
   }

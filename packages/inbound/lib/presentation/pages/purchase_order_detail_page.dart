@@ -28,9 +28,11 @@ class PurchaseOrderDetailPage extends StatefulWidget {
 class _PurchaseOrderDetailPageState extends State<PurchaseOrderDetailPage> {
   final TextEditingController _invoiceController = TextEditingController();
   bool _isInvoiceInputVisible = false;
+  bool _isDownloadingPdf = false;
   String? _invoiceNumber;
   String? _localStatus;
   List<PoItem>? _localItems;
+  PurchaseOrder? _lastPurchaseOrder;
 
   @override
   void initState() {
@@ -88,6 +90,15 @@ class _PurchaseOrderDetailPageState extends State<PurchaseOrderDetailPage> {
     ).showSnackBar(SnackBar(content: Text(message)));
   }
 
+  void _downloadPurchaseOrderPdf(PurchaseOrder purchaseOrder) {
+    if (_isDownloadingPdf) return;
+
+    setState(() => _isDownloadingPdf = true);
+    context.read<PurchaseOrderBloc>().add(
+      DownloadPurchaseOrderPdfEvent(purchaseOrder.id, purchaseOrder.poNumber),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return BlocListener<PurchaseOrderBloc, PurchaseOrderState>(
@@ -98,6 +109,16 @@ class _PurchaseOrderDetailPageState extends State<PurchaseOrderDetailPage> {
 
         if (state is UpdateInvoiceSuccess) {
           Navigator.of(context).pop(PurchaseOrderDetailResult.invoiceUpdated);
+        }
+
+        if (state is DownloadPurchaseOrderPdfSuccess) {
+          setState(() => _isDownloadingPdf = false);
+          WHSnackBar.showSuccess(context, 'PDF downloaded: ${state.filePath}');
+        }
+
+        if (state is PurchaseOrderActionError) {
+          setState(() => _isDownloadingPdf = false);
+          WHSnackBar.showError(context, state.message);
         }
       },
       child: Scaffold(
@@ -116,7 +137,12 @@ class _PurchaseOrderDetailPageState extends State<PurchaseOrderDetailPage> {
 
               if (state is PurchaseOrderDetailLoaded) {
                 final purchaseOrder = state.purchaseOrder;
+                _lastPurchaseOrder = purchaseOrder;
                 return _buildDetailContent(purchaseOrder);
+              }
+
+              if (_lastPurchaseOrder != null) {
+                return _buildDetailContent(_lastPurchaseOrder!);
               }
 
               return const SizedBox.shrink();
@@ -140,6 +166,7 @@ class _PurchaseOrderDetailPageState extends State<PurchaseOrderDetailPage> {
     final isQueued = _isQueued(status);
     final isCompleted = _isCompleted(status);
     final items = _localItems ?? purchaseOrder.items;
+    final invoiceNumber = _invoiceNumber ?? purchaseOrder.invoiceNumber;
 
     return ListView(
       padding: const EdgeInsets.all(16),
@@ -154,15 +181,6 @@ class _PurchaseOrderDetailPageState extends State<PurchaseOrderDetailPage> {
           onEdit: () => _showSnackBar('Edit purchase order.'),
         ),
         const SizedBox(height: 12),
-        if (isCompleted) ...[
-          WHButton(
-            label: 'Print Label Purchase Order',
-            icon: Icons.print_outlined,
-            backgroundColor: WHColors.primary3,
-            onPressed: () => _showSnackBar('Printing purchase order label.'),
-          ),
-          const SizedBox(height: 12),
-        ],
         if (_isInvoiceInputVisible) ...[
           PoInvoiceInputCard(
             controller: _invoiceController,
@@ -174,9 +192,21 @@ class _PurchaseOrderDetailPageState extends State<PurchaseOrderDetailPage> {
             etaLabel: _formatDate(purchaseOrder.eta),
             supplierName: purchaseOrder.supplierName,
             carrier: purchaseOrder.carrier,
-            invoiceNumber: _invoiceNumber,
+            invoiceNumber: invoiceNumber,
           ),
           const SizedBox(height: 16),
+        ],
+        if (isCompleted) ...[
+          WHButton(
+            label: 'Print Label Purchase Order',
+            icon: Icons.print_outlined,
+            backgroundColor: WHColors.primary3,
+            isLoading: _isDownloadingPdf,
+            onPressed: _isDownloadingPdf
+                ? null
+                : () => _downloadPurchaseOrderPdf(purchaseOrder),
+          ),
+          const SizedBox(height: 12),
         ],
         PoProductListSection(
           products: items,
@@ -280,7 +310,8 @@ class _PurchaseOrderDetailPageState extends State<PurchaseOrderDetailPage> {
   }
 
   bool _isCompleted(String status) {
-    return status.trim().toLowerCase() == 'completed';
+    return status.trim().toLowerCase() == 'completed' ||
+        status.trim().toLowerCase() == 'success';
   }
 
   String _formatDate(DateTime value) {

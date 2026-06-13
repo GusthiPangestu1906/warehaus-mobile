@@ -5,6 +5,7 @@ class PurchaseOrder {
   final String poNumber;
   final String supplierName;
   final String status;
+  final String? invoiceNumber;
   final bool isQcCompleted;
   final DateTime eta;
   final String carrier;
@@ -18,6 +19,7 @@ class PurchaseOrder {
     required this.poNumber,
     required this.supplierName,
     required this.status,
+    this.invoiceNumber,
     required this.isQcCompleted,
     required this.eta,
     required this.carrier,
@@ -32,6 +34,7 @@ class PurchaseOrder {
     String? poNumber,
     String? supplierName,
     String? status,
+    String? invoiceNumber,
     bool? isQcCompleted,
     DateTime? eta,
     String? carrier,
@@ -45,6 +48,7 @@ class PurchaseOrder {
       poNumber: poNumber ?? this.poNumber,
       supplierName: supplierName ?? this.supplierName,
       status: status ?? this.status,
+      invoiceNumber: invoiceNumber ?? this.invoiceNumber,
       isQcCompleted: isQcCompleted ?? this.isQcCompleted,
       eta: eta ?? this.eta,
       carrier: carrier ?? this.carrier,

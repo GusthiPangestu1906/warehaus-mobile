@@ -228,6 +228,7 @@ class _InboundOrderListPageState extends State<InboundOrderListPage>
     switch (status.trim().toLowerCase()) {
       case 'active':
         return OrderStatus.active;
+      case 'completed':
       case 'success':
         return OrderStatus.completed;
       case 'pending':

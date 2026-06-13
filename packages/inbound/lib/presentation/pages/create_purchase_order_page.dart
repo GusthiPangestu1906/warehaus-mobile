@@ -27,6 +27,7 @@ class _CreatePurchaseOrderPageState extends State<CreatePurchaseOrderPage> {
   final _carrier = TextEditingController();
 
   final List<CreatePoItemParams> _selectedItems = [];
+  bool _isSubmittingPo = false;
 
   @override
   void initState() {
@@ -45,25 +46,20 @@ class _CreatePurchaseOrderPageState extends State<CreatePurchaseOrderPage> {
   void _onSUbmit() {
     if (_formKey.currentState!.validate()) {
       if (_selectedItems.isEmpty) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Pilih minimal 1 item produk!')),
-        );
+        WHSnackBar.showError(context, 'Pilih minimal 1 item produk!');
         return;
       }
 
       if (_selectedItems.any((item) => item.productId == 0)) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Harap pilih produk pada semua form list!'),
-          ),
+        WHSnackBar.showError(
+          context,
+          'Harap pilih produk pada semua form list!',
         );
         return;
       }
 
       if (_selectedItems.any((item) => item.qtyExpected <= 0)) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Qty expected harus lebih dari 0.')),
-        );
+        WHSnackBar.showError(context, 'Qty expected harus lebih dari 0.');
         return;
       }
 
@@ -74,6 +70,7 @@ class _CreatePurchaseOrderPageState extends State<CreatePurchaseOrderPage> {
         items: _selectedItems,
       );
 
+      setState(() => _isSubmittingPo = true);
       context.read<PurchaseOrderBloc>().add(CreatePurchaseOrderEvent(params));
     }
   }
@@ -83,24 +80,16 @@ class _CreatePurchaseOrderPageState extends State<CreatePurchaseOrderPage> {
     return BlocConsumer<PurchaseOrderBloc, PurchaseOrderState>(
       listener: (context, state) {
         if (state is CreatePurchaseOrderSuccess) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Purchase Order berhasil dibuat!'),
-              backgroundColor: Colors.green,
-            ),
-          );
+          setState(() => _isSubmittingPo = false);
+          WHSnackBar.showSuccess(context, 'Purchase Order berhasil dibuat!');
           Navigator.of(context).pop();
-        } else if (state is PurchaseOrderError) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('Error: ${state.message}'),
-              backgroundColor: Colors.red,
-            ),
-          );
+        } else if (state is PurchaseOrderError && _isSubmittingPo) {
+          setState(() => _isSubmittingPo = false);
+          WHSnackBar.showError(context, state.message);
         }
       },
       builder: (context, state) {
-        bool isLoading = state is PurchaseOrderLoading;
+        final isLoading = state is PurchaseOrderLoading && _isSubmittingPo;
 
         return Scaffold(
           backgroundColor: WHColors.background,
@@ -111,6 +100,7 @@ class _CreatePurchaseOrderPageState extends State<CreatePurchaseOrderPage> {
             child: WHButton(
               label: 'Submit Form',
               icon: Icons.check_circle_outline,
+              backgroundColor: WHColors.secondary,
               isLoading: isLoading,
               onPressed: isLoading ? null : _onSUbmit,
             ),

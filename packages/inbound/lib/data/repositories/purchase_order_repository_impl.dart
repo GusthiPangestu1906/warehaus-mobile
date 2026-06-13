@@ -2,9 +2,10 @@ import 'package:core_services/core_services.dart';
 import 'package:dartz/dartz.dart';
 import 'package:dio/dio.dart';
 import 'package:inbound/data/datasources/purchase_order_api_datasource.dart';
+import 'package:inbound/data/models/carrier_model.dart';
 import 'package:inbound/data/models/pa_next_item_model.dart';
 import 'package:inbound/data/models/purchase_order_model.dart';
-import 'package:inbound/domain/entities/qc_next_item.dart';
+import 'package:inbound/data/models/qc_next_item_model.dart';
 import 'package:inbound/domain/failure/po_failure.dart';
 import 'package:inbound/domain/params/create_po_params.dart';
 import 'package:inbound/domain/params/submit_pa_params.dart';
@@ -84,7 +85,25 @@ class PurchaseOrderRepositoryImpl extends PurchaseOrderRepository {
   }
 
   @override
-  Future<Either<Failure, QcNextItem>> getQcNextItem(int poId) async {
+  Future<Either<Failure, String>> downloadPurchaseOrderPdf(
+    int id,
+    String poNumber,
+  ) async {
+    try {
+      final filePath = await apiDatasource.downloadPurchaseOrderPdf(
+        id,
+        poNumber,
+      );
+      return Right(filePath);
+    } on DioException catch (e) {
+      return Left(_failureFromDio(e));
+    } catch (e) {
+      return Left(ServerFailure(message: e.toString()));
+    }
+  }
+
+  @override
+  Future<Either<Failure, QcNextItemModel>> getQcNextItem(int poId) async {
     try {
       final response = await apiDatasource.getQcNextItem(poId);
       return Right(response);
@@ -127,6 +146,18 @@ class PurchaseOrderRepositoryImpl extends PurchaseOrderRepository {
     try {
       await apiDatasource.submitPa(params.toJson(), receivingLogId);
       return Right(null);
+    } on DioException catch (e) {
+      return Left(_failureFromDio(e));
+    } catch (e) {
+      return Left(ServerFailure());
+    }
+  }
+
+  @override
+  Future<Either<Failure, List<CarrierModel>>> getCarriers() async {
+    try {
+      final response = await apiDatasource.getCarriers();
+      return Right(response);
     } on DioException catch (e) {
       return Left(_failureFromDio(e));
     } catch (e) {

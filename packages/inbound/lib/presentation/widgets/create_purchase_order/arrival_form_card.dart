@@ -1,5 +1,10 @@
 import 'package:core_ui/core_ui.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:inbound/domain/entities/carrier.dart';
+import 'package:inbound/presentation/bloc/purchase_order/purchase_order_bloc.dart';
+import 'package:inbound/presentation/bloc/purchase_order/purchase_order_event.dart';
+import 'package:inbound/presentation/bloc/purchase_order/purchase_order_state.dart';
 
 class ArrivalFormCard extends StatefulWidget {
   const ArrivalFormCard({
@@ -19,6 +24,12 @@ class ArrivalFormCard extends StatefulWidget {
 
 class _ArrivalFormCardState extends State<ArrivalFormCard> {
   bool _isExpanded = true;
+
+  @override
+  void initState() {
+    super.initState();
+    context.read<PurchaseOrderBloc>().add(GetCarriersEvent());
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -88,10 +99,36 @@ class _ArrivalFormCardState extends State<ArrivalFormCard> {
                           },
                         ),
                         const SizedBox(height: 16),
-                        WHTextField(
-                          label: 'Carrier',
-                          hintText: 'e.g., JNE Cargo',
-                          controller: widget.carrierController,
+                        BlocBuilder<PurchaseOrderBloc, PurchaseOrderState>(
+                          builder: (context, state) {
+                            final carriers = state is CarriersLoaded
+                                ? state.carriers
+                                : const <Carrier>[];
+
+                            if (state is PurchaseOrderError) {
+                              return WHError(message: state.message);
+                            }
+
+                            return WHDropdownField<String>(
+                              label: 'Carrier',
+                              hintText: 'Select Carrier',
+                              items: carriers.map((c) {
+                                return WHDropdownItem<String>(
+                                  value: c.name,
+                                  label: c.name,
+                                );
+                              }).toList(),
+                              selectedValue:
+                                  widget.carrierController.text.isEmpty
+                                  ? null
+                                  : widget.carrierController.text,
+                              onChanged: (value) {
+                                setState(() {
+                                  widget.carrierController.text = value ?? '';
+                                });
+                              },
+                            );
+                          },
                         ),
                       ],
                     ),

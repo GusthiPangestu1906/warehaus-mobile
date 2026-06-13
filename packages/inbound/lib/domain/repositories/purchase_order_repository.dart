@@ -1,5 +1,6 @@
 import 'package:core_services/core_services.dart';
 import 'package:dartz/dartz.dart';
+import 'package:inbound/domain/entities/carrier.dart';
 import 'package:inbound/domain/entities/pa_next_item.dart';
 import 'package:inbound/domain/entities/purchase_order.dart';
 import 'package:inbound/domain/entities/qc_next_item.dart';
@@ -13,6 +14,10 @@ abstract class PurchaseOrderRepository {
   Future<Either<Failure, void>> createPurchaseOrder(CreatePoParams params);
   Future<Either<Failure, void>> invoiceUpdate(int id, String invoiceNumber);
   Future<Either<Failure, void>> deletePurchaseOrder(int id);
+  Future<Either<Failure, String>> downloadPurchaseOrderPdf(
+    int id,
+    String poNumber,
+  );
   Future<Either<Failure, QcNextItem>> getQcNextItem(int poId);
   Future<Either<Failure, void>> submitQc(SubmitQcParams params);
   Future<Either<Failure, PaNextItem>> getPaNextItem(int poId);
@@ -20,4 +25,5 @@ abstract class PurchaseOrderRepository {
     SubmitPaParams params,
     int receivingLogId,
   );
+  Future<Either<Failure, List<Carrier>>> getCarriers();
 }

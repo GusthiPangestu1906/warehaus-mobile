@@ -183,6 +183,7 @@ class _StatusBadgeStyle {
           textColor: WHColors.warning1,
         );
       case 'success':
+      case 'completed':
         return const _StatusBadgeStyle(
           label: 'Completed',
           backgroundColor: WHColors.success4,

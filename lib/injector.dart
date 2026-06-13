@@ -10,6 +10,8 @@ import 'package:inbound/domain/usecases/inbound/submit_pa.dart';
 import 'package:inbound/domain/usecases/inbound/submit_qc.dart';
 import 'package:inbound/domain/usecases/purchase_order/create_purchase_order.dart';
 import 'package:inbound/domain/usecases/purchase_order/delete_purchase_order.dart';
+import 'package:inbound/domain/usecases/purchase_order/download_purchase_order_pdf.dart';
+import 'package:inbound/domain/usecases/purchase_order/get_carriers.dart';
 import 'package:inbound/domain/usecases/purchase_order/get_purchase_order_detail.dart';
 import 'package:inbound/domain/usecases/purchase_order/get_purchase_orders.dart';
 import 'package:inbound/domain/usecases/purchase_order/invoice_update.dart';
@@ -163,6 +165,9 @@ Future<void> setupInjector() async {
     () => DeletePurchaseOrder(getIt<PurchaseOrderRepositoryImpl>()),
   );
   getIt.registerLazySingleton(
+    () => DownloadPurchaseOrderPdf(getIt<PurchaseOrderRepositoryImpl>()),
+  );
+  getIt.registerLazySingleton(
     () => GetQcNextItem(getIt<PurchaseOrderRepositoryImpl>()),
   );
   getIt.registerLazySingleton(
@@ -174,6 +179,9 @@ Future<void> setupInjector() async {
   getIt.registerLazySingleton(
     () => SubmitPa(getIt<PurchaseOrderRepositoryImpl>()),
   );
+  getIt.registerLazySingleton(
+    () => GetCarriers(getIt<PurchaseOrderRepositoryImpl>()),
+  );
 
   // BLoC
   getIt.registerFactory(
@@ -183,10 +191,12 @@ Future<void> setupInjector() async {
       createPurchaseOrderUsecase: getIt<CreatePurchaseOrder>(),
       invoiceUpdateUsecase: getIt<InvoiceUpdate>(),
       deletePurchaseOrderUsecase: getIt<DeletePurchaseOrder>(),
+      downloadPurchaseOrderPdfUsecase: getIt<DownloadPurchaseOrderPdf>(),
       getQcNextItemUsecase: getIt<GetQcNextItem>(),
       submitQcUsecase: getIt<SubmitQc>(),
       getPaNextItem: getIt<GetPaNextItem>(),
       submitPaUsecase: getIt<SubmitPa>(),
+      getCarriers: getIt<GetCarriers>(),
     ),
   );
 }

@@ -1,3 +1,4 @@
+import 'package:inbound/domain/entities/carrier.dart';
 import 'package:inbound/domain/entities/pa_next_item.dart';
 import 'package:inbound/domain/entities/purchase_order.dart';
 import 'package:inbound/domain/entities/qc_next_item.dart';
@@ -28,6 +29,18 @@ class UpdateInvoiceSuccess extends PurchaseOrderState {}
 
 class DeletePurchaseOrderSuccess extends PurchaseOrderState {}
 
+class DownloadPurchaseOrderPdfSuccess extends PurchaseOrderState {
+  final String filePath;
+
+  const DownloadPurchaseOrderPdfSuccess(this.filePath);
+}
+
+class PurchaseOrderActionError extends PurchaseOrderState {
+  final String message;
+
+  const PurchaseOrderActionError(this.message);
+}
+
 class QcNextItemLoaded extends PurchaseOrderState {
   final QcNextItem item;
 
@@ -43,6 +56,12 @@ class PaNextItemLoaded extends PurchaseOrderState {
 }
 
 class SubmitPaSuccess extends PurchaseOrderState {}
+
+class CarriersLoaded extends PurchaseOrderState {
+  final List<Carrier> carriers;
+
+  const CarriersLoaded(this.carriers);
+}
 
 class PurchaseOrderError extends PurchaseOrderState {
   final String message;

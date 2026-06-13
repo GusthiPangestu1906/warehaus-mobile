@@ -20,51 +20,34 @@ class PoInfoCards extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Row(
-          children: [
-            Expanded(
-              child: _InfoCard(
-                icon: Icons.event_available_outlined,
-                label: 'ETA',
-                value: etaLabel,
-                backgroundColor: WHColors.primary3,
-              ),
-            ),
-            const SizedBox(width: 12),
-            if (invoiceNumber != null)
-              Expanded(
-                child: _InfoCard(
-                  icon: Icons.description_outlined,
-                  label: 'Invoice Number',
-                  value: invoiceNumber!,
-                  backgroundColor: WHColors.secondary3,
-                ),
-              ),
-          ],
+        _InfoCard(
+          icon: Icons.event_available_outlined,
+          label: 'ETA',
+          value: etaLabel,
+          backgroundColor: WHColors.primary3,
+        ),
+        if (invoiceNumber != null) ...[
+          const SizedBox(height: 12),
+          _InfoCard(
+            icon: Icons.description_outlined,
+            label: 'Invoice Number',
+            value: invoiceNumber!,
+            backgroundColor: WHColors.secondary3,
+          ),
+        ],
+        const SizedBox(height: 12),
+        _InfoCard(
+          icon: Icons.storefront_outlined,
+          label: 'Supplier',
+          value: supplierName,
+          backgroundColor: WHColors.secondary3,
         ),
         const SizedBox(height: 12),
-        Row(
-          children: [
-            Expanded(
-              child: _InfoCard(
-                icon: Icons.storefront_outlined,
-                label: 'Supplier',
-                value: supplierName,
-                backgroundColor: WHColors.secondary3,
-              ),
-            ),
-
-            const SizedBox(width: 12),
-
-            Expanded(
-              child: _InfoCard(
-                icon: Icons.local_shipping_outlined,
-                label: 'Carrier',
-                value: carrier,
-                backgroundColor: WHColors.grey3,
-              ),
-            ),
-          ],
+        _InfoCard(
+          icon: Icons.local_shipping_outlined,
+          label: 'Carrier',
+          value: carrier,
+          backgroundColor: WHColors.grey3,
         ),
       ],
     );

@@ -27,6 +27,13 @@ class DeletePurchaseOrderEvent extends PurchaseOrderEvent {
   DeletePurchaseOrderEvent(this.id);
 }
 
+class DownloadPurchaseOrderPdfEvent extends PurchaseOrderEvent {
+  final int id;
+  final String poNumber;
+
+  DownloadPurchaseOrderPdfEvent(this.id, this.poNumber);
+}
+
 class GetQcNextItemEvent extends PurchaseOrderEvent {
   final int poId;
   GetQcNextItemEvent(this.poId);
@@ -47,3 +54,5 @@ class SubmitPaEvent extends PurchaseOrderEvent {
   final int receivingLogId;
   SubmitPaEvent(this.params, this.receivingLogId);
 }
+
+class GetCarriersEvent extends PurchaseOrderEvent {}
