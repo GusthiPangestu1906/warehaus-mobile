@@ -144,9 +144,12 @@ class SalesOrderSelectField<T> extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final hasItems = items.isNotEmpty;
+    final selectedValue = items.any((item) => item.value == value)
+        ? value
+        : null;
     return DropdownButtonFormField<T>(
-      key: ValueKey('${T.toString()}-$value-${items.length}'),
-      initialValue: hasItems ? value : null,
+      key: ValueKey('${T.toString()}-$selectedValue-${items.length}'),
+      initialValue: hasItems ? selectedValue : null,
       isExpanded: true,
       decoration: salesOrderInputDecoration(
         isLoading

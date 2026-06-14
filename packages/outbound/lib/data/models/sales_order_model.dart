@@ -9,10 +9,14 @@ class SalesOrderModel {
   final String? phoneNumber;
   final String shippingAddress;
   final String? provinceCode;
+  final String? provinceName;
   final String? cityCode;
+  final String? cityName;
   final String? districtCode;
+  final String? districtName;
   final String? postalCode;
   final int? courierId;
+  final String? courierCode;
   final String? courierName;
   final String? courierServiceType;
   final String? trackingNumber;
@@ -35,10 +39,14 @@ class SalesOrderModel {
     this.phoneNumber,
     required this.shippingAddress,
     this.provinceCode,
+    this.provinceName,
     this.cityCode,
+    this.cityName,
     this.districtCode,
+    this.districtName,
     this.postalCode,
     this.courierId,
+    this.courierCode,
     this.courierName,
     this.courierServiceType,
     this.trackingNumber,
@@ -63,10 +71,14 @@ class SalesOrderModel {
       phoneNumber: json['phoneNumber'] as String?,
       shippingAddress: json['shippingAddress'] as String? ?? '',
       provinceCode: json['provinceCode'] as String?,
+      provinceName: json['provinceName'] as String?,
       cityCode: json['cityCode'] as String?,
+      cityName: json['cityName'] as String?,
       districtCode: json['districtCode'] as String?,
+      districtName: json['districtName'] as String?,
       postalCode: json['postalCode'] as String?,
       courierId: json['courierId'] == null ? null : _asInt(json['courierId']),
+      courierCode: json['courierCode'] as String?,
       courierName: json['courierName'] as String?,
       courierServiceType: json['courierServiceType'] as String?,
       trackingNumber: json['trackingNumber'] as String?,

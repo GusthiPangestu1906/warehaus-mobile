@@ -64,16 +64,18 @@ class _ZoneListPageState extends State<ZoneListPage> with RouteAware {
     if (edited == null || !mounted) return;
 
     final zoneName = toOptionalValue(zone.zoneName, edited.zoneName);
-    final category = toOptionalValue(zone.category, edited.category);
+    final categoryId = zone.categoryId == edited.categoryId
+        ? null
+        : edited.categoryId;
     final description = toOptionalValue(zone.description, edited.description);
 
-    if (zoneName == null && category == null && description == null) return;
+    if (zoneName == null && categoryId == null && description == null) return;
 
     bloc.add(
       UpdateZoneEvent(
         id: zone.id,
         zoneName: zoneName,
-        category: category,
+        categoryId: categoryId,
         description: description,
       ),
     );
@@ -128,7 +130,7 @@ class _ZoneListPageState extends State<ZoneListPage> with RouteAware {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       final navigationState = context.read<NavigationBloc>().state;
-      if (navigationState.currentIndex == 2) {
+      if (navigationState.currentIndex == 3) {
         _showSwipeHintIfNeeded();
       }
     });
@@ -152,7 +154,7 @@ class _ZoneListPageState extends State<ZoneListPage> with RouteAware {
   @override
   void didPopNext() {
     final navigationState = context.read<NavigationBloc>().state;
-    if (navigationState.currentIndex == 2) {
+    if (navigationState.currentIndex == 3) {
       context.read<ZoneBloc>().add(GetZonesEvent());
     }
   }
@@ -163,7 +165,7 @@ class _ZoneListPageState extends State<ZoneListPage> with RouteAware {
       listenWhen: (previous, current) =>
           previous.currentIndex != current.currentIndex,
       listener: (context, state) {
-        if (state.currentIndex == 2) {
+        if (state.currentIndex == 3) {
           _showSwipeHintIfNeeded();
           context.read<ZoneBloc>().add(GetZonesEvent());
         }

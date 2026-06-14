@@ -17,10 +17,14 @@ class SalesOrderRepositoryImpl implements SalesOrderRepository {
     phoneNumber: m.phoneNumber,
     shippingAddress: m.shippingAddress,
     provinceCode: m.provinceCode,
+    provinceName: m.provinceName,
     cityCode: m.cityCode,
+    cityName: m.cityName,
     districtCode: m.districtCode,
+    districtName: m.districtName,
     postalCode: m.postalCode,
     courierId: m.courierId,
+    courierCode: m.courierCode,
     courierName: m.courierName,
     courierServiceType: m.courierServiceType,
     trackingNumber: m.trackingNumber,
@@ -76,6 +80,38 @@ class SalesOrderRepositoryImpl implements SalesOrderRepository {
     required List<Map<String, dynamic>> items,
   }) async {
     await apiDatasource.createSalesOrder({
+      'customerName': customerName,
+      'companyName': companyName,
+      'contactPerson': contactPerson,
+      'phoneNumber': phoneNumber,
+      'shippingAddress': shippingAddress,
+      'provinceCode': provinceCode,
+      'cityCode': cityCode,
+      'districtCode': districtCode,
+      'postalCode': postalCode,
+      'courierId': courierId,
+      'requiredDeliveryDate': requiredDeliveryDate,
+      'items': items,
+    });
+  }
+
+  @override
+  Future<void> updateSalesOrder({
+    required int id,
+    required String customerName,
+    required String companyName,
+    required String contactPerson,
+    required String phoneNumber,
+    required String shippingAddress,
+    required String provinceCode,
+    required String cityCode,
+    required String districtCode,
+    required String postalCode,
+    required int courierId,
+    required String requiredDeliveryDate,
+    required List<Map<String, dynamic>> items,
+  }) async {
+    await apiDatasource.updateSalesOrder(id, {
       'customerName': customerName,
       'companyName': companyName,
       'contactPerson': contactPerson,

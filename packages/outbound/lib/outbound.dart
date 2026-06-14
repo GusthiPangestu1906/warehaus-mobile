@@ -8,6 +8,7 @@ export 'domain/repositories/sales_order_repository.dart';
 export 'domain/usecases/create_sales_order.dart';
 export 'domain/usecases/delete_sales_order.dart';
 export 'domain/usecases/get_sales_orders.dart';
+export 'domain/usecases/update_sales_order.dart';
 export 'presentation/bloc/sales_order_bloc.dart';
 export 'presentation/bloc/sales_order_event.dart';
 export 'presentation/bloc/sales_order_state.dart';

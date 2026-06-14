@@ -238,15 +238,28 @@ class SalesOrderShippingStep extends StatelessWidget {
       'Code',
       'provinceCode',
       'cityCode',
+      'districtCode',
+      'province_code',
+      'city_code',
+      'district_code',
     ]);
     if (code == null || code.isEmpty) return null;
     final name =
-        _stringValue(region, ['name', 'Name', 'provinceName', 'cityName']) ??
+        _stringValue(region, [
+          'name',
+          'Name',
+          'provinceName',
+          'cityName',
+          'districtName',
+          'province_name',
+          'city_name',
+          'district_name',
+        ]) ??
         code;
 
     return DropdownMenuItem<String>(
       value: code,
-      child: Text(name, overflow: TextOverflow.ellipsis),
+      child: Text(_cleanRegionName(name), overflow: TextOverflow.ellipsis),
     );
   }
 }
@@ -270,4 +283,11 @@ String? _stringValue(Map<String, dynamic> data, List<String> keys) {
     if (value != null) return value.toString();
   }
   return null;
+}
+
+String _cleanRegionName(String value) {
+  return value
+      .replaceFirst(RegExp(r'^Kabupaten\s+', caseSensitive: false), '')
+      .replaceFirst(RegExp(r'^Kota\s+', caseSensitive: false), '')
+      .trim();
 }

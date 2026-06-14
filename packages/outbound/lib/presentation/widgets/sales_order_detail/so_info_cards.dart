@@ -32,28 +32,31 @@ class SoInfoCards extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Row(
-          children: [
-            Expanded(
-              child: _InfoCard(
-                icon: Icons.event_available_outlined,
-                label: 'SLA',
-                value: slaLabel,
-                backgroundColor: WHColors.primary3,
-              ),
-            ),
-            if (hasTracking) ...[
-              const SizedBox(width: 6),
+        IntrinsicHeight(
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
               Expanded(
                 child: _InfoCard(
-                  icon: Icons.tag,
-                  label: 'Tracking Number',
-                  value: trackingNumber!,
-                  backgroundColor: const Color(0xFF073B72),
+                  icon: Icons.event_available_outlined,
+                  label: 'SLA',
+                  value: slaLabel,
+                  backgroundColor: WHColors.primary3,
                 ),
               ),
+              if (hasTracking) ...[
+                const SizedBox(width: 6),
+                Expanded(
+                  child: _InfoCard(
+                    icon: Icons.tag,
+                    label: 'Tracking Number',
+                    value: trackingNumber!,
+                    backgroundColor: const Color(0xFF073B72),
+                  ),
+                ),
+              ],
             ],
-          ],
+          ),
         ),
         const SizedBox(height: 6),
         Container(
@@ -142,12 +145,15 @@ class _InfoCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(8),
         border: Border.all(color: WHColors.grey5),
       ),
-      child: _InlineInfo(
-        icon: icon,
-        label: label,
-        value: value,
-        backgroundColor: backgroundColor,
-        dense: true,
+      child: Align(
+        alignment: Alignment.centerLeft,
+        child: _InlineInfo(
+          icon: icon,
+          label: label,
+          value: value,
+          backgroundColor: backgroundColor,
+          dense: true,
+        ),
       ),
     );
   }

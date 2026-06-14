@@ -260,6 +260,25 @@ class _ProductDropdown extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final productItems = products
+        .map((product) {
+          final id = _intValue(product, 'id');
+          if (id == null) return null;
+          return DropdownMenuItem<int>(
+            value: id,
+            child: Text(
+              _stringValue(product, 'productName') ?? 'Product #$id',
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(color: WHColors.grey1, fontSize: 16),
+            ),
+          );
+        })
+        .whereType<DropdownMenuItem<int>>()
+        .toList();
+    final selectedValue = productItems.any((item) => item.value == value)
+        ? value
+        : null;
+
     return DropdownButtonHideUnderline(
       child: Container(
         height: 44,
@@ -267,27 +286,13 @@ class _ProductDropdown extends StatelessWidget {
         decoration: salesOrderFilledInputDecoration(14),
         child: DropdownButton<int>(
           isExpanded: true,
-          value: value,
+          value: selectedValue,
           hint: Text(
             products.isEmpty ? 'No products available' : 'Select Product',
             style: const TextStyle(color: WHColors.grey1, fontSize: 16),
           ),
           icon: const Icon(Icons.keyboard_arrow_down, color: WHColors.grey3),
-          items: products
-              .map((product) {
-                final id = _intValue(product, 'id');
-                if (id == null) return null;
-                return DropdownMenuItem<int>(
-                  value: id,
-                  child: Text(
-                    _stringValue(product, 'productName') ?? 'Product #$id',
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(color: WHColors.grey1, fontSize: 16),
-                  ),
-                );
-              })
-              .whereType<DropdownMenuItem<int>>()
-              .toList(),
+          items: productItems,
           onChanged: products.isEmpty ? null : onChanged,
         ),
       ),

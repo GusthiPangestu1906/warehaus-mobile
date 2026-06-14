@@ -1,11 +1,14 @@
 import 'package:core_ui/core_ui.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:get_it/get_it.dart';
+import 'package:outbound/data/datasources/region_api_datasource.dart';
 import 'package:outbound/domain/entities/sales_order.dart';
 import 'package:outbound/presentation/bloc/sales_order_bloc.dart';
 import 'package:outbound/presentation/bloc/sales_order_event.dart';
 import 'package:outbound/presentation/models/pick_flow_item.dart';
 import 'package:outbound/presentation/models/sales_order_status_view.dart';
+import 'package:outbound/presentation/pages/create_sales_order_page.dart';
 import 'package:outbound/presentation/pages/picking_page.dart';
 import 'package:outbound/presentation/widgets/sales_order_detail/so_detail_header.dart';
 import 'package:outbound/presentation/widgets/sales_order_detail/so_info_cards.dart';
@@ -25,13 +28,17 @@ class _SalesOrderDetailPageState extends State<SalesOrderDetailPage> {
   final TextEditingController _trackingController = TextEditingController();
   bool _isEditingTracking = false;
   String? _trackingNumber;
+  String? _provinceName;
+  String? _cityName;
   bool _startedFromTracking = false;
+  RegionApiDatasource get _regionApi => GetIt.instance<RegionApiDatasource>();
 
   @override
   void initState() {
     super.initState();
     _trackingNumber = _clean(widget.order.trackingNumber);
     _trackingController.text = _trackingNumber ?? '';
+    _resolveRegionLabels();
   }
 
   @override
@@ -77,6 +84,112 @@ class _SalesOrderDetailPageState extends State<SalesOrderDetailPage> {
     );
   }
 
+  Future<void> _editSalesOrder() async {
+    final bloc = context.read<SalesOrderBloc>();
+    final updated = await Navigator.of(context).push<bool>(
+      MaterialPageRoute(
+        builder: (_) => BlocProvider.value(
+          value: bloc,
+          child: CreateSalesOrderPage(initialOrder: widget.order),
+        ),
+      ),
+    );
+
+    if (!mounted || updated != true) return;
+    Navigator.of(context).pop();
+  }
+
+  Future<void> _confirmDeleteSalesOrder() async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => _DeleteSalesOrderDialog(
+        soNumber: _formatSalesOrderNumber(widget.order),
+      ),
+    );
+
+    if (confirmed != true || !mounted) return;
+
+    context.read<SalesOrderBloc>().add(DeleteSalesOrderEvent(widget.order.id));
+    Navigator.of(context).pop();
+  }
+
+  Future<void> _resolveRegionLabels() async {
+    final provinceCode = _clean(widget.order.provinceCode);
+    final cityCode = _clean(widget.order.cityCode);
+
+    try {
+      String? provinceName;
+      String? cityName;
+
+      if (provinceCode != null) {
+        final provinces = await _regionApi.getProvinces();
+        provinceName = _findRegionName(provinces, provinceCode);
+      }
+
+      if (provinceCode != null && cityCode != null) {
+        final cities = await _regionApi.getCities(provinceCode);
+        cityName = _findRegionName(cities, cityCode);
+      }
+
+      if (!mounted) return;
+      setState(() {
+        _provinceName = provinceName;
+        _cityName = cityName;
+      });
+    } catch (e) {
+      debugPrint('[SalesOrderDetailPage] failed to resolve region labels: $e');
+    }
+  }
+
+  String? _findRegionName(List<Map<String, dynamic>> rows, String code) {
+    final target = code.trim().toLowerCase();
+    for (final row in rows) {
+      final rowCode = _valueFrom(row, const [
+        'code',
+        'Code',
+        'provinceCode',
+        'cityCode',
+        'districtCode',
+        'id',
+        'Id',
+      ])?.trim().toLowerCase();
+
+      if (rowCode == target) {
+        final name = _valueFrom(row, const [
+              'name',
+              'Name',
+              'provinceName',
+              'cityName',
+              'districtName',
+            ]) ??
+            code;
+        return _cleanRegionName(name);
+      }
+    }
+    return null;
+  }
+
+  String? _valueFrom(Map<String, dynamic> data, List<String> keys) {
+    for (final key in keys) {
+      final value = data[key];
+      if (value != null) return value.toString();
+    }
+    return null;
+  }
+
+  String _cleanRegionName(String value) {
+    return value
+        .replaceFirst(RegExp(r'^Kabupaten\s+', caseSensitive: false), '')
+        .replaceFirst(RegExp(r'^Kota\s+', caseSensitive: false), '')
+        .trim();
+  }
+
+  String? _backendRegionLabel(String? value) {
+    final cleanValue = _clean(value);
+    if (cleanValue == null) return null;
+    return _cleanRegionName(cleanValue);
+  }
+
   @override
   Widget build(BuildContext context) {
     final bottomAction = _bottomAction();
@@ -117,8 +230,8 @@ class _SalesOrderDetailPageState extends State<SalesOrderDetailPage> {
             createdAt: _formatDate(widget.order.orderDate),
             status: _status,
             showActions: _isQueued && !_isEditingTracking && !_hasTracking,
-            onDelete: () {},
-            onEdit: () {},
+            onDelete: _confirmDeleteSalesOrder,
+            onEdit: _editSalesOrder,
           ),
           const SizedBox(height: 6),
           SoInfoCards(
@@ -129,8 +242,14 @@ class _SalesOrderDetailPageState extends State<SalesOrderDetailPage> {
             companyName: widget.order.companyName ?? '-',
             courier: widget.order.courierName ?? '-',
             address: _address(widget.order),
-            province: _provinceLabel(widget.order),
-            city: _cityLabel(widget.order),
+            province:
+                _backendRegionLabel(widget.order.provinceName) ??
+                _provinceName ??
+                _provinceLabel(widget.order),
+            city:
+                _backendRegionLabel(widget.order.cityName) ??
+                _cityName ??
+                _cityLabel(widget.order),
             postalCode: widget.order.postalCode ?? '-',
           ),
           const SizedBox(height: 8),
@@ -182,6 +301,98 @@ class _SalesOrderDetailPageState extends State<SalesOrderDetailPage> {
     }
 
     return null;
+  }
+}
+
+class _DeleteSalesOrderDialog extends StatelessWidget {
+  const _DeleteSalesOrderDialog({required this.soNumber});
+
+  final String soNumber;
+
+  @override
+  Widget build(BuildContext context) {
+    return Dialog(
+      backgroundColor: const Color(0xFFF3F3F3),
+      insetPadding: const EdgeInsets.symmetric(horizontal: 24),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(28)),
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(24, 34, 24, 22),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(
+              Icons.warning_amber_rounded,
+              size: 102,
+              color: Color(0xFFC71920),
+            ),
+            const SizedBox(height: 22),
+            const Text(
+              'Are you sure want to delete this\nSales Order?',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                color: Colors.black,
+                fontSize: 20,
+                height: 1.16,
+                fontWeight: FontWeight.w400,
+              ),
+            ),
+            const SizedBox(height: 12),
+            Text(
+              soNumber,
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                color: Colors.black,
+                fontSize: 26,
+                height: 1.1,
+                fontWeight: FontWeight.w900,
+              ),
+            ),
+            const SizedBox(height: 28),
+            SizedBox(
+              width: double.infinity,
+              height: 48,
+              child: ElevatedButton(
+                onPressed: () => Navigator.of(context).pop(true),
+                style: ElevatedButton.styleFrom(
+                  elevation: 0,
+                  backgroundColor: const Color(0xFFFFC0C4),
+                  foregroundColor: const Color(0xFFC71920),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(24),
+                    side: const BorderSide(color: Colors.black),
+                  ),
+                  textStyle: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+                child: const Text('Delete'),
+              ),
+            ),
+            const SizedBox(height: 8),
+            SizedBox(
+              width: double.infinity,
+              height: 48,
+              child: OutlinedButton(
+                onPressed: () => Navigator.of(context).pop(false),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: Colors.black,
+                  side: const BorderSide(color: Colors.black),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(24),
+                  ),
+                  textStyle: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+                child: const Text('Cancel'),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }
 
@@ -348,7 +559,9 @@ String _address(SalesOrder order) {
 
 String _provinceLabel(SalesOrder order) {
   final code = order.provinceCode?.trim();
-  if (code == null || code.isEmpty) return 'East Java';
+  if (code == null || code.isEmpty) return 'Jawa Timur';
+  if (code == '32') return 'Jawa Barat';
+  if (code == '35') return 'Jawa Timur';
   if (code == '51') return 'Bali';
   return code;
 }
@@ -356,6 +569,8 @@ String _provinceLabel(SalesOrder order) {
 String _cityLabel(SalesOrder order) {
   final code = order.cityCode?.trim();
   if (code == null || code.isEmpty) return 'Surabaya';
+  if (code == '32.15') return 'Karawang';
+  if (code == '35.78') return 'Surabaya';
   if (code == '51.03') return 'Badung';
   return code;
 }

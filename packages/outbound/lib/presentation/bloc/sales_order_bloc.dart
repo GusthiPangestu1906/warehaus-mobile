@@ -4,6 +4,7 @@ import 'package:outbound/domain/entities/sales_order.dart';
 import 'package:outbound/domain/usecases/create_sales_order.dart';
 import 'package:outbound/domain/usecases/delete_sales_order.dart';
 import 'package:outbound/domain/usecases/get_sales_orders.dart';
+import 'package:outbound/domain/usecases/update_sales_order.dart';
 import 'package:outbound/domain/usecases/update_sales_order_tracking.dart';
 import 'package:outbound/presentation/bloc/sales_order_event.dart';
 import 'package:outbound/presentation/bloc/sales_order_state.dart';
@@ -12,12 +13,14 @@ class SalesOrderBloc extends Bloc<SalesOrderEvent, SalesOrderState> {
   final GetSalesOrders getSalesOrdersUsecase;
   final CreateSalesOrder createSalesOrderUsecase;
   final DeleteSalesOrder deleteSalesOrderUsecase;
+  final UpdateSalesOrder updateSalesOrderUsecase;
   final UpdateSalesOrderTracking updateSalesOrderTrackingUsecase;
 
   SalesOrderBloc({
     required this.getSalesOrdersUsecase,
     required this.createSalesOrderUsecase,
     required this.deleteSalesOrderUsecase,
+    required this.updateSalesOrderUsecase,
     required this.updateSalesOrderTrackingUsecase,
   }) : super(SalesOrderInitial()) {
     on<GetSalesOrdersEvent>((event, emit) async {
@@ -52,7 +55,7 @@ class SalesOrderBloc extends Bloc<SalesOrderEvent, SalesOrderState> {
           items: event.items,
         );
         debugPrint('[SalesOrderBloc] create success');
-        emit(SalesOrderActionSuccess('Sales Order berhasil dibuat'));
+        emit(SalesOrderActionSuccess('Sales Order Saved'));
         add(GetSalesOrdersEvent());
       } catch (e) {
         debugPrint('[SalesOrderBloc] create error: $e');
@@ -66,10 +69,38 @@ class SalesOrderBloc extends Bloc<SalesOrderEvent, SalesOrderState> {
       try {
         await deleteSalesOrderUsecase(event.id);
         debugPrint('[SalesOrderBloc] delete success');
-        emit(SalesOrderActionSuccess('Sales Order berhasil dihapus'));
+        emit(SalesOrderActionSuccess('Sales Order Deleted'));
         add(GetSalesOrdersEvent());
       } catch (e) {
         debugPrint('[SalesOrderBloc] delete error: $e');
+        emit(SalesOrderError(e.toString()));
+      }
+    });
+
+    on<UpdateSalesOrderEvent>((event, emit) async {
+      debugPrint('[SalesOrderBloc] UpdateSalesOrderEvent id=${event.id}');
+      emit(SalesOrderLoading());
+      try {
+        await updateSalesOrderUsecase(
+          id: event.id,
+          customerName: event.customerName,
+          companyName: event.companyName,
+          contactPerson: event.contactPerson,
+          phoneNumber: event.phoneNumber,
+          shippingAddress: event.shippingAddress,
+          provinceCode: event.provinceCode,
+          cityCode: event.cityCode,
+          districtCode: event.districtCode,
+          postalCode: event.postalCode,
+          courierId: event.courierId,
+          requiredDeliveryDate: event.requiredDeliveryDate,
+          items: event.items,
+        );
+        debugPrint('[SalesOrderBloc] update success');
+        emit(SalesOrderActionSuccess('Sales Order Saved'));
+        add(GetSalesOrdersEvent());
+      } catch (e) {
+        debugPrint('[SalesOrderBloc] update error: $e');
         emit(SalesOrderError(e.toString()));
       }
     });
@@ -164,10 +195,14 @@ class SalesOrderBloc extends Bloc<SalesOrderEvent, SalesOrderState> {
       phoneNumber: order.phoneNumber,
       shippingAddress: order.shippingAddress,
       provinceCode: order.provinceCode,
+      provinceName: order.provinceName,
       cityCode: order.cityCode,
+      cityName: order.cityName,
       districtCode: order.districtCode,
+      districtName: order.districtName,
       postalCode: order.postalCode,
       courierId: order.courierId,
+      courierCode: order.courierCode,
       courierName: order.courierName,
       courierServiceType: order.courierServiceType,
       trackingNumber: trackingNumber,

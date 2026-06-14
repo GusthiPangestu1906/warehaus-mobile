@@ -40,6 +40,13 @@ class _OutboundListPageState extends State<OutboundListPage> {
         listener: (context, state) {
           if (state is SalesOrderError) {
             WHSnackBar.showError(context, state.message);
+          } else if (state is SalesOrderActionSuccess &&
+              state.message == 'Sales Order Deleted') {
+            _showSalesOrderNotice(
+              context,
+              message: 'Sales Order Deleted',
+              backgroundColor: const Color(0xFFC71920),
+            );
           }
         },
         child: Scaffold(
@@ -49,7 +56,7 @@ class _OutboundListPageState extends State<OutboundListPage> {
           floatingActionButton: FloatingActionButton(
             heroTag: 'outbound-create-so-fab',
             onPressed: () async {
-              await Navigator.of(context).push(
+              final saved = await Navigator.of(context).push<bool>(
                 PageRouteBuilder(
                   pageBuilder: (_, _, _) => BlocProvider.value(
                     value: _bloc,
@@ -59,6 +66,12 @@ class _OutboundListPageState extends State<OutboundListPage> {
                   reverseTransitionDuration: Duration.zero,
                 ),
               );
+              if (!context.mounted || saved != true) return;
+              _showSalesOrderNotice(
+                context,
+                message: 'Sales Order Saved',
+                backgroundColor: const Color(0xFF27C46A),
+              );
             },
             backgroundColor: WHColors.primary3,
             child: const Icon(Icons.add, color: WHColors.surface),
@@ -67,4 +80,43 @@ class _OutboundListPageState extends State<OutboundListPage> {
       ),
     );
   }
+}
+
+void _showSalesOrderNotice(
+  BuildContext context, {
+  required String message,
+  required Color backgroundColor,
+}) {
+  final overlay = Overlay.of(context);
+  final topInset = MediaQuery.of(context).padding.top;
+  late final OverlayEntry entry;
+
+  entry = OverlayEntry(
+    builder: (context) => Positioned(
+      top: topInset,
+      left: 0,
+      right: 0,
+      child: Material(
+        color: backgroundColor,
+        child: SizedBox(
+          height: 40,
+          child: Center(
+            child: Text(
+              message,
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 18,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ),
+        ),
+      ),
+    ),
+  );
+
+  overlay.insert(entry);
+  Future<void>.delayed(const Duration(seconds: 2), () {
+    if (entry.mounted) entry.remove();
+  });
 }

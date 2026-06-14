@@ -37,6 +37,38 @@ class DeleteSalesOrderEvent extends SalesOrderEvent {
   DeleteSalesOrderEvent(this.id);
 }
 
+class UpdateSalesOrderEvent extends SalesOrderEvent {
+  final int id;
+  final String customerName;
+  final String companyName;
+  final String contactPerson;
+  final String phoneNumber;
+  final String shippingAddress;
+  final String provinceCode;
+  final String cityCode;
+  final String districtCode;
+  final String postalCode;
+  final int courierId;
+  final String requiredDeliveryDate;
+  final List<Map<String, dynamic>> items;
+
+  UpdateSalesOrderEvent({
+    required this.id,
+    required this.customerName,
+    required this.companyName,
+    required this.contactPerson,
+    required this.phoneNumber,
+    required this.shippingAddress,
+    required this.provinceCode,
+    required this.cityCode,
+    required this.districtCode,
+    required this.postalCode,
+    required this.courierId,
+    required this.requiredDeliveryDate,
+    required this.items,
+  });
+}
+
 class UpdateSalesOrderLocalStatusEvent extends SalesOrderEvent {
   final int id;
   final String status;

@@ -35,16 +35,44 @@ class RegionApiDatasource {
   }
 
   List<Map<String, dynamic>> _asMapList(dynamic data) {
-    final rawList = data is List
-        ? data
-        : data is Map<String, dynamic>
-        ? data['value'] ?? data['data'] ?? data['items'] ?? data['result']
-        : null;
+    final rawList = _extractList(data);
 
     if (rawList is! List) {
       return const [];
     }
 
-    return rawList.whereType<Map<String, dynamic>>().toList();
+    return rawList
+        .whereType<Map>()
+        .map((item) => Map<String, dynamic>.from(item))
+        .toList();
+  }
+
+  dynamic _extractList(dynamic data) {
+    if (data is List) return data;
+    if (data is! Map) return null;
+
+    final map = Map<String, dynamic>.from(data);
+    for (final key in const [
+      'value',
+      'Value',
+      'data',
+      'Data',
+      'items',
+      'Items',
+      'result',
+      'Result',
+      'results',
+      'Results',
+    ]) {
+      final value = map[key];
+      if (value is List) return value;
+    }
+
+    final nestedData = map['data'] ?? map['Data'];
+    if (nestedData is Map) {
+      return _extractList(nestedData);
+    }
+
+    return null;
   }
 }

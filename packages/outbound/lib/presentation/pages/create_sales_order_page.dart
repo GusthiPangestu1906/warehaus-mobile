@@ -5,22 +5,44 @@ import 'package:get_it/get_it.dart';
 import 'package:outbound/data/datasources/outbound_product_api_datasource.dart';
 import 'package:outbound/data/datasources/region_api_datasource.dart';
 import 'package:outbound/data/models/so_item_model.dart';
+import 'package:outbound/domain/entities/sales_order.dart';
 import 'package:outbound/presentation/bloc/sales_order_bloc.dart';
 import 'package:outbound/presentation/bloc/sales_order_event.dart';
+import 'package:outbound/presentation/bloc/sales_order_form_cubit.dart';
+import 'package:outbound/presentation/bloc/sales_order_form_state.dart';
 import 'package:outbound/presentation/bloc/sales_order_state.dart';
 import 'package:outbound/presentation/models/sales_order_product_line.dart';
 import 'package:outbound/presentation/widgets/create_sales_order/sales_order_bottom_bar.dart';
 import 'package:outbound/presentation/widgets/create_sales_order/sales_order_product_step.dart';
 import 'package:outbound/presentation/widgets/create_sales_order/sales_order_shipping_step.dart';
 
-class CreateSalesOrderPage extends StatefulWidget {
-  const CreateSalesOrderPage({super.key});
+class CreateSalesOrderPage extends StatelessWidget {
+  const CreateSalesOrderPage({super.key, this.initialOrder});
+
+  final SalesOrder? initialOrder;
 
   @override
-  State<CreateSalesOrderPage> createState() => _CreateSalesOrderPageState();
+  Widget build(BuildContext context) {
+    return BlocProvider(
+      create: (_) => SalesOrderFormCubit(
+        productApi: GetIt.instance<OutboundProductApiDatasource>(),
+        regionApi: GetIt.instance<RegionApiDatasource>(),
+      ),
+      child: _CreateSalesOrderView(initialOrder: initialOrder),
+    );
+  }
 }
 
-class _CreateSalesOrderPageState extends State<CreateSalesOrderPage> {
+class _CreateSalesOrderView extends StatefulWidget {
+  const _CreateSalesOrderView({this.initialOrder});
+
+  final SalesOrder? initialOrder;
+
+  @override
+  State<_CreateSalesOrderView> createState() => _CreateSalesOrderViewState();
+}
+
+class _CreateSalesOrderViewState extends State<_CreateSalesOrderView> {
   final _shippingFormKey = GlobalKey<FormState>();
   final _companyNameCtrl = TextEditingController();
   final _contactPersonCtrl = TextEditingController();
@@ -35,33 +57,24 @@ class _CreateSalesOrderPageState extends State<CreateSalesOrderPage> {
   int _step = 0;
   DateTime? _requiredDeliveryDate;
 
-  List<Map<String, dynamic>> _products = [];
-  List<Map<String, dynamic>> _couriers = [];
-  List<Map<String, dynamic>> _provinces = [];
-  List<Map<String, dynamic>> _cities = [];
-  List<Map<String, dynamic>> _districts = [];
-
   int? _selectedCourierId;
   String? _selectedProvinceCode;
   String? _selectedCityCode;
   String? _selectedDistrictCode;
 
-  bool _loadingProducts = true;
-  bool _loadingCouriers = true;
-  bool _loadingProvinces = true;
-  bool _loadingCities = false;
-  bool _loadingDistricts = false;
-
-  OutboundProductApiDatasource get _productApi =>
-      GetIt.instance<OutboundProductApiDatasource>();
-  RegionApiDatasource get _regionApi => GetIt.instance<RegionApiDatasource>();
+  bool get _isEdit => widget.initialOrder != null;
 
   @override
   void initState() {
     super.initState();
     _requiredDeliveryDate = DateTime(_today.year, _today.month, _today.day + 1);
+    _populateInitialOrder();
     _noteCtrl.addListener(_refreshNoteCounter);
-    _loadInitialDropdowns();
+    context.read<SalesOrderFormCubit>().loadInitialData(
+      initialProvinceCode: _selectedProvinceCode,
+      initialCityCode: _selectedCityCode,
+      initialDistrictCode: _selectedDistrictCode,
+    );
   }
 
   @override
@@ -75,100 +88,6 @@ class _CreateSalesOrderPageState extends State<CreateSalesOrderPage> {
       ..removeListener(_refreshNoteCounter)
       ..dispose();
     super.dispose();
-  }
-
-  Future<void> _loadInitialDropdowns() async {
-    await Future.wait([_fetchProducts(), _fetchCouriers(), _fetchProvinces()]);
-  }
-
-  Future<void> _fetchProducts() async {
-    try {
-      final products = await _productApi.getProducts();
-      if (!mounted) return;
-      setState(() {
-        _products = products;
-        _loadingProducts = false;
-      });
-    } catch (_) {
-      if (!mounted) return;
-      setState(() => _loadingProducts = false);
-      WHSnackBar.showError(context, 'Failed to load products');
-    }
-  }
-
-  Future<void> _fetchCouriers() async {
-    try {
-      final couriers = await _regionApi.getCouriers();
-      if (!mounted) return;
-      setState(() {
-        _couriers = couriers;
-        _selectedCourierId = _firstId(couriers);
-        _loadingCouriers = false;
-      });
-    } catch (_) {
-      if (!mounted) return;
-      setState(() => _loadingCouriers = false);
-      WHSnackBar.showError(context, 'Failed to load couriers');
-    }
-  }
-
-  Future<void> _fetchProvinces() async {
-    try {
-      final provinces = await _regionApi.getProvinces();
-      if (!mounted) return;
-      setState(() {
-        _provinces = provinces;
-        _loadingProvinces = false;
-      });
-    } catch (_) {
-      if (!mounted) return;
-      setState(() => _loadingProvinces = false);
-      WHSnackBar.showError(context, 'Failed to load provinces');
-    }
-  }
-
-  Future<void> _fetchCities(String provinceCode) async {
-    setState(() {
-      _loadingCities = true;
-      _cities = [];
-      _districts = [];
-      _selectedCityCode = null;
-      _selectedDistrictCode = null;
-    });
-
-    try {
-      final cities = await _regionApi.getCities(provinceCode);
-      if (!mounted) return;
-      setState(() {
-        _cities = cities;
-        _loadingCities = false;
-      });
-    } catch (_) {
-      if (!mounted) return;
-      setState(() => _loadingCities = false);
-      WHSnackBar.showError(context, 'Failed to load cities');
-    }
-  }
-
-  Future<void> _fetchDistricts(String cityCode) async {
-    setState(() {
-      _loadingDistricts = true;
-      _districts = [];
-      _selectedDistrictCode = null;
-    });
-
-    try {
-      final districts = await _regionApi.getDistricts(cityCode);
-      if (!mounted) return;
-      setState(() {
-        _districts = districts;
-        _loadingDistricts = false;
-      });
-    } catch (_) {
-      if (!mounted) return;
-      setState(() => _loadingDistricts = false);
-      WHSnackBar.showError(context, 'Failed to load districts');
-    }
   }
 
   Future<void> _pickDate() async {
@@ -185,6 +104,37 @@ class _CreateSalesOrderPageState extends State<CreateSalesOrderPage> {
 
   void _refreshNoteCounter() {
     if (mounted) setState(() {});
+  }
+
+  void _populateInitialOrder() {
+    final order = widget.initialOrder;
+    if (order == null) return;
+
+    _companyNameCtrl.text = order.companyName ?? '';
+    _contactPersonCtrl.text = order.contactPerson ?? order.customerName;
+    _phoneNumberCtrl.text = order.phoneNumber ?? '';
+    _addressCtrl.text = order.shippingAddress;
+    _postalCodeCtrl.text = order.postalCode ?? '';
+    _selectedCourierId = order.courierId;
+    _selectedProvinceCode = order.provinceCode;
+    _selectedCityCode = order.cityCode;
+    _selectedDistrictCode = order.districtCode;
+    _requiredDeliveryDate =
+        DateTime.tryParse(order.requiredDeliveryDate)?.toLocal() ??
+        _requiredDeliveryDate;
+
+    _productLines
+      ..clear()
+      ..addAll(
+        order.items.isEmpty
+            ? [SalesOrderProductLine()]
+            : order.items.map(
+                (item) => SalesOrderProductLine(
+                  productId: item.productId,
+                  qty: item.qtyOrdered,
+                ),
+              ),
+      );
   }
 
   void _addProductLine() {
@@ -211,13 +161,28 @@ class _CreateSalesOrderPageState extends State<CreateSalesOrderPage> {
   }
 
   void _setProvince(String? code) {
-    setState(() => _selectedProvinceCode = code);
-    if (code != null) _fetchCities(code);
+    setState(() {
+      _selectedProvinceCode = code;
+      _selectedCityCode = null;
+      _selectedDistrictCode = null;
+    });
+    if (code != null) {
+      context.read<SalesOrderFormCubit>().fetchCities(code);
+    } else {
+      context.read<SalesOrderFormCubit>().clearCitiesAndDistricts();
+    }
   }
 
   void _setCity(String? code) {
-    setState(() => _selectedCityCode = code);
-    if (code != null) _fetchDistricts(code);
+    setState(() {
+      _selectedCityCode = code;
+      _selectedDistrictCode = null;
+    });
+    if (code != null) {
+      context.read<SalesOrderFormCubit>().fetchDistricts(code);
+    } else {
+      context.read<SalesOrderFormCubit>().clearDistricts();
+    }
   }
 
   void _goToShipping() {
@@ -255,8 +220,36 @@ class _CreateSalesOrderPageState extends State<CreateSalesOrderPage> {
 
     final contactPerson = _contactPersonCtrl.text.trim();
     final companyName = _companyNameCtrl.text.trim();
-    context.read<SalesOrderBloc>().add(
-      CreateSalesOrderEvent(
+    final products = context.read<SalesOrderFormCubit>().state.products;
+    final payload = _selectedItems(
+      products,
+    ).map((item) => item.toJson()).toList();
+    final bloc = context.read<SalesOrderBloc>();
+    final order = widget.initialOrder;
+
+    if (order == null) {
+      bloc.add(
+        CreateSalesOrderEvent(
+          customerName: contactPerson,
+          companyName: companyName.isEmpty ? contactPerson : companyName,
+          contactPerson: contactPerson,
+          phoneNumber: _phoneNumberCtrl.text.trim(),
+          shippingAddress: _addressCtrl.text.trim(),
+          provinceCode: _selectedProvinceCode!,
+          cityCode: _selectedCityCode!,
+          districtCode: _selectedDistrictCode!,
+          postalCode: _postalCodeCtrl.text.trim(),
+          courierId: _selectedCourierId!,
+          requiredDeliveryDate: _toUtcDateString(_requiredDeliveryDate!),
+          items: payload,
+        ),
+      );
+      return;
+    }
+
+    bloc.add(
+      UpdateSalesOrderEvent(
+        id: order.id,
         customerName: contactPerson,
         companyName: companyName.isEmpty ? contactPerson : companyName,
         contactPerson: contactPerson,
@@ -268,14 +261,14 @@ class _CreateSalesOrderPageState extends State<CreateSalesOrderPage> {
         postalCode: _postalCodeCtrl.text.trim(),
         courierId: _selectedCourierId!,
         requiredDeliveryDate: _toUtcDateString(_requiredDeliveryDate!),
-        items: _selectedItems.map((item) => item.toJson()).toList(),
+        items: payload,
       ),
     );
   }
 
-  List<SoItemModel> get _selectedItems {
+  List<SoItemModel> _selectedItems(List<Map<String, dynamic>> products) {
     return _productLines.map((line) {
-      final product = _findProduct(line.productId!);
+      final product = _findProduct(products, line.productId!);
       return SoItemModel(
         productId: line.productId!,
         qtyOrdered: line.qty,
@@ -284,8 +277,11 @@ class _CreateSalesOrderPageState extends State<CreateSalesOrderPage> {
     }).toList();
   }
 
-  Map<String, dynamic>? _findProduct(int productId) {
-    for (final product in _products) {
+  Map<String, dynamic>? _findProduct(
+    List<Map<String, dynamic>> products,
+    int productId,
+  ) {
+    for (final product in products) {
       if (_intValue(product, 'id') == productId) return product;
     }
     return null;
@@ -310,24 +306,54 @@ class _CreateSalesOrderPageState extends State<CreateSalesOrderPage> {
 
   @override
   Widget build(BuildContext context) {
-    return BlocListener<SalesOrderBloc, SalesOrderState>(
-      listener: (context, state) {
-        if (state is SalesOrderActionSuccess) {
-          WHSnackBar.showSuccess(context, state.message);
-          Navigator.of(context).pop();
-        } else if (state is SalesOrderError) {
-          WHSnackBar.showError(context, state.message);
-        }
-      },
+    return MultiBlocListener(
+      listeners: [
+        BlocListener<SalesOrderFormCubit, SalesOrderFormState>(
+          listenWhen: (previous, current) =>
+              previous.couriers != current.couriers ||
+              previous.errorMessage != current.errorMessage,
+          listener: (context, state) {
+            if (_selectedCourierId == null && state.couriers.isNotEmpty) {
+              setState(() => _selectedCourierId = _firstId(state.couriers));
+            }
+
+            final errorMessage = state.errorMessage;
+            if (errorMessage != null && errorMessage.isNotEmpty) {
+              WHSnackBar.showError(context, errorMessage);
+            }
+          },
+        ),
+        BlocListener<SalesOrderBloc, SalesOrderState>(
+          listener: (context, state) {
+            if (state is SalesOrderActionSuccess) {
+              Navigator.of(context).pop(true);
+            } else if (state is SalesOrderError) {
+              WHSnackBar.showError(context, state.message);
+            }
+          },
+        ),
+      ],
       child: BlocBuilder<SalesOrderBloc, SalesOrderState>(
         builder: (context, state) {
           final isSubmitting = state is SalesOrderLoading;
           return Scaffold(
             backgroundColor: WHColors.background,
-            appBar: WHAppbar(title: 'Sales Order Form'),
-            body: _step == 0 ? _buildProductStep() : _buildShippingStep(),
+            appBar: WHAppbar(
+              title: _isEdit ? 'Edit Sales Order' : 'Sales Order Form',
+            ),
+            body: BlocBuilder<SalesOrderFormCubit, SalesOrderFormState>(
+              builder: (context, formState) {
+                return _step == 0
+                    ? _buildProductStep(formState)
+                    : _buildShippingStep(formState);
+              },
+            ),
             bottomNavigationBar: SalesOrderBottomBar(
-              label: _step == 0 ? 'Next' : 'Submit Form',
+              label: _step == 0
+                  ? 'Next'
+                  : _isEdit
+                  ? 'Save Changes'
+                  : 'Submit Form',
               showCheckIcon: _step == 1,
               isLoading: isSubmitting,
               onPressed: isSubmitting
@@ -342,12 +368,12 @@ class _CreateSalesOrderPageState extends State<CreateSalesOrderPage> {
     );
   }
 
-  Widget _buildProductStep() {
+  Widget _buildProductStep(SalesOrderFormState formState) {
     return SalesOrderProductStep(
       requiredDeliveryDate: _requiredDeliveryDate,
       lines: _productLines,
-      products: _products,
-      isLoadingProducts: _loadingProducts,
+      products: formState.products,
+      isLoadingProducts: formState.isLoadingProducts,
       onPickDate: _pickDate,
       onAddProduct: _addProductLine,
       onDeleteProduct: _deleteProductLine,
@@ -356,7 +382,7 @@ class _CreateSalesOrderPageState extends State<CreateSalesOrderPage> {
     );
   }
 
-  Widget _buildShippingStep() {
+  Widget _buildShippingStep(SalesOrderFormState formState) {
     return SalesOrderShippingStep(
       formKey: _shippingFormKey,
       companyNameController: _companyNameCtrl,
@@ -366,18 +392,18 @@ class _CreateSalesOrderPageState extends State<CreateSalesOrderPage> {
       postalCodeController: _postalCodeCtrl,
       noteController: _noteCtrl,
       noteLength: _noteCtrl.text.length,
-      couriers: _couriers,
-      provinces: _provinces,
-      cities: _cities,
-      districts: _districts,
+      couriers: formState.couriers,
+      provinces: formState.provinces,
+      cities: formState.cities,
+      districts: formState.districts,
       selectedCourierId: _selectedCourierId,
       selectedProvinceCode: _selectedProvinceCode,
       selectedCityCode: _selectedCityCode,
       selectedDistrictCode: _selectedDistrictCode,
-      loadingCouriers: _loadingCouriers,
-      loadingProvinces: _loadingProvinces,
-      loadingCities: _loadingCities,
-      loadingDistricts: _loadingDistricts,
+      loadingCouriers: formState.isLoadingCouriers,
+      loadingProvinces: formState.isLoadingProvinces,
+      loadingCities: formState.isLoadingCities,
+      loadingDistricts: formState.isLoadingDistricts,
       onCourierChanged: (id) => setState(() => _selectedCourierId = id),
       onProvinceChanged: _setProvince,
       onCityChanged: _setCity,

@@ -9,10 +9,14 @@ class SalesOrder {
   final String? phoneNumber;
   final String shippingAddress;
   final String? provinceCode;
+  final String? provinceName;
   final String? cityCode;
+  final String? cityName;
   final String? districtCode;
+  final String? districtName;
   final String? postalCode;
   final int? courierId;
+  final String? courierCode;
   final String? courierName;
   final String? courierServiceType;
   final String? trackingNumber;
@@ -35,10 +39,14 @@ class SalesOrder {
     this.phoneNumber,
     required this.shippingAddress,
     this.provinceCode,
+    this.provinceName,
     this.cityCode,
+    this.cityName,
     this.districtCode,
+    this.districtName,
     this.postalCode,
     this.courierId,
+    this.courierCode,
     this.courierName,
     this.courierServiceType,
     this.trackingNumber,
