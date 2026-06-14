@@ -2,6 +2,9 @@ import 'package:outbound/data/datasources/sales_order_api_datasource.dart';
 import 'package:outbound/data/models/sales_order_model.dart';
 import 'package:outbound/domain/entities/sales_order.dart';
 import 'package:outbound/domain/entities/so_item.dart';
+import 'package:outbound/domain/params/create_sales_order_params.dart';
+import 'package:outbound/domain/params/update_sales_order_params.dart';
+import 'package:outbound/domain/params/update_sales_order_tracking_params.dart';
 import 'package:outbound/domain/repositories/sales_order_repository.dart';
 
 class SalesOrderRepositoryImpl implements SalesOrderRepository {
@@ -15,6 +18,7 @@ class SalesOrderRepositoryImpl implements SalesOrderRepository {
     companyName: m.companyName,
     contactPerson: m.contactPerson,
     phoneNumber: m.phoneNumber,
+    note: m.note,
     shippingAddress: m.shippingAddress,
     provinceCode: m.provinceCode,
     provinceName: m.provinceName,
@@ -65,66 +69,13 @@ class SalesOrderRepositoryImpl implements SalesOrderRepository {
   }
 
   @override
-  Future<void> createSalesOrder({
-    required String customerName,
-    required String companyName,
-    required String contactPerson,
-    required String phoneNumber,
-    required String shippingAddress,
-    required String provinceCode,
-    required String cityCode,
-    required String districtCode,
-    required String postalCode,
-    required int courierId,
-    required String requiredDeliveryDate,
-    required List<Map<String, dynamic>> items,
-  }) async {
-    await apiDatasource.createSalesOrder({
-      'customerName': customerName,
-      'companyName': companyName,
-      'contactPerson': contactPerson,
-      'phoneNumber': phoneNumber,
-      'shippingAddress': shippingAddress,
-      'provinceCode': provinceCode,
-      'cityCode': cityCode,
-      'districtCode': districtCode,
-      'postalCode': postalCode,
-      'courierId': courierId,
-      'requiredDeliveryDate': requiredDeliveryDate,
-      'items': items,
-    });
+  Future<void> createSalesOrder(CreateSalesOrderParams params) async {
+    await apiDatasource.createSalesOrder(params.toJson());
   }
 
   @override
-  Future<void> updateSalesOrder({
-    required int id,
-    required String customerName,
-    required String companyName,
-    required String contactPerson,
-    required String phoneNumber,
-    required String shippingAddress,
-    required String provinceCode,
-    required String cityCode,
-    required String districtCode,
-    required String postalCode,
-    required int courierId,
-    required String requiredDeliveryDate,
-    required List<Map<String, dynamic>> items,
-  }) async {
-    await apiDatasource.updateSalesOrder(id, {
-      'customerName': customerName,
-      'companyName': companyName,
-      'contactPerson': contactPerson,
-      'phoneNumber': phoneNumber,
-      'shippingAddress': shippingAddress,
-      'provinceCode': provinceCode,
-      'cityCode': cityCode,
-      'districtCode': districtCode,
-      'postalCode': postalCode,
-      'courierId': courierId,
-      'requiredDeliveryDate': requiredDeliveryDate,
-      'items': items,
-    });
+  Future<void> updateSalesOrder(UpdateSalesOrderParams params) async {
+    await apiDatasource.updateSalesOrder(params.id, params.toJson());
   }
 
   @override
@@ -133,7 +84,9 @@ class SalesOrderRepositoryImpl implements SalesOrderRepository {
   }
 
   @override
-  Future<void> updateTrackingNumber(int id, String trackingNumber) async {
-    await apiDatasource.updateTrackingNumber(id, trackingNumber);
+  Future<void> updateTrackingNumber(
+    UpdateSalesOrderTrackingParams params,
+  ) async {
+    await apiDatasource.updateTrackingNumber(params.id, params.trackingNumber);
   }
 }

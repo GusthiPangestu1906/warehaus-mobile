@@ -253,7 +253,7 @@ class _SalesOrderDetailPageState extends State<SalesOrderDetailPage> {
             postalCode: widget.order.postalCode ?? '-',
           ),
           const SizedBox(height: 8),
-          const _NoteCard(),
+          _NoteCard(note: widget.order.note),
           if (!_hasTracking) ...[
             const SizedBox(height: 6),
             SoTrackingInputCard(
@@ -397,10 +397,14 @@ class _DeleteSalesOrderDialog extends StatelessWidget {
 }
 
 class _NoteCard extends StatelessWidget {
-  const _NoteCard();
+  const _NoteCard({this.note});
+
+  final String? note;
 
   @override
   Widget build(BuildContext context) {
+    final displayNote = note?.trim();
+
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(16),
@@ -414,7 +418,7 @@ class _NoteCard extends StatelessWidget {
         children: [
           Text('Note', style: WHTypography.caption),
           Text(
-            'Lorem ipsum dolor sit amet, consectetur adipiscing elit.',
+            displayNote == null || displayNote.isEmpty ? '-' : displayNote,
             style: WHTypography.bodyText.copyWith(fontSize: 14),
           ),
         ],

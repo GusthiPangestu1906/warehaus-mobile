@@ -4,8 +4,8 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:get_it/get_it.dart';
 import 'package:outbound/data/datasources/outbound_product_api_datasource.dart';
 import 'package:outbound/data/datasources/region_api_datasource.dart';
-import 'package:outbound/data/models/so_item_model.dart';
 import 'package:outbound/domain/entities/sales_order.dart';
+import 'package:outbound/domain/params/create_sales_order_params.dart';
 import 'package:outbound/presentation/bloc/sales_order_bloc.dart';
 import 'package:outbound/presentation/bloc/sales_order_event.dart';
 import 'package:outbound/presentation/bloc/sales_order_form_cubit.dart';
@@ -113,6 +113,7 @@ class _CreateSalesOrderViewState extends State<_CreateSalesOrderView> {
     _companyNameCtrl.text = order.companyName ?? '';
     _contactPersonCtrl.text = order.contactPerson ?? order.customerName;
     _phoneNumberCtrl.text = order.phoneNumber ?? '';
+    _noteCtrl.text = order.note ?? '';
     _addressCtrl.text = order.shippingAddress;
     _postalCodeCtrl.text = order.postalCode ?? '';
     _selectedCourierId = order.courierId;
@@ -221,9 +222,7 @@ class _CreateSalesOrderViewState extends State<_CreateSalesOrderView> {
     final contactPerson = _contactPersonCtrl.text.trim();
     final companyName = _companyNameCtrl.text.trim();
     final products = context.read<SalesOrderFormCubit>().state.products;
-    final payload = _selectedItems(
-      products,
-    ).map((item) => item.toJson()).toList();
+    final payload = _selectedItems(products);
     final bloc = context.read<SalesOrderBloc>();
     final order = widget.initialOrder;
 
@@ -234,6 +233,7 @@ class _CreateSalesOrderViewState extends State<_CreateSalesOrderView> {
           companyName: companyName.isEmpty ? contactPerson : companyName,
           contactPerson: contactPerson,
           phoneNumber: _phoneNumberCtrl.text.trim(),
+          note: _noteCtrl.text.trim(),
           shippingAddress: _addressCtrl.text.trim(),
           provinceCode: _selectedProvinceCode!,
           cityCode: _selectedCityCode!,
@@ -254,6 +254,7 @@ class _CreateSalesOrderViewState extends State<_CreateSalesOrderView> {
         companyName: companyName.isEmpty ? contactPerson : companyName,
         contactPerson: contactPerson,
         phoneNumber: _phoneNumberCtrl.text.trim(),
+        note: _noteCtrl.text.trim(),
         shippingAddress: _addressCtrl.text.trim(),
         provinceCode: _selectedProvinceCode!,
         cityCode: _selectedCityCode!,
@@ -266,10 +267,12 @@ class _CreateSalesOrderViewState extends State<_CreateSalesOrderView> {
     );
   }
 
-  List<SoItemModel> _selectedItems(List<Map<String, dynamic>> products) {
+  List<SalesOrderItemParams> _selectedItems(
+    List<Map<String, dynamic>> products,
+  ) {
     return _productLines.map((line) {
       final product = _findProduct(products, line.productId!);
-      return SoItemModel(
+      return SalesOrderItemParams(
         productId: line.productId!,
         qtyOrdered: line.qty,
         productName: product?['productName'] as String?,

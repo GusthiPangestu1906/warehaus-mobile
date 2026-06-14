@@ -1,37 +1,13 @@
 import 'package:outbound/domain/entities/sales_order.dart';
+import 'package:outbound/domain/params/create_sales_order_params.dart';
+import 'package:outbound/domain/params/update_sales_order_params.dart';
+import 'package:outbound/domain/params/update_sales_order_tracking_params.dart';
 
 abstract class SalesOrderRepository {
   Future<List<SalesOrder>> getSalesOrders();
   Future<SalesOrder> getSalesOrderById(int id);
-  Future<void> createSalesOrder({
-    required String customerName,
-    required String companyName,
-    required String contactPerson,
-    required String phoneNumber,
-    required String shippingAddress,
-    required String provinceCode,
-    required String cityCode,
-    required String districtCode,
-    required String postalCode,
-    required int courierId,
-    required String requiredDeliveryDate,
-    required List<Map<String, dynamic>> items,
-  });
-  Future<void> updateSalesOrder({
-    required int id,
-    required String customerName,
-    required String companyName,
-    required String contactPerson,
-    required String phoneNumber,
-    required String shippingAddress,
-    required String provinceCode,
-    required String cityCode,
-    required String districtCode,
-    required String postalCode,
-    required int courierId,
-    required String requiredDeliveryDate,
-    required List<Map<String, dynamic>> items,
-  });
+  Future<void> createSalesOrder(CreateSalesOrderParams params);
+  Future<void> updateSalesOrder(UpdateSalesOrderParams params);
   Future<void> deleteSalesOrder(int id);
-  Future<void> updateTrackingNumber(int id, String trackingNumber);
+  Future<void> updateTrackingNumber(UpdateSalesOrderTrackingParams params);
 }

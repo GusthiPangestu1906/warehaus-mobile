@@ -1,3 +1,5 @@
+import 'package:outbound/domain/params/create_sales_order_params.dart';
+
 abstract class SalesOrderEvent {}
 
 class GetSalesOrdersEvent extends SalesOrderEvent {}
@@ -7,6 +9,7 @@ class CreateSalesOrderEvent extends SalesOrderEvent {
   final String companyName;
   final String contactPerson;
   final String phoneNumber;
+  final String note;
   final String shippingAddress;
   final String provinceCode;
   final String cityCode;
@@ -14,13 +17,14 @@ class CreateSalesOrderEvent extends SalesOrderEvent {
   final String postalCode;
   final int courierId;
   final String requiredDeliveryDate;
-  final List<Map<String, dynamic>> items;
+  final List<SalesOrderItemParams> items;
 
   CreateSalesOrderEvent({
     required this.customerName,
     required this.companyName,
     required this.contactPerson,
     required this.phoneNumber,
+    required this.note,
     required this.shippingAddress,
     required this.provinceCode,
     required this.cityCode,
@@ -43,6 +47,7 @@ class UpdateSalesOrderEvent extends SalesOrderEvent {
   final String companyName;
   final String contactPerson;
   final String phoneNumber;
+  final String note;
   final String shippingAddress;
   final String provinceCode;
   final String cityCode;
@@ -50,7 +55,7 @@ class UpdateSalesOrderEvent extends SalesOrderEvent {
   final String postalCode;
   final int courierId;
   final String requiredDeliveryDate;
-  final List<Map<String, dynamic>> items;
+  final List<SalesOrderItemParams> items;
 
   UpdateSalesOrderEvent({
     required this.id,
@@ -58,6 +63,7 @@ class UpdateSalesOrderEvent extends SalesOrderEvent {
     required this.companyName,
     required this.contactPerson,
     required this.phoneNumber,
+    required this.note,
     required this.shippingAddress,
     required this.provinceCode,
     required this.cityCode,

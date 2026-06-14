@@ -1,6 +1,9 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:outbound/domain/entities/sales_order.dart';
+import 'package:outbound/domain/params/create_sales_order_params.dart';
+import 'package:outbound/domain/params/update_sales_order_params.dart';
+import 'package:outbound/domain/params/update_sales_order_tracking_params.dart';
 import 'package:outbound/domain/usecases/create_sales_order.dart';
 import 'package:outbound/domain/usecases/delete_sales_order.dart';
 import 'package:outbound/domain/usecases/get_sales_orders.dart';
@@ -41,18 +44,21 @@ class SalesOrderBloc extends Bloc<SalesOrderEvent, SalesOrderState> {
       emit(SalesOrderLoading());
       try {
         await createSalesOrderUsecase(
-          customerName: event.customerName,
-          companyName: event.companyName,
-          contactPerson: event.contactPerson,
-          phoneNumber: event.phoneNumber,
-          shippingAddress: event.shippingAddress,
-          provinceCode: event.provinceCode,
-          cityCode: event.cityCode,
-          districtCode: event.districtCode,
-          postalCode: event.postalCode,
-          courierId: event.courierId,
-          requiredDeliveryDate: event.requiredDeliveryDate,
-          items: event.items,
+          CreateSalesOrderParams(
+            customerName: event.customerName,
+            companyName: event.companyName,
+            contactPerson: event.contactPerson,
+            phoneNumber: event.phoneNumber,
+            note: event.note,
+            shippingAddress: event.shippingAddress,
+            provinceCode: event.provinceCode,
+            cityCode: event.cityCode,
+            districtCode: event.districtCode,
+            postalCode: event.postalCode,
+            courierId: event.courierId,
+            requiredDeliveryDate: event.requiredDeliveryDate,
+            items: event.items,
+          ),
         );
         debugPrint('[SalesOrderBloc] create success');
         emit(SalesOrderActionSuccess('Sales Order Saved'));
@@ -82,19 +88,22 @@ class SalesOrderBloc extends Bloc<SalesOrderEvent, SalesOrderState> {
       emit(SalesOrderLoading());
       try {
         await updateSalesOrderUsecase(
-          id: event.id,
-          customerName: event.customerName,
-          companyName: event.companyName,
-          contactPerson: event.contactPerson,
-          phoneNumber: event.phoneNumber,
-          shippingAddress: event.shippingAddress,
-          provinceCode: event.provinceCode,
-          cityCode: event.cityCode,
-          districtCode: event.districtCode,
-          postalCode: event.postalCode,
-          courierId: event.courierId,
-          requiredDeliveryDate: event.requiredDeliveryDate,
-          items: event.items,
+          UpdateSalesOrderParams(
+            id: event.id,
+            customerName: event.customerName,
+            companyName: event.companyName,
+            contactPerson: event.contactPerson,
+            phoneNumber: event.phoneNumber,
+            note: event.note,
+            shippingAddress: event.shippingAddress,
+            provinceCode: event.provinceCode,
+            cityCode: event.cityCode,
+            districtCode: event.districtCode,
+            postalCode: event.postalCode,
+            courierId: event.courierId,
+            requiredDeliveryDate: event.requiredDeliveryDate,
+            items: event.items,
+          ),
         );
         debugPrint('[SalesOrderBloc] update success');
         emit(SalesOrderActionSuccess('Sales Order Saved'));
@@ -146,7 +155,12 @@ class SalesOrderBloc extends Bloc<SalesOrderEvent, SalesOrderState> {
       }
 
       try {
-        await updateSalesOrderTrackingUsecase(event.id, event.trackingNumber);
+        await updateSalesOrderTrackingUsecase(
+          UpdateSalesOrderTrackingParams(
+            id: event.id,
+            trackingNumber: event.trackingNumber,
+          ),
+        );
         debugPrint('[SalesOrderBloc] tracking update success');
         add(GetSalesOrdersEvent());
       } catch (e) {
@@ -193,6 +207,7 @@ class SalesOrderBloc extends Bloc<SalesOrderEvent, SalesOrderState> {
       companyName: order.companyName,
       contactPerson: order.contactPerson,
       phoneNumber: order.phoneNumber,
+      note: order.note,
       shippingAddress: order.shippingAddress,
       provinceCode: order.provinceCode,
       provinceName: order.provinceName,

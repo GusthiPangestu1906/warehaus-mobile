@@ -7,6 +7,7 @@ class SalesOrder {
   final String? companyName;
   final String? contactPerson;
   final String? phoneNumber;
+  final String? note;
   final String shippingAddress;
   final String? provinceCode;
   final String? provinceName;
@@ -37,6 +38,7 @@ class SalesOrder {
     this.companyName,
     this.contactPerson,
     this.phoneNumber,
+    this.note,
     required this.shippingAddress,
     this.provinceCode,
     this.provinceName,

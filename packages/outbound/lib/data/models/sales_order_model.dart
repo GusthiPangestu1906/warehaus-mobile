@@ -7,6 +7,7 @@ class SalesOrderModel {
   final String? companyName;
   final String? contactPerson;
   final String? phoneNumber;
+  final String? note;
   final String shippingAddress;
   final String? provinceCode;
   final String? provinceName;
@@ -37,6 +38,7 @@ class SalesOrderModel {
     this.companyName,
     this.contactPerson,
     this.phoneNumber,
+    this.note,
     required this.shippingAddress,
     this.provinceCode,
     this.provinceName,
@@ -69,6 +71,10 @@ class SalesOrderModel {
       companyName: json['companyName'] as String?,
       contactPerson: json['contactPerson'] as String?,
       phoneNumber: json['phoneNumber'] as String?,
+      note:
+          json['note'] as String? ??
+          json['notes'] as String? ??
+          json['remarks'] as String?,
       shippingAddress: json['shippingAddress'] as String? ?? '',
       provinceCode: json['provinceCode'] as String?,
       provinceName: json['provinceName'] as String?,
@@ -108,6 +114,7 @@ class SalesOrderModel {
       'companyName': companyName ?? '',
       'contactPerson': contactPerson ?? '',
       'phoneNumber': phoneNumber ?? '',
+      'note': note ?? '',
       'shippingAddress': shippingAddress,
       'provinceCode': provinceCode ?? '',
       'cityCode': cityCode ?? '',

@@ -1,10 +1,11 @@
+import 'package:outbound/domain/params/update_sales_order_tracking_params.dart';
 import 'package:outbound/domain/repositories/sales_order_repository.dart';
 
 class UpdateSalesOrderTracking {
   final SalesOrderRepository repository;
   const UpdateSalesOrderTracking(this.repository);
 
-  Future<void> call(int id, String trackingNumber) {
-    return repository.updateTrackingNumber(id, trackingNumber);
+  Future<void> call(UpdateSalesOrderTrackingParams params) {
+    return repository.updateTrackingNumber(params);
   }
 }
