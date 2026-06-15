@@ -13,8 +13,12 @@ class PurchaseOrderApiDatasource {
   static const String _purchaseOrderPath = '/purchase-orders';
   static const String _inboundPath = '/inbound';
 
-  Future<List<PurchaseOrderModel>> getPurchaseOrders() async {
-    final response = await dio.get(_purchaseOrderPath);
+  Future<List<PurchaseOrderModel>> getPurchaseOrders(DateTime date) async {
+    final utcDate = date.isUtc ? date : date.toUtc();
+    final response = await dio.get(
+      _purchaseOrderPath,
+      queryParameters: {'date': utcDate.toIso8601String()},
+    );
     return (response.data as List)
         .map((e) => PurchaseOrderModel.fromJson(e as Map<String, dynamic>))
         .toList();

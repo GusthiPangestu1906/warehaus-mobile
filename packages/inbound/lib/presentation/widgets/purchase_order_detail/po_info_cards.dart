@@ -20,35 +20,61 @@ class PoInfoCards extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _InfoCard(
-          icon: Icons.event_available_outlined,
-          label: 'ETA',
-          value: etaLabel,
-          backgroundColor: WHColors.primary3,
-        ),
-        if (invoiceNumber != null) ...[
-          const SizedBox(height: 12),
-          _InfoCard(
-            icon: Icons.description_outlined,
-            label: 'Invoice Number',
-            value: invoiceNumber!,
-            backgroundColor: WHColors.secondary3,
-          ),
-        ],
-        const SizedBox(height: 12),
-        _InfoCard(
-          icon: Icons.storefront_outlined,
-          label: 'Supplier',
-          value: supplierName,
-          backgroundColor: WHColors.secondary3,
+        _InfoRow(
+          children: [
+            _InfoCard(
+              icon: Icons.event_available_outlined,
+              label: 'ETA',
+              value: etaLabel,
+              backgroundColor: WHColors.primary3,
+            ),
+            if (invoiceNumber != null)
+              _InfoCard(
+                icon: Icons.description_outlined,
+                label: 'Invoice Number',
+                value: invoiceNumber!,
+                backgroundColor: WHColors.secondary3,
+              ),
+          ],
         ),
         const SizedBox(height: 12),
-        _InfoCard(
-          icon: Icons.local_shipping_outlined,
-          label: 'Carrier',
-          value: carrier,
-          backgroundColor: WHColors.grey3,
+        _InfoRow(
+          children: [
+            _InfoCard(
+              icon: Icons.storefront_outlined,
+              label: 'Supplier',
+              value: supplierName,
+              backgroundColor: WHColors.secondary3,
+            ),
+            _InfoCard(
+              icon: Icons.local_shipping_outlined,
+              label: 'Carrier',
+              value: carrier,
+              backgroundColor: WHColors.grey3,
+            ),
+          ],
         ),
+      ],
+    );
+  }
+}
+
+class _InfoRow extends StatelessWidget {
+  const _InfoRow({required this.children});
+
+  final List<Widget> children;
+
+  @override
+  Widget build(BuildContext context) {
+    if (children.length == 1) {
+      return Row(children: [Expanded(child: children.first)]);
+    }
+
+    return Row(
+      children: [
+        Expanded(child: children[0]),
+        const SizedBox(width: 12),
+        Expanded(child: children[1]),
       ],
     );
   }
@@ -94,12 +120,19 @@ class _InfoCard extends StatelessWidget {
               children: [
                 Text(label, style: WHTypography.caption),
                 const SizedBox(height: 4),
-                Text(
-                  value,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: WHTypography.bodyText.copyWith(
-                    fontWeight: FontWeight.w700,
+                SizedBox(
+                  width: double.infinity,
+                  height: 20,
+                  child: FittedBox(
+                    fit: BoxFit.scaleDown,
+                    alignment: Alignment.centerLeft,
+                    child: Text(
+                      value,
+                      maxLines: 1,
+                      style: WHTypography.bodyText.copyWith(
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
                   ),
                 ),
               ],

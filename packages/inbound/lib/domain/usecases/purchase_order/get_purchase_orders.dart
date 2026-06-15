@@ -7,7 +7,9 @@ class GetPurchaseOrders {
   final PurchaseOrderRepository repository;
   GetPurchaseOrders(this.repository);
 
-  Future<Either<Failure, List<PurchaseOrder>>> call() async {
-    return await repository.getPurchaseOrders();
+  Future<Either<Failure, List<PurchaseOrder>>> call({DateTime? date}) async {
+    return await repository.getPurchaseOrders(
+      date?.toUtc() ?? DateTime.now().toUtc(),
+    );
   }
 }

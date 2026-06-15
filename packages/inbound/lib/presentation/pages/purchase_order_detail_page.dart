@@ -132,7 +132,13 @@ class _PurchaseOrderDetailPageState extends State<PurchaseOrderDetailPage> {
               }
 
               if (state is PurchaseOrderError) {
-                return Center(child: Text('Error: ${state.message}'));
+                return Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Align(
+                    alignment: Alignment.topCenter,
+                    child: WHError(message: state.message),
+                  ),
+                );
               }
 
               if (state is PurchaseOrderDetailLoaded) {

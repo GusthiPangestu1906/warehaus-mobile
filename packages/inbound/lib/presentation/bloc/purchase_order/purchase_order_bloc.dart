@@ -41,7 +41,7 @@ class PurchaseOrderBloc extends Bloc<PurchaseOrderEvent, PurchaseOrderState> {
   }) : super(PurchaseOrderInitial()) {
     on<GetPurchaseOrdersEvent>((event, emit) async {
       emit(PurchaseOrderLoading());
-      final result = await getPurchaseOrdersUsecase();
+      final result = await getPurchaseOrdersUsecase(date: event.date);
       result.fold(
         (failure) => emit(PurchaseOrderError(failure.message)),
         (purchaseOrders) => emit(PurchaseOrderLoaded(purchaseOrders)),

@@ -4,7 +4,10 @@ import 'package:inbound/domain/params/submit_qc_params.dart';
 
 abstract class PurchaseOrderEvent {}
 
-class GetPurchaseOrdersEvent extends PurchaseOrderEvent {}
+class GetPurchaseOrdersEvent extends PurchaseOrderEvent {
+  final DateTime? date;
+  GetPurchaseOrdersEvent({this.date});
+}
 
 class GetPurchaseOrderDetailEvent extends PurchaseOrderEvent {
   final int id;

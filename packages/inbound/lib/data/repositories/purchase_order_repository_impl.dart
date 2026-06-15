@@ -17,9 +17,11 @@ class PurchaseOrderRepositoryImpl extends PurchaseOrderRepository {
   PurchaseOrderRepositoryImpl(this.apiDatasource);
 
   @override
-  Future<Either<Failure, List<PurchaseOrderModel>>> getPurchaseOrders() async {
+  Future<Either<Failure, List<PurchaseOrderModel>>> getPurchaseOrders(
+    DateTime date,
+  ) async {
     try {
-      final response = await apiDatasource.getPurchaseOrders();
+      final response = await apiDatasource.getPurchaseOrders(date);
 
       return Right(response);
     } on DioException catch (e) {
@@ -171,6 +173,17 @@ class PurchaseOrderRepositoryImpl extends PurchaseOrderRepository {
         e.type == DioExceptionType.receiveTimeout ||
         e.type == DioExceptionType.connectionError) {
       return const NetworkFailure();
+    }
+
+    if (e.type == DioExceptionType.badResponse) {
+      final responseData = e.response?.data;
+      String errorMessage = 'Terjadi kesalahan validasi (400).';
+
+      if (responseData is Map<String, dynamic>) {
+        errorMessage = responseData['detail']?.toString() ?? errorMessage;
+      }
+
+      return BadRequestFailure(errorMessage);
     }
 
     return ServerFailure();

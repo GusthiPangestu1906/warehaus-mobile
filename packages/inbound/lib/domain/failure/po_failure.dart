@@ -18,3 +18,7 @@ class UnauthorizedFailure extends Failure {
     String message = 'Unauthorized access. Please log in again.',
   }) : super(message);
 }
+
+class BadRequestFailure extends Failure {
+  const BadRequestFailure(super.message);
+}

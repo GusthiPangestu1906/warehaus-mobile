@@ -27,12 +27,16 @@ class CreatePoParams {
     ),
   );
 
-  Map<String, dynamic> toJson() => {
-    "supplierName": supplierName,
-    "eta": eta.toIso8601String().split('T').first,
-    "carrier": carrier,
-    "items": List<dynamic>.from(items.map((x) => x.toJson())),
-  };
+  Map<String, dynamic> toJson() {
+    final utcEta = DateTime.utc(eta.year, eta.month, eta.day);
+
+    return {
+      "supplierName": supplierName,
+      "eta": utcEta.toIso8601String(),
+      "carrier": carrier,
+      "items": List<dynamic>.from(items.map((x) => x.toJson())),
+    };
+  }
 }
 
 class CreatePoItemParams {

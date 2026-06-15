@@ -143,10 +143,7 @@ class _CreatePurchaseOrderPageState extends State<CreatePurchaseOrderPage> {
                           if (productState is ProductError)
                             Padding(
                               padding: const EdgeInsets.only(bottom: 12),
-                              child: Text(
-                                'Failed to load products: ${productState.message}',
-                                style: const TextStyle(color: Colors.red),
-                              ),
+                              child: WHError(message: productState.message),
                             ),
                           ListView.builder(
                             shrinkWrap: true,

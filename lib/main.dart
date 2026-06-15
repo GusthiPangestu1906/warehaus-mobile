@@ -3,7 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:inbound/presentation/bloc/purchase_order/purchase_order_bloc.dart';
 import 'package:mobile/presentation/bloc/navigation_bloc.dart';
-import 'package:mobile/presentation/pages/main_page.dart';
+import 'package:mobile/presentation/pages/splash_page.dart';
 import 'package:product/presentation/bloc/product_bloc.dart';
 import 'package:zone/presentation/bloc/zone_bloc.dart';
 
@@ -39,7 +39,7 @@ class MyApp extends StatelessWidget {
           scaffoldBackgroundColor: Colors.white,
         ),
         navigatorObservers: [routeObserver],
-        home: const MainPage(),
+        home: const SplashPage(),
       ),
     );
   }
