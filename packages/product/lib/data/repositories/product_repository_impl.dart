@@ -1,8 +1,6 @@
 import 'package:product/data/datasources/product_api_datasource.dart';
 import 'package:product/data/models/product_model.dart';
-import 'package:product/data/models/stock_location_input_model.dart';
 import 'package:product/domain/entities/product.dart';
-import 'package:product/domain/entities/stock_location_input.dart';
 import 'package:product/domain/repositories/product_repository.dart';
 
 class ProductRepositoryImpl implements ProductRepository {
@@ -57,45 +55,45 @@ class ProductRepositoryImpl implements ProductRepository {
     await apiDatasource.deleteProduct(id);
   }
 
-  @override
-  Future<void> addStockLocation(StockLocationInput input) async {
-    final model = input is StockLocationInputModel
-        ? input
-        : StockLocationInputModel(
-            productId: input.productId,
-            shelfId: input.shelfId,
-            quantity: input.quantity,
-          );
-    await apiDatasource.addStockLocation(model);
-  }
+  // @override
+  // Future<void> addStockLocation(StockLocationInput input) async {
+  //   final model = input is StockLocationInputModel
+  //       ? input
+  //       : StockLocationInputModel(
+  //           productId: input.productId,
+  //           shelfId: input.shelfId,
+  //           quantity: input.quantity,
+  //         );
+  //   await apiDatasource.addStockLocation(model);
+  // }
 
-  @override
-  Future<void> updateStockLocation(StockLocationInput input) async {
-    final model = input is StockLocationInputModel
-        ? input
-        : StockLocationInputModel(
-            productId: input.productId,
-            shelfId: input.shelfId,
-            quantity: input.quantity,
-          );
-    await apiDatasource.updateStockLocation(model);
-  }
+  // @override
+  // Future<void> updateStockLocation(StockLocationInput input) async {
+  //   final model = input is StockLocationInputModel
+  //       ? input
+  //       : StockLocationInputModel(
+  //           productId: input.productId,
+  //           shelfId: input.shelfId,
+  //           quantity: input.quantity,
+  //         );
+  //   await apiDatasource.updateStockLocation(model);
+  // }
 
-  @override
-  Future<void> moveStockLocation(MoveStockInput input) async {
-    final model = input is MoveStockInputModel
-        ? input
-        : MoveStockInputModel(
-            productId: input.productId,
-            fromShelfId: input.fromShelfId,
-            toShelfId: input.toShelfId,
-            quantity: input.quantity,
-          );
-    await apiDatasource.moveStockLocation(model);
-  }
+  // @override
+  // Future<void> moveStockLocation(MoveStockInput input) async {
+  //   final model = input is MoveStockInputModel
+  //       ? input
+  //       : MoveStockInputModel(
+  //           productId: input.productId,
+  //           fromShelfId: input.fromShelfId,
+  //           toShelfId: input.toShelfId,
+  //           quantity: input.quantity,
+  //         );
+  //   await apiDatasource.moveStockLocation(model);
+  // }
 
-  @override
-  Future<void> deleteProductStockLocation({required String productId, required int shelfId}) async {
-    await apiDatasource.deleteProductStockLocation(productId: productId, shelfId: shelfId);
-  }
+  // @override
+  // Future<void> deleteProductStockLocation({required String productId, required int shelfId}) async {
+  //   await apiDatasource.deleteProductStockLocation(productId: productId, shelfId: shelfId);
+  // }
 }

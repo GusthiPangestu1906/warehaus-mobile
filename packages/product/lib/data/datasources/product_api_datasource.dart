@@ -1,6 +1,5 @@
 import 'package:dio/dio.dart';
 import 'package:product/data/models/product_model.dart';
-import 'package:product/data/models/stock_location_input_model.dart';
 
 class ProductApiDatasource {
   final Dio dio;
@@ -31,27 +30,5 @@ class ProductApiDatasource {
 
   Future<void> deleteProduct(String id) async {
     await dio.delete('$_productPath/$id');
-  }
-
-  Future<void> addStockLocation(StockLocationInputModel input) async {
-    await dio.post(_stockLocationsPath, data: input.toJson());
-  }
-
-  Future<void> updateStockLocation(StockLocationInputModel input) async {
-    await dio.put(_stockLocationsPath, data: input.toJson());
-  }
-
-  Future<void> moveStockLocation(MoveStockInputModel input) async {
-    await dio.post('$_stockLocationsPath/move', data: input.toJson());
-  }
-
-  Future<void> deleteProductStockLocation({
-    required String productId,
-    required int shelfId,
-  }) async {
-    await dio.delete(
-      _stockLocationsPath,
-      data: {'productId': productId, 'shelfId': shelfId},
-    );
   }
 }

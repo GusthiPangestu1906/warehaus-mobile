@@ -17,21 +17,39 @@ import 'package:inbound/domain/usecases/purchase_order/get_purchase_orders.dart'
 import 'package:inbound/domain/usecases/purchase_order/invoice_update.dart';
 import 'package:inbound/domain/usecases/purchase_order/update_purchase_order.dart';
 import 'package:inbound/presentation/bloc/purchase_order/purchase_order_bloc.dart';
+import 'package:outbound/data/datasources/outbound_product_api_datasource.dart';
+import 'package:outbound/data/datasources/region_api_datasource.dart';
+import 'package:outbound/data/datasources/sales_order_api_datasource.dart';
+import 'package:outbound/data/repositories/sales_order_repository_impl.dart';
+import 'package:outbound/domain/usecases/create_sales_order.dart';
+import 'package:outbound/domain/usecases/delete_sales_order.dart';
+import 'package:outbound/domain/usecases/get_sales_orders.dart';
+import 'package:outbound/domain/usecases/update_sales_order.dart';
+import 'package:outbound/domain/usecases/update_sales_order_tracking.dart';
+import 'package:outbound/presentation/bloc/sales_order_bloc.dart';
+import 'package:outbound/presentation/bloc/sales_order_form_cubit.dart';
 import 'package:product/data/datasources/product_api_datasource.dart';
 import 'package:product/data/repositories/product_repository_impl.dart';
-import 'package:product/domain/usecases/add_stock_location.dart';
 import 'package:product/domain/usecases/create_product.dart';
 import 'package:product/domain/usecases/delete_product.dart';
 import 'package:product/domain/usecases/get_product_detail.dart';
 import 'package:product/domain/usecases/get_products.dart';
-import 'package:product/domain/usecases/move_stock_location.dart';
 import 'package:product/domain/usecases/update_product.dart';
+import 'package:product/domain/usecases/add_stock_location.dart';
 import 'package:product/domain/usecases/update_stock_location.dart';
+import 'package:product/domain/usecases/move_stock_location.dart';
+import 'package:product/domain/usecases/delete_product_stock_location.dart';
 import 'package:product/presentation/bloc/product_bloc.dart';
-import 'package:zone/domain/usecases/get_shelf_details.dart';
+import 'package:zone/data/datasources/zone_api_datasource.dart';
+import 'package:zone/data/repositories/zone_repository_impl.dart';
+import 'package:zone/domain/usecases/create_zone.dart';
+import 'package:zone/domain/usecases/delete_zone.dart';
 import 'package:zone/domain/usecases/get_zone_by_aisle.dart';
+import 'package:zone/domain/usecases/get_zone_details.dart';
+import 'package:zone/domain/usecases/get_zones.dart';
+import 'package:zone/domain/usecases/update_zone.dart';
+import 'package:zone/domain/usecases/get_shelf_details.dart';
 import 'package:zone/presentation/bloc/zone_bloc.dart';
-import 'package:zone/zone.dart';
 
 final getIt = GetIt.instance;
 
@@ -67,12 +85,12 @@ Future<void> setupInjector() async {
   getIt.registerLazySingleton(
     () => GetZoneDetails(getIt<ZoneRepositoryImpl>()),
   );
-  getIt.registerLazySingleton(
-    () => GetShelfDetails(getIt<ZoneRepositoryImpl>()),
-  );
   getIt.registerLazySingleton(() => CreateZone(getIt<ZoneRepositoryImpl>()));
   getIt.registerLazySingleton(() => UpdateZone(getIt<ZoneRepositoryImpl>()));
   getIt.registerLazySingleton(() => DeleteZone(getIt<ZoneRepositoryImpl>()));
+  getIt.registerLazySingleton(
+    () => GetShelfDetails(getIt<ZoneRepositoryImpl>()),
+  );
 
   // BLoC (Menggunakan registerFactory karena state BLoC harus di-recreate setiap pindah page)
   getIt.registerFactory(
@@ -114,6 +132,7 @@ Future<void> setupInjector() async {
   getIt.registerLazySingleton(
     () => DeleteProduct(getIt<ProductRepositoryImpl>()),
   );
+  // Stock location use cases — sekarang sudah ada di backend
   getIt.registerLazySingleton(
     () => AddStockLocation(getIt<ProductRepositoryImpl>()),
   );
@@ -122,6 +141,9 @@ Future<void> setupInjector() async {
   );
   getIt.registerLazySingleton(
     () => MoveStockLocation(getIt<ProductRepositoryImpl>()),
+  );
+  getIt.registerLazySingleton(
+    () => DeleteProductStockLocation(getIt<ProductRepositoryImpl>()),
   );
 
   // BLoC
@@ -185,6 +207,66 @@ Future<void> setupInjector() async {
   );
   getIt.registerLazySingleton(
     () => GetCarriers(getIt<PurchaseOrderRepositoryImpl>()),
+
+  // ── Outbound ──────────────────────────────────────────────────
+  getIt.registerLazySingleton<SalesOrderApiDatasource>(
+    () => SalesOrderApiDatasource(getIt<Dio>()),
+  );
+  getIt.registerLazySingleton<RegionApiDatasource>(
+    () => RegionApiDatasource(getIt<Dio>()),
+  );
+  getIt.registerLazySingleton<OutboundProductApiDatasource>(
+    () => OutboundProductApiDatasource(getIt<Dio>()),
+  );
+
+  getIt.registerLazySingleton<SalesOrderRepositoryImpl>(
+    () => SalesOrderRepositoryImpl(getIt<SalesOrderApiDatasource>()),
+  );
+
+  getIt.registerLazySingleton(
+    () => GetSalesOrders(getIt<SalesOrderRepositoryImpl>()),
+  );
+  getIt.registerLazySingleton(
+    () => CreateSalesOrder(getIt<SalesOrderRepositoryImpl>()),
+  );
+  getIt.registerLazySingleton(
+    () => DeleteSalesOrder(getIt<SalesOrderRepositoryImpl>()),
+  );
+  getIt.registerLazySingleton(
+    () => UpdateSalesOrder(getIt<SalesOrderRepositoryImpl>()),
+  );
+  getIt.registerLazySingleton(
+      () => UpdateSalesOrderTracking(getIt<SalesOrderRepositoryImpl>()),
+  );
+
+  getIt.registerFactory(
+    () => SalesOrderBloc(
+      getSalesOrdersUsecase: getIt<GetSalesOrders>(),
+      createSalesOrderUsecase: getIt<CreateSalesOrder>(),
+      deleteSalesOrderUsecase: getIt<DeleteSalesOrder>(),
+      updateSalesOrderUsecase: getIt<UpdateSalesOrder>(),
+      updateSalesOrderTrackingUsecase: getIt<UpdateSalesOrderTracking>(),
+    ),
+  );
+
+  getIt.registerFactory(
+    () => SalesOrderFormCubit(
+      productApi: getIt<OutboundProductApiDatasource>(),
+      regionApi: getIt<RegionApiDatasource>(),
+    ),
+  );
+
+  // ── Blocs ───────────────────────────────────────────────────────
+  getIt.registerFactory(
+    () => ZoneBloc(
+      getZonesUsecase: getIt<GetZones>(),
+      getZoneByAisleUsecase: getIt<GetZoneByAisle>(),
+      getZoneDetailsUsecase: getIt<GetZoneDetails>(),
+      createZoneUsecase: getIt<CreateZone>(),
+      updateZoneUsecase: getIt<UpdateZone>(),
+      deleteZoneUsecase: getIt<DeleteZone>(),
+      getShelfDetailsUsecase: getIt<GetShelfDetails>(),
+    ),
   );
 
   // BLoC

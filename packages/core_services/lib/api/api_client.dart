@@ -7,13 +7,16 @@ class ApiClient {
   late Dio dio;
 
   ApiClient() {
-    final configuredBaseUrl = dotenv.get('API_URL');
+    final configuredBaseUrl = dotenv.get('API_URL').trim();
     final baseUrl = _resolveBaseUrl(configuredBaseUrl);
+    debugPrint('[ApiClient] baseUrl=$baseUrl');
 
     dio = Dio(
       BaseOptions(
         baseUrl: baseUrl,
         connectTimeout: const Duration(seconds: 90),
+        receiveTimeout: const Duration(seconds: 90),
+        headers: const {'ngrok-skip-browser-warning': 'true'},
       ),
     );
 

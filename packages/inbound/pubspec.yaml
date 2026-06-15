@@ -5,7 +5,7 @@ resolution: workspace
 homepage:
 
 environment:
-  sdk: ^3.11.4
+  sdk: ^3.8.1
   flutter: ">=1.17.0"
 
 dependencies:
@@ -15,6 +15,9 @@ dependencies:
     path: ../core_ui
   dio: ^5.0.0
   flutter_bloc: ^9.1.1
+  get_it: ^9.2.1
+  outbound:
+    path: ../outbound
   product:
     path: ../product
 

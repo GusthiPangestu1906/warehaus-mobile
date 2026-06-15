@@ -1,16 +1,11 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:product/data/models/stock_location_input_model.dart';
 import 'package:product/domain/entities/product.dart';
-import 'package:product/domain/entities/stock_location_input.dart';
-import 'package:product/domain/usecases/add_stock_location.dart';
 import 'package:product/domain/usecases/create_product.dart';
 import 'package:product/domain/usecases/delete_product.dart';
 import 'package:product/domain/usecases/get_product_detail.dart';
 import 'package:product/domain/usecases/get_products.dart';
-import 'package:product/domain/usecases/move_stock_location.dart';
 import 'package:product/domain/usecases/update_product.dart';
-import 'package:product/domain/usecases/update_stock_location.dart';
 import 'package:product/presentation/bloc/product_event.dart';
 import 'package:product/presentation/bloc/product_state.dart';
 
@@ -20,9 +15,9 @@ class ProductBloc extends Bloc<ProductEvent, ProductState> {
   final CreateProduct createProductUsecase;
   final UpdateProduct updateProductUsecase;
   final DeleteProduct deleteProductUsecase;
-  final AddStockLocation addStockLocationUsecase;
-  final UpdateStockLocation updateStockLocationUsecase;
-  final MoveStockLocation moveStockLocationUsecase;
+  // final AddStockLocation addStockLocationUsecase; // TODO: /v1/product/stock-locations belum ada di backend
+  // final UpdateStockLocation updateStockLocationUsecase;
+  // final MoveStockLocation moveStockLocationUsecase;
 
   ProductBloc({
     required this.getProductsUsecase,
@@ -30,9 +25,9 @@ class ProductBloc extends Bloc<ProductEvent, ProductState> {
     required this.createProductUsecase,
     required this.updateProductUsecase,
     required this.deleteProductUsecase,
-    required this.addStockLocationUsecase,
-    required this.updateStockLocationUsecase,
-    required this.moveStockLocationUsecase,
+    // required this.addStockLocationUsecase, // TODO: /v1/product/stock-locations belum ada di backend
+    // required this.updateStockLocationUsecase,
+    // required this.moveStockLocationUsecase,
   }) : super(ProductInitial()) {
     on<GetProductsEvent>((event, emit) async {
       debugPrint('[ProductBloc] GetProductsEvent');
@@ -95,70 +90,72 @@ class ProductBloc extends Bloc<ProductEvent, ProductState> {
         emit(ProductError(e.toString()));
       }
     });
-    on<AddStockLocationEvent>((event, emit) async {
-      debugPrint(
-        '[ProductBloc] AddStockLocationEvent: '
-        '${event.productId}/${event.shelfId} x ${event.quantity}',
-      );
-      emit(ProductLoading());
-      try {
-        await addStockLocationUsecase(
-          StockLocationInput(
-            productId: event.productId,
-            shelfId: event.shelfId,
-            quantity: event.quantity,
-          ),
-        );
-        debugPrint('[ProductBloc] AddStockLocationEvent success');
-        add(GetProductDetailsEvent(event.productId));
-      } catch (e) {
-        debugPrint('[ProductBloc] AddStockLocationEvent error: $e');
-        emit(ProductError(e.toString()));
-      }
-    });
-    on<UpdateStockLocationEvent>((event, emit) async {
-      debugPrint(
-        '[ProductBloc] UpdateStockLocationEvent: '
-        '${event.productId}/${event.shelfId} x ${event.quantity}',
-      );
-      emit(ProductLoading());
-      try {
-        await updateStockLocationUsecase(
-          StockLocationInput(
-            productId: event.productId,
-            shelfId: event.shelfId,
-            quantity: event.quantity,
-          ),
-        );
-        debugPrint('[ProductBloc] UpdateStockLocationEvent success');
-        add(GetProductDetailsEvent(event.productId));
-      } catch (e) {
-        debugPrint('[ProductBloc] UpdateStockLocationEvent error: $e');
-        emit(ProductError(e.toString()));
-      }
-    });
-    on<MoveStockLocationEvent>((event, emit) async {
-      debugPrint(
-        '[ProductBloc] MoveStockLocationEvent: '
-        '${event.productId} from ${event.fromShelfId} to ${event.toShelfId} x ${event.quantity}',
-      );
-      emit(ProductLoading());
-      try {
-        await moveStockLocationUsecase(
-          MoveStockInput(
-            productId: event.productId,
-            fromShelfId: event.fromShelfId,
-            toShelfId: event.toShelfId,
-            quantity: event.quantity,
-          ),
-        );
-        debugPrint('[ProductBloc] MoveStockLocationEvent success');
-        add(GetProductDetailsEvent(event.productId));
-      } catch (e) {
-        debugPrint('[ProductBloc] MoveStockLocationEvent error: $e');
-        emit(ProductError(e.toString()));
-      }
-    });
+
+    // TODO: /v1/product/stock-locations belum ada di backend
+    // on<AddStockLocationEvent>((event, emit) async {
+    //   debugPrint(
+    //     '[ProductBloc] AddStockLocationEvent: '
+    //     '${event.productId}/${event.shelfId} x ${event.quantity}',
+    //   );
+    //   emit(ProductLoading());
+    //   try {
+    //     await addStockLocationUsecase(
+    //       StockLocationInput(
+    //         productId: event.productId,
+    //         shelfId: event.shelfId,
+    //         quantity: event.quantity,
+    //       ),
+    //     );
+    //     debugPrint('[ProductBloc] AddStockLocationEvent success');
+    //     add(GetProductDetailsEvent(event.productId));
+    //   } catch (e) {
+    //     debugPrint('[ProductBloc] AddStockLocationEvent error: $e');
+    //     emit(ProductError(e.toString()));
+    //   }
+    // });
+    // on<UpdateStockLocationEvent>((event, emit) async {
+    //   debugPrint(
+    //     '[ProductBloc] UpdateStockLocationEvent: '
+    //     '${event.productId}/${event.shelfId} x ${event.quantity}',
+    //   );
+    //   emit(ProductLoading());
+    //   try {
+    //     await updateStockLocationUsecase(
+    //       StockLocationInput(
+    //         productId: event.productId,
+    //         shelfId: event.shelfId,
+    //         quantity: event.quantity,
+    //       ),
+    //     );
+    //     debugPrint('[ProductBloc] UpdateStockLocationEvent success');
+    //     add(GetProductDetailsEvent(event.productId));
+    //   } catch (e) {
+    //     debugPrint('[ProductBloc] UpdateStockLocationEvent error: $e');
+    //     emit(ProductError(e.toString()));
+    //   }
+    // });
+    // on<MoveStockLocationEvent>((event, emit) async {
+    //   debugPrint(
+    //     '[ProductBloc] MoveStockLocationEvent: '
+    //     '${event.productId} from ${event.fromShelfId} to ${event.toShelfId} x ${event.quantity}',
+    //   );
+    //   emit(ProductLoading());
+    //   try {
+    //     await moveStockLocationUsecase(
+    //       MoveStockInput(
+    //         productId: event.productId,
+    //         fromShelfId: event.fromShelfId,
+    //         toShelfId: event.toShelfId,
+    //         quantity: event.quantity,
+    //       ),
+    //     );
+    //     debugPrint('[ProductBloc] MoveStockLocationEvent success');
+    //     add(GetProductDetailsEvent(event.productId));
+    //   } catch (e) {
+    //     debugPrint('[ProductBloc] MoveStockLocationEvent error: $e');
+    //     emit(ProductError(e.toString()));
+    //   }
+    // });
   }
 
   Product _productFromEvent(ProductEvent event) {

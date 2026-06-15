@@ -5,7 +5,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:zone/domain/entities/zone.dart';
 import 'package:zone/domain/usecases/create_zone.dart';
 import 'package:zone/domain/usecases/delete_zone.dart';
-import 'package:zone/domain/usecases/get_shelf_details.dart';
+// import 'package:zone/domain/usecases/get_shelf_details.dart'; // TODO: /v1/Zone/shelves/{shelfId} belum ada di backend
 import 'package:zone/domain/usecases/get_zone_by_aisle.dart';
 import 'package:zone/domain/usecases/get_zone_details.dart';
 import 'package:zone/domain/usecases/get_zones.dart';
@@ -20,7 +20,7 @@ class ZoneBloc extends Bloc<ZoneEvent, ZoneState> {
   final CreateZone createZoneUsecase;
   final UpdateZone updateZoneUsecase;
   final DeleteZone deleteZoneUsecase;
-  final GetShelfDetails getShelfDetailsUsecase;
+  // final GetShelfDetails getShelfDetailsUsecase; // TODO: /v1/Zone/shelves/{shelfId} belum ada di backend
 
   ZoneBloc({
     required this.getZonesUsecase,
@@ -29,7 +29,7 @@ class ZoneBloc extends Bloc<ZoneEvent, ZoneState> {
     required this.updateZoneUsecase,
     required this.deleteZoneUsecase,
     required this.getZoneDetailsUsecase,
-    required this.getShelfDetailsUsecase,
+    // required this.getShelfDetailsUsecase, // TODO: /v1/Zone/shelves/{shelfId} belum ada di backend
   }) : super(ZoneInitial()) {
     on<GetZonesEvent>((event, emit) async {
       debugPrint('[ZoneBloc] GetZonesEvent');
@@ -70,22 +70,25 @@ class ZoneBloc extends Bloc<ZoneEvent, ZoneState> {
         emit(ZoneError(_extractErrorMessage(e)));
       }
     });
-    on<GetShelfDetailsEvent>((event, emit) async {
-      debugPrint('[ZoneBloc] GetShelfDetailsEvent: ${event.shelfId}');
-      emit(ZoneLoading());
-      try {
-        final shelfDetail = await getShelfDetailsUsecase(event.shelfId);
-        debugPrint(
-          '[ZoneBloc] GetShelfDetailsEvent success: ${shelfDetail.shelfCode}',
-        );
-        emit(
-          ShelfDetailLoaded(shelfId: event.shelfId, shelfDetail: shelfDetail),
-        );
-      } catch (e) {
-        debugPrint('[ZoneBloc] GetShelfDetailsEvent error: $e');
-        emit(ZoneError(_extractErrorMessage(e)));
-      }
-    });
+
+    // TODO: /v1/Zone/shelves/{shelfId} belum ada di backend
+    // on<GetShelfDetailsEvent>((event, emit) async {
+    //   debugPrint('[ZoneBloc] GetShelfDetailsEvent: ${event.shelfId}');
+    //   emit(ZoneLoading());
+    //   try {
+    //     final shelfDetail = await getShelfDetailsUsecase(event.shelfId);
+    //     debugPrint(
+    //       '[ZoneBloc] GetShelfDetailsEvent success: ${shelfDetail.shelfCode}',
+    //     );
+    //     emit(
+    //       ShelfDetailLoaded(shelfId: event.shelfId, shelfDetail: shelfDetail),
+    //     );
+    //   } catch (e) {
+    //     debugPrint('[ZoneBloc] GetShelfDetailsEvent error: $e');
+    //     emit(ZoneError(_extractErrorMessage(e)));
+    //   }
+    // });
+
     on<CreateZoneEvent>((event, emit) async {
       debugPrint('[ZoneBloc] CreateZoneEvent');
       emit(ZoneLoading());
@@ -104,8 +107,6 @@ class ZoneBloc extends Bloc<ZoneEvent, ZoneState> {
         await createZoneUsecase(zone);
         final zones = await getZonesUsecase();
         debugPrint('[ZoneBloc] CreateZoneEvent success');
-        // Emit ZoneOperationSuccess agar listener (CreateZonePage) bisa pop,
-        // lalu emit ZoneLoaded agar ZoneListPage punya data terbaru.
         emit(ZoneOperationSuccess(zones));
       } catch (e) {
         debugPrint('[ZoneBloc] CreateZoneEvent error: $e');
@@ -124,8 +125,6 @@ class ZoneBloc extends Bloc<ZoneEvent, ZoneState> {
         );
         final zones = await getZonesUsecase();
         debugPrint('[ZoneBloc] UpdateZoneEvent success');
-        // Emit ZoneOperationSuccess lalu ZoneLoaded agar list ter-refresh
-        // tanpa race condition saat dialog/page sedang di-dispose.
         emit(ZoneOperationSuccess(zones));
         emit(ZoneLoaded(zones));
       } catch (e) {
@@ -151,7 +150,6 @@ class ZoneBloc extends Bloc<ZoneEvent, ZoneState> {
 }
 
 String _extractErrorMessage(Object e) {
-  // DioException membungkus ApiException di field .error
   if (e is DioException) {
     if (e.error is ApiException) {
       return (e.error as ApiException).message;

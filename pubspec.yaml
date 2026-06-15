@@ -9,6 +9,7 @@ workspace:
   - packages/zone
   - packages/product
   - packages/dashboard
+  - packages/outbound
   - packages/inbound
 
 environment:
@@ -31,6 +32,8 @@ dependencies:
     path: packages/product
   dashboard:
     path: packages/dashboard
+  outbound:
+    path: ./packages/outbound
   inbound:
     path: packages/inbound
   flutter_dotenv: ^6.0.1

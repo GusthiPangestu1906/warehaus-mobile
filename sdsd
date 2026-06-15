@@ -1,0 +1,15 @@
+  feature/product-management[m
+  feature/releasev1.0.0[m
+  fix/hah[m
+* [32mhotfix/zone_bug[m
+  main[m
+  [31mremotes/origin/HEAD[m -> origin/main
+  [31mremotes/origin/feature/core-components[m
+  [31mremotes/origin/feature/dashboard[m
+  [31mremotes/origin/feature/inbound[m
+  [31mremotes/origin/feature/product-management[m
+  [31mremotes/origin/feature/releasev1.0.0[m
+  [31mremotes/origin/feature/zone-management[m
+  [31mremotes/origin/hotfix/zone_bug[m
+  [31mremotes/origin/main[m
+  [31mremotes/origin/revert-2-feature/zone-management[m
