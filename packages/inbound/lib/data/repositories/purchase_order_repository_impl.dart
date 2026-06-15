@@ -18,7 +18,7 @@ class PurchaseOrderRepositoryImpl extends PurchaseOrderRepository {
 
   @override
   Future<Either<Failure, List<PurchaseOrderModel>>> getPurchaseOrders(
-    DateTime date,
+    DateTime? date,
   ) async {
     try {
       final response = await apiDatasource.getPurchaseOrders(date);
@@ -51,6 +51,21 @@ class PurchaseOrderRepositoryImpl extends PurchaseOrderRepository {
   ) async {
     try {
       await apiDatasource.createPurchaseOrder(params.toJson());
+      return Right(null);
+    } on DioException catch (e) {
+      return Left(_failureFromDio(e));
+    } catch (e) {
+      return Left(ServerFailure());
+    }
+  }
+
+  @override
+  Future<Either<Failure, void>> updatePurchaseOrder(
+    int id,
+    CreatePoParams params,
+  ) async {
+    try {
+      await apiDatasource.updatePurchaseOrder(id, params.toJson());
       return Right(null);
     } on DioException catch (e) {
       return Left(_failureFromDio(e));

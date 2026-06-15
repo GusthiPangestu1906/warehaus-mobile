@@ -9,9 +9,15 @@ import 'package:inbound/domain/params/submit_pa_params.dart';
 import 'package:inbound/domain/params/submit_qc_params.dart';
 
 abstract class PurchaseOrderRepository {
-  Future<Either<Failure, List<PurchaseOrder>>> getPurchaseOrders(DateTime date);
+  Future<Either<Failure, List<PurchaseOrder>>> getPurchaseOrders(
+    DateTime? date,
+  );
   Future<Either<Failure, PurchaseOrder>> getPurchaseOrderDetail(int id);
   Future<Either<Failure, void>> createPurchaseOrder(CreatePoParams params);
+  Future<Either<Failure, void>> updatePurchaseOrder(
+    int id,
+    CreatePoParams params,
+  );
   Future<Either<Failure, void>> invoiceUpdate(int id, String invoiceNumber);
   Future<Either<Failure, void>> deletePurchaseOrder(int id);
   Future<Either<Failure, String>> downloadPurchaseOrderPdf(

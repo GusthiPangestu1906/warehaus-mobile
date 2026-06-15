@@ -11,6 +11,9 @@ class PurchaseOrder {
   final String carrier;
   final int totalQtyExpected;
   final int totalQtyReceived;
+  final int totalItemCount;
+  final int qcCompletedCount;
+  final int putAwayCompletedCount;
   final DateTime createdAt;
   final List<PoItem> items;
 
@@ -25,6 +28,9 @@ class PurchaseOrder {
     required this.carrier,
     required this.totalQtyExpected,
     required this.totalQtyReceived,
+    required this.totalItemCount,
+    required this.qcCompletedCount,
+    required this.putAwayCompletedCount,
     required this.createdAt,
     required this.items,
   });
@@ -40,6 +46,9 @@ class PurchaseOrder {
     String? carrier,
     int? totalQtyExpected,
     int? totalQtyReceived,
+    int? totalItemCount,
+    int? qcCompletedCount,
+    int? putAwayCompletedCount,
     DateTime? createdAt,
     List<PoItem>? items,
   }) {
@@ -54,6 +63,10 @@ class PurchaseOrder {
       carrier: carrier ?? this.carrier,
       totalQtyExpected: totalQtyExpected ?? this.totalQtyExpected,
       totalQtyReceived: totalQtyReceived ?? this.totalQtyReceived,
+      totalItemCount: totalItemCount ?? this.totalItemCount,
+      qcCompletedCount: qcCompletedCount ?? this.qcCompletedCount,
+      putAwayCompletedCount:
+          putAwayCompletedCount ?? this.putAwayCompletedCount,
       createdAt: createdAt ?? this.createdAt,
       items: items ?? this.items,
     );

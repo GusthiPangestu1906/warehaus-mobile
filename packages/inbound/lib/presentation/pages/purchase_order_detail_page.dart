@@ -6,6 +6,7 @@ import 'package:inbound/domain/entities/purchase_order.dart';
 import 'package:inbound/presentation/bloc/purchase_order/purchase_order_bloc.dart';
 import 'package:inbound/presentation/bloc/purchase_order/purchase_order_event.dart';
 import 'package:inbound/presentation/bloc/purchase_order/purchase_order_state.dart';
+import 'package:inbound/presentation/pages/create_purchase_order_page.dart';
 import 'package:inbound/presentation/pages/put_away_page.dart';
 import 'package:inbound/presentation/pages/quality_control_page.dart';
 import 'package:inbound/presentation/widgets/purchase_order_detail/po_detail_header.dart';
@@ -88,6 +89,21 @@ class _PurchaseOrderDetailPageState extends State<PurchaseOrderDetailPage> {
     ScaffoldMessenger.of(
       context,
     ).showSnackBar(SnackBar(content: Text(message)));
+  }
+
+  Future<void> _openEditForm(PurchaseOrder purchaseOrder) async {
+    final updated = await Navigator.of(context).push<bool>(
+      MaterialPageRoute(
+        builder: (_) =>
+            CreatePurchaseOrderPage(initialPurchaseOrder: purchaseOrder),
+      ),
+    );
+
+    if (!mounted || updated != true) return;
+
+    context.read<PurchaseOrderBloc>().add(
+      GetPurchaseOrderDetailEvent(purchaseOrder.id),
+    );
   }
 
   void _downloadPurchaseOrderPdf(PurchaseOrder purchaseOrder) {
@@ -184,7 +200,7 @@ class _PurchaseOrderDetailPageState extends State<PurchaseOrderDetailPage> {
           carrier: purchaseOrder.carrier,
           showActions: isQueued && !_isInvoiceInputVisible,
           onDelete: () => _showDeleteModal(purchaseOrder),
-          onEdit: () => _showSnackBar('Edit purchase order.'),
+          onEdit: () => _openEditForm(purchaseOrder),
         ),
         const SizedBox(height: 12),
         if (_isInvoiceInputVisible) ...[

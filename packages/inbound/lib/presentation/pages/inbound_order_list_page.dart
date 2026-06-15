@@ -310,6 +310,13 @@ class _InboundOrderListPageState extends State<InboundOrderListPage>
                               status: _mapOrderStatus(order.status),
                               createdAt: formattedDate,
                               carrierOrCourier: order.carrier,
+                              processStage: order.isQcCompleted == true
+                                  ? OrderProcessStage.puttingAway
+                                  : OrderProcessStage.qc,
+                              processValue: order.isQcCompleted == true
+                                  ? order.putAwayCompletedCount
+                                  : order.qcCompletedCount,
+                              processTotal: order.totalItemCount,
                             ),
                             onTap: () {
                               Navigator.of(context)

@@ -10,6 +10,7 @@ import 'package:inbound/domain/usecases/purchase_order/get_carriers.dart';
 import 'package:inbound/domain/usecases/purchase_order/get_purchase_order_detail.dart';
 import 'package:inbound/domain/usecases/purchase_order/get_purchase_orders.dart';
 import 'package:inbound/domain/usecases/purchase_order/invoice_update.dart';
+import 'package:inbound/domain/usecases/purchase_order/update_purchase_order.dart';
 import 'package:inbound/presentation/bloc/purchase_order/purchase_order_event.dart';
 import 'package:inbound/presentation/bloc/purchase_order/purchase_order_state.dart';
 
@@ -17,6 +18,7 @@ class PurchaseOrderBloc extends Bloc<PurchaseOrderEvent, PurchaseOrderState> {
   final CreatePurchaseOrder createPurchaseOrderUsecase;
   final GetPurchaseOrderDetail getPurchaseOrderDetailUsecase;
   final GetPurchaseOrders getPurchaseOrdersUsecase;
+  final UpdatePurchaseOrder updatePurchaseOrderUsecase;
   final InvoiceUpdate invoiceUpdateUsecase;
   final DeletePurchaseOrder deletePurchaseOrderUsecase;
   final DownloadPurchaseOrderPdf downloadPurchaseOrderPdfUsecase;
@@ -30,6 +32,7 @@ class PurchaseOrderBloc extends Bloc<PurchaseOrderEvent, PurchaseOrderState> {
     required this.createPurchaseOrderUsecase,
     required this.getPurchaseOrderDetailUsecase,
     required this.getPurchaseOrdersUsecase,
+    required this.updatePurchaseOrderUsecase,
     required this.invoiceUpdateUsecase,
     required this.deletePurchaseOrderUsecase,
     required this.downloadPurchaseOrderPdfUsecase,
@@ -69,6 +72,14 @@ class PurchaseOrderBloc extends Bloc<PurchaseOrderEvent, PurchaseOrderState> {
       result.fold(
         (failure) => emit(PurchaseOrderError(failure.message)),
         (_) => emit(CreatePurchaseOrderSuccess()),
+      );
+    });
+    on<UpdatePurchaseOrderEvent>((event, emit) async {
+      emit(PurchaseOrderLoading());
+      final result = await updatePurchaseOrderUsecase(event.id, event.params);
+      result.fold(
+        (failure) => emit(PurchaseOrderError(failure.message)),
+        (_) => emit(UpdatePurchaseOrderSuccess()),
       );
     });
     on<DeletePurchaseOrderEvent>((event, emit) async {

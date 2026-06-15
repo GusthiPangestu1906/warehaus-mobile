@@ -1,20 +1,12 @@
 import 'package:core_ui/core_ui.dart';
 import 'package:flutter/material.dart';
 
-// ─────────────────────────────────────────────────────────────────
-// ENUMS & MODELS
-// ─────────────────────────────────────────────────────────────────
-
 enum OrderType { inbound, outbound }
 
 enum OrderStatus { queued, active, completed }
 
-/// Tahap proses aktif.
-/// Inbound  : qc, puttingAway
-/// Outbound : pickingUp, packing
 enum OrderProcessStage { qc, puttingAway, pickingUp, packing }
 
-/// Data model untuk OrderCard.
 class OrderCardData {
   const OrderCardData({
     required this.orderNumber,
@@ -32,11 +24,7 @@ class OrderCardData {
   final OrderType type;
   final OrderStatus status;
   final String createdAt;
-
-  /// Inbound → "Carrier", Outbound → "Courier"
   final String carrierOrCourier;
-
-  /// Hanya ada jika [status] == active
   final OrderProcessStage? processStage;
   final int processValue;
   final int processTotal;
@@ -49,16 +37,9 @@ class OrderCard extends StatelessWidget {
   final OrderCardData data;
   final VoidCallback? onTap;
 
-  // ── Colors ───────────────────────────────────────────────────
-  static const _cardBg = WHColors.surface;
-  static const _cardBorder = WHColors.grey3;
   static const _labelColor = WHColors.grey2;
   static const _valueColor = WHColors.textPrimary;
-  static const _orderNumSize = 20.0;
-  static const _labelSize = 10.0;
-  static const _valueSize = 13.0;
 
-  // ── Helpers ──────────────────────────────────────────────────
   bool get _isInbound => data.type == OrderType.inbound;
   bool get _isActive => data.status == OrderStatus.active;
 
@@ -85,7 +66,7 @@ class OrderCard extends StatelessWidget {
     switch (data.status) {
       case OrderStatus.queued:
         return const _StatusStyle(
-          bg: WHColors.grey5,
+          bg: Color(0xFFEDEDED),
           text: WHColors.grey2,
           label: 'Queued',
         );
@@ -98,18 +79,18 @@ class OrderCard extends StatelessWidget {
       case OrderStatus.completed:
         return const _StatusStyle(
           bg: WHColors.success2,
-          text: WHColors.success4,
+          text: WHColors.surface,
           label: 'Completed',
         );
     }
   }
 
-  Color get _statusColor {
+  Color get _borderColor {
     switch (data.status) {
       case OrderStatus.queued:
         return WHColors.grey3;
       case OrderStatus.active:
-        return WHColors.warning2;
+        return WHColors.secondary4;
       case OrderStatus.completed:
         return WHColors.success2;
     }
@@ -128,26 +109,26 @@ class OrderCard extends StatelessWidget {
       onTap: onTap,
       child: Container(
         decoration: BoxDecoration(
-          color: _cardBg,
-          borderRadius: BorderRadius.circular(12),
-          border: Border(left: BorderSide(color: _statusColor, width: 6)),
+          color: WHColors.surface,
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(color: _borderColor, width: 1),
         ),
-        padding: const EdgeInsets.all(14),
+        padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           mainAxisSize: MainAxisSize.min,
           children: [
-            // ── Row 1: order type + badge ─────────────────────
             Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  _orderTypeLabel,
-                  style: const TextStyle(
-                    fontSize: _labelSize,
-                    color: _labelColor,
-                    letterSpacing: 0.5,
-                    fontWeight: FontWeight.w500,
+                Expanded(
+                  child: Text(
+                    _orderTypeLabel,
+                    style: const TextStyle(
+                      fontSize: 11,
+                      color: _labelColor,
+                      fontWeight: FontWeight.w500,
+                    ),
                   ),
                 ),
                 _StatusBadge(
@@ -157,36 +138,42 @@ class OrderCard extends StatelessWidget {
                 ),
               ],
             ),
-
-            const SizedBox(height: 4),
-
-            // ── Row 2: order number ───────────────────────────
+            const SizedBox(height: 2),
             Text(
               data.orderNumber,
               style: const TextStyle(
-                fontSize: _orderNumSize,
-                fontWeight: FontWeight.w700,
+                fontSize: 24,
+                fontWeight: FontWeight.w800,
                 color: _valueColor,
-                letterSpacing: -0.3,
               ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
             ),
-
             const SizedBox(height: 10),
-
-            // ── Row 3: Created At + Carrier/Courier ───────────
-            Row(
-              children: [
-                _MetaColumn(label: 'Created At', value: data.createdAt),
-                const SizedBox(width: 24),
-                _MetaColumn(label: _carrierLabel, value: data.carrierOrCourier),
-              ],
-            ),
-
-            // ── Row 4: Progress bar (only when active) ────────
+            if (_isActive)
+              _MetaColumn(label: _carrierLabel, value: data.carrierOrCourier)
+            else
+              Row(
+                children: [
+                  Expanded(
+                    child: _MetaColumn(
+                      label: 'Created At',
+                      value: data.createdAt,
+                    ),
+                  ),
+                  const SizedBox(width: 24),
+                  Expanded(
+                    child: _MetaColumn(
+                      label: _carrierLabel,
+                      value: data.carrierOrCourier,
+                    ),
+                  ),
+                ],
+              ),
             if (_isActive && data.processStage != null) ...[
               const SizedBox(height: 12),
-              const Divider(color: _cardBorder, height: 1),
-              const SizedBox(height: 10),
+              const Divider(color: WHColors.grey3, height: 1),
+              const SizedBox(height: 8),
               _ProgressRow(
                 label: _processLabel,
                 value: data.processValue,
@@ -202,16 +189,13 @@ class OrderCard extends StatelessWidget {
   }
 }
 
-// ─────────────────────────────────────────────────────────────────
-// SUB-WIDGETS
-// ─────────────────────────────────────────────────────────────────
-
 class _StatusStyle {
   const _StatusStyle({
     required this.bg,
     required this.text,
     required this.label,
   });
+
   final Color bg;
   final Color text;
   final String label;
@@ -223,6 +207,7 @@ class _StatusBadge extends StatelessWidget {
     required this.bg,
     required this.text,
   });
+
   final String label;
   final Color bg;
   final Color text;
@@ -230,25 +215,21 @@ class _StatusBadge extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
       decoration: BoxDecoration(
         color: bg,
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(18),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Container(
-            width: 6,
-            height: 6,
-            decoration: BoxDecoration(color: text, shape: BoxShape.circle),
-          ),
-          const SizedBox(width: 5),
+          Icon(_icon, size: 12, color: text),
+          const SizedBox(width: 4),
           Text(
             label,
             style: TextStyle(
-              fontSize: 11,
-              fontWeight: FontWeight.w600,
+              fontSize: 12,
+              fontWeight: FontWeight.w700,
               color: text,
             ),
           ),
@@ -256,10 +237,22 @@ class _StatusBadge extends StatelessWidget {
       ),
     );
   }
+
+  IconData get _icon {
+    switch (label) {
+      case 'Completed':
+        return Icons.check_circle;
+      case 'Active':
+        return Icons.more_horiz;
+      default:
+        return Icons.access_time;
+    }
+  }
 }
 
 class _MetaColumn extends StatelessWidget {
   const _MetaColumn({required this.label, required this.value});
+
   final String label;
   final String value;
 
@@ -270,16 +263,18 @@ class _MetaColumn extends StatelessWidget {
       children: [
         Text(
           label,
-          style: const TextStyle(fontSize: 10, color: Color(0xFF8A8A8A)),
+          style: const TextStyle(fontSize: 12, color: WHColors.grey2),
         ),
         const SizedBox(height: 2),
         Text(
           value,
           style: const TextStyle(
-            fontSize: 13,
+            fontSize: 14,
             fontWeight: FontWeight.w500,
             color: WHColors.textPrimary,
           ),
+          maxLines: 2,
+          overflow: TextOverflow.ellipsis,
         ),
       ],
     );
@@ -294,13 +289,12 @@ class _ProgressRow extends StatelessWidget {
     required this.unit,
     required this.percent,
   });
+
   final String label;
   final int value;
   final int total;
   final String unit;
   final double percent;
-
-  static const _orange = Color(0xFFFF8C00);
 
   @override
   Widget build(BuildContext context) {
@@ -308,30 +302,33 @@ class _ProgressRow extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text(
-              label,
-              style: const TextStyle(fontSize: 11, color: Color(0xFF8A8A8A)),
+            Expanded(
+              child: Text(
+                label,
+                style: const TextStyle(fontSize: 12, color: WHColors.grey2),
+              ),
             ),
             Text(
               '$value / $total $unit',
               style: const TextStyle(
-                fontSize: 11,
-                fontWeight: FontWeight.w600,
-                color: _orange,
+                fontSize: 12,
+                fontWeight: FontWeight.w700,
+                color: WHColors.secondary4,
               ),
             ),
           ],
         ),
         const SizedBox(height: 6),
         ClipRRect(
-          borderRadius: BorderRadius.circular(4),
+          borderRadius: BorderRadius.circular(6),
           child: LinearProgressIndicator(
             value: percent,
-            minHeight: 5,
-            backgroundColor: const Color(0xFF3A3A3A),
-            valueColor: const AlwaysStoppedAnimation<Color>(_orange),
+            minHeight: 7,
+            backgroundColor: const Color(0xFFE8E8E8),
+            valueColor: const AlwaysStoppedAnimation<Color>(
+              WHColors.secondary4,
+            ),
           ),
         ),
       ],

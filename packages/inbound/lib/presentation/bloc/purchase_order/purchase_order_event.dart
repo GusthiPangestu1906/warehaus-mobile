@@ -19,6 +19,12 @@ class CreatePurchaseOrderEvent extends PurchaseOrderEvent {
   CreatePurchaseOrderEvent(this.params);
 }
 
+class UpdatePurchaseOrderEvent extends PurchaseOrderEvent {
+  final int id;
+  final CreatePoParams params;
+  UpdatePurchaseOrderEvent(this.id, this.params);
+}
+
 class UpdateInvoiceEvent extends PurchaseOrderEvent {
   final int id;
   final String invoiceNumber;

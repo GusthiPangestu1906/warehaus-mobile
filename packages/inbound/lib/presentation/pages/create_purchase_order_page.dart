@@ -1,6 +1,7 @@
 import 'package:core_ui/core_ui.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:inbound/domain/entities/purchase_order.dart';
 import 'package:inbound/domain/params/create_po_params.dart';
 import 'package:inbound/presentation/bloc/purchase_order/purchase_order_bloc.dart';
 import 'package:inbound/presentation/bloc/purchase_order/purchase_order_event.dart';
@@ -13,7 +14,9 @@ import 'package:product/presentation/bloc/product_event.dart';
 import 'package:product/presentation/bloc/product_state.dart';
 
 class CreatePurchaseOrderPage extends StatefulWidget {
-  const CreatePurchaseOrderPage({super.key});
+  const CreatePurchaseOrderPage({super.key, this.initialPurchaseOrder});
+
+  final PurchaseOrder? initialPurchaseOrder;
 
   @override
   State<CreatePurchaseOrderPage> createState() =>
@@ -29,10 +32,32 @@ class _CreatePurchaseOrderPageState extends State<CreatePurchaseOrderPage> {
   final List<CreatePoItemParams> _selectedItems = [];
   bool _isSubmittingPo = false;
 
+  bool get _isEditMode => widget.initialPurchaseOrder != null;
+
   @override
   void initState() {
     super.initState();
+    _fillInitialData();
     context.read<ProductBloc>().add(GetProductsEvent());
+  }
+
+  void _fillInitialData() {
+    final purchaseOrder = widget.initialPurchaseOrder;
+    if (purchaseOrder == null) return;
+
+    _supplierName.text = purchaseOrder.supplierName;
+    _eta.text = purchaseOrder.eta.toIso8601String().split('T').first;
+    _carrier.text = purchaseOrder.carrier;
+    _selectedItems
+      ..clear()
+      ..addAll(
+        purchaseOrder.items.map(
+          (item) => CreatePoItemParams(
+            productId: item.productId,
+            qtyExpected: item.qtyExpected,
+          ),
+        ),
+      );
   }
 
   @override
@@ -71,7 +96,13 @@ class _CreatePurchaseOrderPageState extends State<CreatePurchaseOrderPage> {
       );
 
       setState(() => _isSubmittingPo = true);
-      context.read<PurchaseOrderBloc>().add(CreatePurchaseOrderEvent(params));
+      if (_isEditMode) {
+        context.read<PurchaseOrderBloc>().add(
+          UpdatePurchaseOrderEvent(widget.initialPurchaseOrder!.id, params),
+        );
+      } else {
+        context.read<PurchaseOrderBloc>().add(CreatePurchaseOrderEvent(params));
+      }
     }
   }
 
@@ -83,6 +114,10 @@ class _CreatePurchaseOrderPageState extends State<CreatePurchaseOrderPage> {
           setState(() => _isSubmittingPo = false);
           WHSnackBar.showSuccess(context, 'Purchase Order berhasil dibuat!');
           Navigator.of(context).pop();
+        } else if (state is UpdatePurchaseOrderSuccess) {
+          setState(() => _isSubmittingPo = false);
+          WHSnackBar.showSuccess(context, 'Purchase Order berhasil diupdate!');
+          Navigator.of(context).pop(true);
         } else if (state is PurchaseOrderError && _isSubmittingPo) {
           setState(() => _isSubmittingPo = false);
           WHSnackBar.showError(context, state.message);
@@ -93,12 +128,14 @@ class _CreatePurchaseOrderPageState extends State<CreatePurchaseOrderPage> {
 
         return Scaffold(
           backgroundColor: WHColors.background,
-          appBar: WHAppbar(title: 'PURCHASE ORDER FORM'),
+          appBar: WHAppbar(
+            title: _isEditMode ? 'EDIT PURCHASE ORDER' : 'PURCHASE ORDER FORM',
+          ),
 
           bottomNavigationBar: Padding(
             padding: const EdgeInsets.all(16.0),
             child: WHButton(
-              label: 'Submit Form',
+              label: _isEditMode ? 'Update Form' : 'Submit Form',
               icon: Icons.check_circle_outline,
               backgroundColor: WHColors.secondary,
               isLoading: isLoading,

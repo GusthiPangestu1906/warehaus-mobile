@@ -58,7 +58,12 @@ class _QualityControlPageState extends State<QualityControlPage> {
   }
 
   void _updateFormData(int itemId, QcFormData data) {
-    setState(() => _formDataByItemId[itemId] = data);
+    setState(() {
+      _formDataByItemId[itemId] = data;
+      if (data.isUnreadableBarcode) {
+        _verifiedBarcodeItemIds.remove(itemId);
+      }
+    });
   }
 
   Future<void> _captureCondition(QcNextItem item) async {
@@ -320,8 +325,10 @@ class _QualityControlContent extends StatelessWidget {
           onCapture: onCapture,
           hasCapturedPhoto: hasPhoto,
         ),
-        const SizedBox(height: 10),
-        QcBarcodeCard(isVerified: isBarcodeVerified, onScan: onBarcodeScan),
+        if (!formData.isUnreadableBarcode) ...[
+          const SizedBox(height: 10),
+          QcBarcodeCard(isVerified: isBarcodeVerified, onScan: onBarcodeScan),
+        ],
         if (upcomingProduct != null) ...[
           const SizedBox(height: 16),
           Text('Upcoming', style: WHTypography.bodyText.copyWith(fontSize: 16)),

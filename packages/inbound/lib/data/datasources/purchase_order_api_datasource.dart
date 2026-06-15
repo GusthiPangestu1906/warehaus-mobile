@@ -13,11 +13,17 @@ class PurchaseOrderApiDatasource {
   static const String _purchaseOrderPath = '/purchase-orders';
   static const String _inboundPath = '/inbound';
 
-  Future<List<PurchaseOrderModel>> getPurchaseOrders(DateTime date) async {
-    final utcDate = date.isUtc ? date : date.toUtc();
+  Future<List<PurchaseOrderModel>> getPurchaseOrders(DateTime? date) async {
+    final utcDate = date == null
+        ? null
+        : date.isUtc
+        ? date
+        : date.toUtc();
     final response = await dio.get(
       _purchaseOrderPath,
-      queryParameters: {'date': utcDate.toIso8601String()},
+      queryParameters: utcDate == null
+          ? null
+          : {'date': utcDate.toIso8601String()},
     );
     return (response.data as List)
         .map((e) => PurchaseOrderModel.fromJson(e as Map<String, dynamic>))
@@ -31,6 +37,10 @@ class PurchaseOrderApiDatasource {
 
   Future<void> createPurchaseOrder(Map<String, dynamic> data) async {
     await dio.post(_purchaseOrderPath, data: data);
+  }
+
+  Future<void> updatePurchaseOrder(int id, Map<String, dynamic> data) async {
+    await dio.put('$_purchaseOrderPath/$id', data: data);
   }
 
   Future<void> invoiceUpdate(int id, String invoiceNumber) async {

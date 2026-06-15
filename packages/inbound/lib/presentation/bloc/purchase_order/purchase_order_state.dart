@@ -25,6 +25,8 @@ class PurchaseOrderDetailLoaded extends PurchaseOrderState {
 
 class CreatePurchaseOrderSuccess extends PurchaseOrderState {}
 
+class UpdatePurchaseOrderSuccess extends PurchaseOrderState {}
+
 class UpdateInvoiceSuccess extends PurchaseOrderState {}
 
 class DeletePurchaseOrderSuccess extends PurchaseOrderState {}
