@@ -1,15 +1,22 @@
 import 'package:core_ui/core_ui.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:inbound/domain/entities/purchase_order.dart';
 import 'package:inbound/domain/params/create_po_params.dart';
 import 'package:inbound/presentation/bloc/purchase_order/purchase_order_bloc.dart';
 import 'package:inbound/presentation/bloc/purchase_order/purchase_order_event.dart';
 import 'package:inbound/presentation/bloc/purchase_order/purchase_order_state.dart';
-import 'package:inbound/presentation/widgets/product_form_card.dart';
+import 'package:inbound/presentation/widgets/create_purchase_order/arrival_form_card.dart';
+import 'package:inbound/presentation/widgets/create_purchase_order/product_form_card.dart';
 import 'package:product/domain/entities/product.dart';
+import 'package:product/presentation/bloc/product_bloc.dart';
+import 'package:product/presentation/bloc/product_event.dart';
+import 'package:product/presentation/bloc/product_state.dart';
 
 class CreatePurchaseOrderPage extends StatefulWidget {
-  const CreatePurchaseOrderPage({super.key});
+  const CreatePurchaseOrderPage({super.key, this.initialPurchaseOrder});
+
+  final PurchaseOrder? initialPurchaseOrder;
 
   @override
   State<CreatePurchaseOrderPage> createState() =>
@@ -22,11 +29,36 @@ class _CreatePurchaseOrderPageState extends State<CreatePurchaseOrderPage> {
   final _eta = TextEditingController();
   final _carrier = TextEditingController();
 
-  // Array utama penyimpan form produk dinamis
   final List<CreatePoItemParams> _selectedItems = [];
+  bool _isSubmittingPo = false;
 
-  // Gunakan tipe data Entity Product dari package sebelah, jangan dynamic raw map
-  final List<Product> _masterProducts = [];
+  bool get _isEditMode => widget.initialPurchaseOrder != null;
+
+  @override
+  void initState() {
+    super.initState();
+    _fillInitialData();
+    context.read<ProductBloc>().add(GetProductsEvent());
+  }
+
+  void _fillInitialData() {
+    final purchaseOrder = widget.initialPurchaseOrder;
+    if (purchaseOrder == null) return;
+
+    _supplierName.text = purchaseOrder.supplierName;
+    _eta.text = purchaseOrder.eta.toIso8601String().split('T').first;
+    _carrier.text = purchaseOrder.carrier;
+    _selectedItems
+      ..clear()
+      ..addAll(
+        purchaseOrder.items.map(
+          (item) => CreatePoItemParams(
+            productId: item.productId,
+            qtyExpected: item.qtyExpected,
+          ),
+        ),
+      );
+  }
 
   @override
   void dispose() {
@@ -39,19 +71,20 @@ class _CreatePurchaseOrderPageState extends State<CreatePurchaseOrderPage> {
   void _onSUbmit() {
     if (_formKey.currentState!.validate()) {
       if (_selectedItems.isEmpty) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Pilih minimal 1 item produk!')),
+        WHSnackBar.showError(context, 'Pilih minimal 1 item produk!');
+        return;
+      }
+
+      if (_selectedItems.any((item) => item.productId == 0)) {
+        WHSnackBar.showError(
+          context,
+          'Harap pilih produk pada semua form list!',
         );
         return;
       }
 
-      // Validasi tambahan agar tidak ada produk kosong (id == 0) yang terkirim
-      if (_selectedItems.any((item) => item.productId == 0)) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Harap pilih produk pada semua form list!'),
-          ),
-        );
+      if (_selectedItems.any((item) => item.qtyExpected <= 0)) {
+        WHSnackBar.showError(context, 'Qty expected harus lebih dari 0.');
         return;
       }
 
@@ -62,7 +95,14 @@ class _CreatePurchaseOrderPageState extends State<CreatePurchaseOrderPage> {
         items: _selectedItems,
       );
 
-      context.read<PurchaseOrderBloc>().add(CreatePurchaseOrderEvent(params));
+      setState(() => _isSubmittingPo = true);
+      if (_isEditMode) {
+        context.read<PurchaseOrderBloc>().add(
+          UpdatePurchaseOrderEvent(widget.initialPurchaseOrder!.id, params),
+        );
+      } else {
+        context.read<PurchaseOrderBloc>().add(CreatePurchaseOrderEvent(params));
+      }
     }
   }
 
@@ -71,34 +111,33 @@ class _CreatePurchaseOrderPageState extends State<CreatePurchaseOrderPage> {
     return BlocConsumer<PurchaseOrderBloc, PurchaseOrderState>(
       listener: (context, state) {
         if (state is CreatePurchaseOrderSuccess) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Purchase Order berhasil dibuat!'),
-              backgroundColor: Colors.green,
-            ),
-          );
+          setState(() => _isSubmittingPo = false);
+          WHSnackBar.showSuccess(context, 'Purchase Order berhasil dibuat!');
           Navigator.of(context).pop();
-        } else if (state is PurchaseOrderError) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('Error: ${state.message}'),
-              backgroundColor: Colors.red,
-            ),
-          );
+        } else if (state is UpdatePurchaseOrderSuccess) {
+          setState(() => _isSubmittingPo = false);
+          WHSnackBar.showSuccess(context, 'Purchase Order berhasil diupdate!');
+          Navigator.of(context).pop(true);
+        } else if (state is PurchaseOrderError && _isSubmittingPo) {
+          setState(() => _isSubmittingPo = false);
+          WHSnackBar.showError(context, state.message);
         }
       },
       builder: (context, state) {
-        bool isLoading = state is PurchaseOrderLoading;
+        final isLoading = state is PurchaseOrderLoading && _isSubmittingPo;
 
         return Scaffold(
           backgroundColor: WHColors.background,
-          appBar: WHAppbar(title: 'PURCHASE ORDER FORM'),
+          appBar: WHAppbar(
+            title: _isEditMode ? 'EDIT PURCHASE ORDER' : 'PURCHASE ORDER FORM',
+          ),
 
           bottomNavigationBar: Padding(
             padding: const EdgeInsets.all(16.0),
             child: WHButton(
-              label: 'Submit Form',
+              label: _isEditMode ? 'Update Form' : 'Submit Form',
               icon: Icons.check_circle_outline,
+              backgroundColor: WHColors.secondary,
               isLoading: isLoading,
               onPressed: isLoading ? null : _onSUbmit,
             ),
@@ -111,29 +150,10 @@ class _CreatePurchaseOrderPageState extends State<CreatePurchaseOrderPage> {
               child: ListView(
                 padding: const EdgeInsets.all(16),
                 children: [
-                  WHTextField(
-                    label: 'Supplier Name',
-                    hintText: 'e.g., Mayora',
-                    controller: _supplierName,
-                  ),
-                  const SizedBox(height: 16),
-                  WHDateField(
-                    label: 'Expected Arrival Date (ETA):',
-                    hintText: '01/01/2026',
-                    selectedDate: _eta.text.isEmpty
-                        ? null
-                        : DateTime.tryParse(_eta.text),
-                    onDateSelected: (date) {
-                      setState(() {
-                        _eta.text = date.toIso8601String();
-                      });
-                    },
-                  ),
-                  const SizedBox(height: 16),
-                  WHTextField(
-                    label: 'Carrier',
-                    hintText: 'e.g., JNE Cargo',
-                    controller: _carrier,
+                  ArrivalFormCard(
+                    supplierNameController: _supplierName,
+                    etaController: _eta,
+                    carrierController: _carrier,
                   ),
                   const SizedBox(height: 24),
 
@@ -144,54 +164,78 @@ class _CreatePurchaseOrderPageState extends State<CreatePurchaseOrderPage> {
                   ),
                   const SizedBox(height: 8),
 
-                  ListView.builder(
-                    shrinkWrap: true,
-                    physics: const NeverScrollableScrollPhysics(),
-                    itemCount: _selectedItems.length,
-                    itemBuilder: (context, index) {
-                      final currentItem = _selectedItems[index];
+                  BlocBuilder<ProductBloc, ProductState>(
+                    builder: (context, productState) {
+                      final masterProducts = productState is ProductLoaded
+                          ? productState.products
+                          : const <Product>[];
 
-                      return ProductFormCard(
-                        masterProducts: _masterProducts,
-                        selectedProductId: currentItem.productId == 0
-                            ? null
-                            : currentItem.productId,
-                        quantity: currentItem.qtyExpected,
-                        onProductChanged: (productId) {
-                          setState(() {
-                            _selectedItems[index] = CreatePoItemParams(
-                              productId: productId ?? 0,
-                              qtyExpected: currentItem.qtyExpected,
-                            );
-                          });
-                        },
-                        onQtyChanged: (value) {
-                          setState(() {
-                            _selectedItems[index] = CreatePoItemParams(
-                              productId: currentItem.productId,
-                              qtyExpected: value,
-                            );
-                          });
-                        },
-                        onDelete: () {
-                          setState(() {
-                            _selectedItems.removeAt(index);
-                          });
-                        },
+                      return Column(
+                        children: [
+                          if (productState is ProductLoading)
+                            const Padding(
+                              padding: EdgeInsets.only(bottom: 12),
+                              child: LinearProgressIndicator(),
+                            ),
+                          if (productState is ProductError)
+                            Padding(
+                              padding: const EdgeInsets.only(bottom: 12),
+                              child: WHError(message: productState.message),
+                            ),
+                          ListView.builder(
+                            shrinkWrap: true,
+                            physics: const NeverScrollableScrollPhysics(),
+                            itemCount: _selectedItems.length,
+                            itemBuilder: (context, index) {
+                              final currentItem = _selectedItems[index];
+
+                              return ProductFormCard(
+                                masterProducts: masterProducts,
+                                selectedProductId: currentItem.productId == 0
+                                    ? null
+                                    : currentItem.productId,
+                                quantity: currentItem.qtyExpected,
+                                onProductChanged: (productId) {
+                                  setState(() {
+                                    _selectedItems[index] = CreatePoItemParams(
+                                      productId: productId ?? 0,
+                                      qtyExpected: currentItem.qtyExpected,
+                                    );
+                                  });
+                                },
+                                onQtyChanged: (value) {
+                                  setState(() {
+                                    _selectedItems[index] = CreatePoItemParams(
+                                      productId: currentItem.productId,
+                                      qtyExpected: value,
+                                    );
+                                  });
+                                },
+                                onDelete: () {
+                                  setState(() {
+                                    _selectedItems.removeAt(index);
+                                  });
+                                },
+                              );
+                            },
+                          ),
+                          const SizedBox(height: 8),
+                          WHOutlinedButton(
+                            label: 'Product',
+                            icon: Icons.add,
+                            onPressed: () {
+                              setState(() {
+                                _selectedItems.add(
+                                  CreatePoItemParams(
+                                    productId: 0,
+                                    qtyExpected: 0,
+                                  ),
+                                );
+                              });
+                            },
+                          ),
+                        ],
                       );
-                    },
-                  ),
-                  const SizedBox(height: 8),
-
-                  WHOutlinedButton(
-                    label: 'Product',
-                    icon: Icons.add,
-                    onPressed: () {
-                      setState(() {
-                        _selectedItems.add(
-                          CreatePoItemParams(productId: 0, qtyExpected: 0),
-                        );
-                      });
                     },
                   ),
                 ],

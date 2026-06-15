@@ -5,7 +5,7 @@ class ZoneApiDatasource {
   final Dio dio;
   ZoneApiDatasource(this.dio);
 
-  static const String _zonePath = '/v1/Zone';
+  static const String _zonePath = '/zones';
 
   Future<List<ZoneModel>> getZones() async {
     final response = await dio.get(_zonePath);
@@ -59,9 +59,8 @@ class ZoneApiDatasource {
     await dio.delete('$_zonePath/$id');
   }
 
-  // TODO: /v1/Zone/shelves/{shelfId} endpoint belum ada di backend
-  // Future<Map<String, dynamic>> getShelfDetails(int shelfId) async {
-  //   final response = await dio.get('$_zonePath/shelves/$shelfId');
-  //   return response.data as Map<String, dynamic>;
-  // }
+  Future<Map<String, dynamic>> getShelfDetails(int shelfId) async {
+    final response = await dio.get('$_zonePath/shelves/$shelfId');
+    return response.data as Map<String, dynamic>;
+  }
 }

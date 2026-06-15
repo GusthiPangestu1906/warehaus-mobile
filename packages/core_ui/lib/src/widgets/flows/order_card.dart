@@ -92,7 +92,7 @@ class OrderCard extends StatelessWidget {
       case OrderStatus.active:
         return WHColors.secondary4;
       case OrderStatus.completed:
-        return WHColors.grey3;
+        return WHColors.success2;
     }
   }
 

@@ -51,6 +51,10 @@ class WHDropdownField<T> extends StatefulWidget {
 class _WHDropdownFieldState<T> extends State<WHDropdownField<T>> {
   bool _isOpen = false;
 
+  final LayerLink _layerLink = LayerLink();
+  final GlobalKey _fieldKey = GlobalKey();
+  OverlayEntry? _overlayEntry;
+
   // ── Design tokens (WHColors) ──────────────────────────────────
   static const _mainColorBackground = WHColors.surface; // 0xFFD8E5E6
   static const _mainBorderColor = WHColors.grey5;
@@ -67,8 +71,8 @@ class _WHDropdownFieldState<T> extends State<WHDropdownField<T>> {
   static const _colorLabelDisabled = WHColors.grey4;
 
   static const _colorText = WHColors.textPrimary;
-  static const _colorHint = WHColors.grey4;
-  static const _colorIcon = WHColors.grey4;
+  static const _colorHint = WHColors.grey3;
+  static const _colorIcon = WHColors.grey3;
   static const _colorIconFocused = WHColors.primary3;
   static const _colorIconError = WHColors.error2;
   static const _colorIconDisabled = WHColors.grey5;
@@ -113,30 +117,150 @@ class _WHDropdownFieldState<T> extends State<WHDropdownField<T>> {
     return _colorIcon;
   }
 
-  // ── Open bottom sheet ─────────────────────────────────────────
-  Future<void> _openSheet() async {
+  void _toggleDropdown() {
     if (widget.isDisabled || widget.items.isEmpty) return;
+
+    if (_isOpen) {
+      _closeDropdown();
+    } else {
+      _openDropdown();
+    }
+  }
+
+  void _openDropdown() {
+    final renderBox =
+        _fieldKey.currentContext?.findRenderObject() as RenderBox?;
+
+    if (renderBox == null) return;
+
+    final size = renderBox.size;
 
     setState(() => _isOpen = true);
 
-    final result = await showModalBottomSheet<T>(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (_) => _DropdownSheet<T>(
-        label: widget.label,
-        items: widget.items,
-        selectedValue: widget.selectedValue,
-        isSearchable: widget.isSearchable,
-        searchHint: widget.searchHint,
-      ),
+    _overlayEntry = OverlayEntry(
+      builder: (context) {
+        return Stack(
+          children: [
+            // Area luar dropdown, kalau diklik dropdown tertutup
+            Positioned.fill(
+              child: GestureDetector(
+                behavior: HitTestBehavior.translucent,
+                onTap: _closeDropdown,
+                child: const SizedBox.expand(),
+              ),
+            ),
+
+            // Dropdown muncul tepat di bawah field
+            CompositedTransformFollower(
+              link: _layerLink,
+              showWhenUnlinked: false,
+              offset: Offset(0, size.height + 4),
+              child: Material(
+                color: Colors.transparent,
+                child: SizedBox(
+                  width: size.width,
+                  child: Container(
+                    constraints: const BoxConstraints(maxHeight: 220),
+                    decoration: BoxDecoration(
+                      color: _colorBackground,
+                      borderRadius: BorderRadius.circular(_borderRadius),
+                      border: Border.all(color: _colorBorderDefault, width: 1),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.08),
+                          blurRadius: 10,
+                          offset: const Offset(0, 4),
+                        ),
+                      ],
+                    ),
+                    child: ListView.separated(
+                      padding: EdgeInsets.zero,
+                      shrinkWrap: true,
+                      itemCount: widget.items.length,
+                      separatorBuilder: (_, __) => const Divider(
+                        height: 1,
+                        thickness: 0.5,
+                        color: WHColors.grey5,
+                      ),
+                      itemBuilder: (context, index) {
+                        final item = widget.items[index];
+                        final isSelected = item.value == widget.selectedValue;
+
+                        return InkWell(
+                          onTap: () {
+                            _closeDropdown();
+                            widget.onChanged?.call(item.value);
+                          },
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 14,
+                              vertical: 13,
+                            ),
+                            child: Row(
+                              children: [
+                                if (item.icon != null) ...[
+                                  Icon(
+                                    item.icon,
+                                    size: 18,
+                                    color: isSelected
+                                        ? WHColors.primary3
+                                        : WHColors.grey4,
+                                  ),
+                                  const SizedBox(width: 8),
+                                ],
+                                Expanded(
+                                  child: Text(
+                                    item.label,
+                                    style: TextStyle(
+                                      fontSize: _inputFontSize,
+                                      fontWeight: isSelected
+                                          ? FontWeight.w600
+                                          : FontWeight.w400,
+                                      color: isSelected
+                                          ? WHColors.primary3
+                                          : WHColors.textPrimary,
+                                    ),
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                                if (isSelected)
+                                  const Icon(
+                                    Icons.check_rounded,
+                                    size: 18,
+                                    color: WHColors.primary3,
+                                  ),
+                              ],
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ],
+        );
+      },
     );
 
-    setState(() => _isOpen = false);
+    Overlay.of(context).insert(_overlayEntry!);
+  }
 
-    if (result != null || (result == null && _hasValue)) {
-      widget.onChanged?.call(result);
+  void _closeDropdown() {
+    _overlayEntry?.remove();
+    _overlayEntry = null;
+
+    if (mounted) {
+      setState(() => _isOpen = false);
     }
+  }
+
+  @override
+  void dispose() {
+    _overlayEntry?.remove();
+    _overlayEntry = null;
+    super.dispose();
   }
 
   @override
@@ -168,68 +292,76 @@ class _WHDropdownFieldState<T> extends State<WHDropdownField<T>> {
           const SizedBox(height: 6),
 
           // ── Dropdown trigger ──────────────────────────────────────
-          AnimatedContainer(
-            duration: const Duration(milliseconds: 180),
-            curve: Curves.easeOut,
-            decoration: BoxDecoration(
-              color: widget.isDisabled ? _colorDisabledBg : _colorBackground,
-              borderRadius: BorderRadius.circular(_borderRadius),
-              border: Border.all(
-                color: _borderColor,
-                width: _isOpen || _hasError ? 1.5 : 1.0,
-              ),
-            ),
-            child: Material(
-              color: Colors.transparent,
-              child: InkWell(
-                onTap: widget.isDisabled ? null : _openSheet,
+          CompositedTransformTarget(
+            link: _layerLink,
+            child: AnimatedContainer(
+              key: _fieldKey,
+              duration: const Duration(milliseconds: 180),
+              curve: Curves.easeOut,
+              decoration: BoxDecoration(
+                color: widget.isDisabled ? _colorDisabledBg : _colorBackground,
                 borderRadius: BorderRadius.circular(_borderRadius),
-                splashColor: WHColors.primary6.withOpacity(0.3),
-                highlightColor: WHColors.primary6.withOpacity(0.15),
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 14,
-                    vertical: 13,
-                  ),
-                  child: Row(
-                    children: [
-                      // Icon item terpilih (jika ada)
-                      if (_selectedItem?.icon != null) ...[
-                        Icon(_selectedItem!.icon, size: 18, color: _iconColor),
-                        const SizedBox(width: 8),
-                      ],
-
-                      // Label terpilih / placeholder
-                      Expanded(
-                        child: Text(
-                          _selectedItem?.label ?? widget.hintText,
-                          style: TextStyle(
-                            fontSize: _inputFontSize,
-                            fontWeight: FontWeight.w400,
-                            color: widget.isDisabled
-                                ? _colorDisabledText
-                                : _hasValue
-                                ? _colorText
-                                : _colorHint,
-                            height: 1.4,
+                border: Border.all(
+                  color: _borderColor,
+                  width: _isOpen || _hasError ? 1.5 : 1.0,
+                ),
+              ),
+              child: Material(
+                color: Colors.transparent,
+                child: InkWell(
+                  onTap: widget.isDisabled ? null : _toggleDropdown,
+                  borderRadius: BorderRadius.circular(_borderRadius),
+                  splashColor: WHColors.primary6.withOpacity(0.3),
+                  highlightColor: WHColors.primary6.withOpacity(0.15),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 14,
+                      vertical: 13,
+                    ),
+                    child: Row(
+                      children: [
+                        // Icon item terpilih (jika ada)
+                        if (_selectedItem?.icon != null) ...[
+                          Icon(
+                            _selectedItem!.icon,
+                            size: 18,
+                            color: _iconColor,
                           ),
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ),
+                          const SizedBox(width: 8),
+                        ],
 
-                      const SizedBox(width: 8),
-
-                      // Chevron icon — rotasi saat terbuka
-                      AnimatedRotation(
-                        turns: _isOpen ? 0.5 : 0,
-                        duration: const Duration(milliseconds: 200),
-                        child: Icon(
-                          Icons.keyboard_arrow_down_rounded,
-                          size: 20,
-                          color: _iconColor,
+                        // Label terpilih / placeholder
+                        Expanded(
+                          child: Text(
+                            _selectedItem?.label ?? widget.hintText,
+                            style: TextStyle(
+                              fontSize: _inputFontSize,
+                              fontWeight: FontWeight.w400,
+                              color: widget.isDisabled
+                                  ? _colorDisabledText
+                                  : _hasValue
+                                  ? _colorText
+                                  : _colorHint,
+                              height: 1.4,
+                            ),
+                            overflow: TextOverflow.ellipsis,
+                          ),
                         ),
-                      ),
-                    ],
+
+                        const SizedBox(width: 8),
+
+                        // Chevron icon — rotasi saat terbuka
+                        AnimatedRotation(
+                          turns: _isOpen ? 0.5 : 0,
+                          duration: const Duration(milliseconds: 200),
+                          child: Icon(
+                            Icons.keyboard_arrow_down_rounded,
+                            size: 20,
+                            color: _iconColor,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ),
@@ -261,234 +393,6 @@ class _WHDropdownFieldState<T> extends State<WHDropdownField<T>> {
               ],
             ),
           ],
-        ],
-      ),
-    );
-  }
-}
-
-// ── Bottom sheet internal ──────────────────────────────────────────
-class _DropdownSheet<T> extends StatefulWidget {
-  const _DropdownSheet({
-    required this.label,
-    required this.items,
-    required this.selectedValue,
-    required this.isSearchable,
-    required this.searchHint,
-  });
-
-  final String label;
-  final List<WHDropdownItem<T>> items;
-  final T? selectedValue;
-  final bool isSearchable;
-  final String searchHint;
-
-  @override
-  State<_DropdownSheet<T>> createState() => _DropdownSheetState<T>();
-}
-
-class _DropdownSheetState<T> extends State<_DropdownSheet<T>> {
-  late List<WHDropdownItem<T>> _filtered;
-  final _searchCtrl = TextEditingController();
-
-  @override
-  void initState() {
-    super.initState();
-    _filtered = widget.items;
-    _searchCtrl.addListener(_onSearch);
-  }
-
-  void _onSearch() {
-    final q = _searchCtrl.text.toLowerCase();
-    setState(() {
-      _filtered = q.isEmpty
-          ? widget.items
-          : widget.items
-                .where((i) => i.label.toLowerCase().contains(q))
-                .toList();
-    });
-  }
-
-  @override
-  void dispose() {
-    _searchCtrl.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final maxHeight = MediaQuery.of(context).size.height * 0.6;
-
-    return Container(
-      constraints: BoxConstraints(maxHeight: maxHeight),
-      decoration: const BoxDecoration(
-        color: WHColors.surface,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          // Handle bar
-          Container(
-            margin: const EdgeInsets.only(top: 10, bottom: 4),
-            width: 36,
-            height: 4,
-            decoration: BoxDecoration(
-              color: WHColors.grey5,
-              borderRadius: BorderRadius.circular(2),
-            ),
-          ),
-
-          // Header
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-            child: Row(
-              children: [
-                Text(
-                  widget.label,
-                  style: const TextStyle(
-                    fontSize: 15,
-                    fontWeight: FontWeight.w600,
-                    color: WHColors.textPrimary,
-                  ),
-                ),
-                const Spacer(),
-                GestureDetector(
-                  onTap: () => Navigator.pop(context),
-                  child: const Icon(
-                    Icons.close_rounded,
-                    size: 20,
-                    color: WHColors.grey4,
-                  ),
-                ),
-              ],
-            ),
-          ),
-
-          // Search bar (opsional)
-          if (widget.isSearchable)
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
-              child: Container(
-                decoration: BoxDecoration(
-                  color: WHColors.grey5,
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: TextField(
-                  controller: _searchCtrl,
-                  style: const TextStyle(
-                    fontSize: 14,
-                    color: WHColors.textPrimary,
-                  ),
-                  decoration: InputDecoration(
-                    hintText: widget.searchHint,
-                    hintStyle: const TextStyle(
-                      fontSize: 14,
-                      color: WHColors.grey4,
-                    ),
-                    prefixIcon: const Icon(
-                      Icons.search_rounded,
-                      size: 18,
-                      color: WHColors.grey4,
-                    ),
-                    border: InputBorder.none,
-                    contentPadding: const EdgeInsets.symmetric(
-                      horizontal: 4,
-                      vertical: 11,
-                    ),
-                  ),
-                ),
-              ),
-            ),
-
-          const Divider(height: 1, thickness: 0.5, color: WHColors.grey5),
-
-          // Item list
-          Flexible(
-            child: _filtered.isEmpty
-                ? Padding(
-                    padding: const EdgeInsets.all(24),
-                    child: Text(
-                      'Tidak ada hasil',
-                      style: TextStyle(fontSize: 14, color: WHColors.grey4),
-                    ),
-                  )
-                : ListView.separated(
-                    shrinkWrap: true,
-                    padding: const EdgeInsets.only(bottom: 24),
-                    itemCount: _filtered.length,
-                    separatorBuilder: (_, __) => const Divider(
-                      height: 1,
-                      thickness: 0.5,
-                      indent: 16,
-                      endIndent: 16,
-                      color: WHColors.grey5,
-                    ),
-                    itemBuilder: (context, i) {
-                      final item = _filtered[i];
-                      final isSelected = item.value == widget.selectedValue;
-
-                      return InkWell(
-                        onTap: () => Navigator.pop(context, item.value),
-                        child: Padding(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 16,
-                            vertical: 14,
-                          ),
-                          child: Row(
-                            children: [
-                              if (item.icon != null) ...[
-                                Icon(
-                                  item.icon,
-                                  size: 18,
-                                  color: isSelected
-                                      ? WHColors.primary3
-                                      : WHColors.grey4,
-                                ),
-                                const SizedBox(width: 10),
-                              ],
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      item.label,
-                                      style: TextStyle(
-                                        fontSize: 14,
-                                        fontWeight: isSelected
-                                            ? FontWeight.w600
-                                            : FontWeight.w400,
-                                        color: isSelected
-                                            ? WHColors.primary3
-                                            : WHColors.textPrimary,
-                                      ),
-                                    ),
-                                    if (item.subtitle != null) ...[
-                                      const SizedBox(height: 2),
-                                      Text(
-                                        item.subtitle!,
-                                        style: const TextStyle(
-                                          fontSize: 12,
-                                          color: WHColors.grey4,
-                                        ),
-                                      ),
-                                    ],
-                                  ],
-                                ),
-                              ),
-                              if (isSelected)
-                                const Icon(
-                                  Icons.check_rounded,
-                                  size: 18,
-                                  color: WHColors.primary3,
-                                ),
-                            ],
-                          ),
-                        ),
-                      );
-                    },
-                  ),
-          ),
         ],
       ),
     );

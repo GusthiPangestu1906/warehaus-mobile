@@ -1,4 +1,7 @@
 .env
+.claude/
+.codex/
+.vscode/
 
 # Miscellaneous
 *.class
