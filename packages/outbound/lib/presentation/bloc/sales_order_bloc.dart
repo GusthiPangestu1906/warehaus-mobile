@@ -1,3 +1,4 @@
+import 'package:core_services/interceptors/app_error_handler.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:outbound/domain/entities/sales_order.dart';
@@ -35,7 +36,7 @@ class SalesOrderBloc extends Bloc<SalesOrderEvent, SalesOrderState> {
         emit(SalesOrderLoaded(orders));
       } catch (e) {
         debugPrint('[SalesOrderBloc] error: $e');
-        emit(SalesOrderError(e.toString()));
+        emit(SalesOrderError(AppErrorHandler.extractMessage(e)));
       }
     });
 
@@ -65,7 +66,7 @@ class SalesOrderBloc extends Bloc<SalesOrderEvent, SalesOrderState> {
         add(GetSalesOrdersEvent());
       } catch (e) {
         debugPrint('[SalesOrderBloc] create error: $e');
-        emit(SalesOrderError(e.toString()));
+        emit(SalesOrderError(AppErrorHandler.extractMessage(e)));
       }
     });
 
@@ -79,7 +80,7 @@ class SalesOrderBloc extends Bloc<SalesOrderEvent, SalesOrderState> {
         add(GetSalesOrdersEvent());
       } catch (e) {
         debugPrint('[SalesOrderBloc] delete error: $e');
-        emit(SalesOrderError(e.toString()));
+        emit(SalesOrderError(AppErrorHandler.extractMessage(e)));
       }
     });
 
@@ -110,7 +111,7 @@ class SalesOrderBloc extends Bloc<SalesOrderEvent, SalesOrderState> {
         add(GetSalesOrdersEvent());
       } catch (e) {
         debugPrint('[SalesOrderBloc] update error: $e');
-        emit(SalesOrderError(e.toString()));
+        emit(SalesOrderError(AppErrorHandler.extractMessage(e)));
       }
     });
 

@@ -44,10 +44,15 @@ class _ProductTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final productCode = product.productId == 0
-        ? 'TEA-GRN-90'
-        : 'PRD-${product.productId.toString().padLeft(4, '0')}';
+    final productCode = (product.sku?.trim().isNotEmpty ?? false)
+        ? product.sku!.trim()
+        : (product.productId == 0
+              ? 'TEA-GRN-90'
+              : 'PRD-${product.productId.toString().padLeft(4, '0')}');
     final productName = product.productName ?? 'Product #${product.productId}';
+    final unit = (product.unitOfMeasure?.trim().isNotEmpty ?? false)
+        ? product.unitOfMeasure!.trim()
+        : 'Box';
 
     return Container(
       padding: const EdgeInsets.all(10),
@@ -81,7 +86,7 @@ class _ProductTile extends StatelessWidget {
           ),
           const SizedBox(width: 12),
           Text(
-            'QTY\n${product.qtyOrdered} Box',
+            'QTY\n${product.qtyOrdered} $unit',
             textAlign: TextAlign.right,
             style: WHTypography.bodyText.copyWith(fontSize: 14),
           ),

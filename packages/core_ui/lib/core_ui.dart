@@ -18,3 +18,4 @@ export 'src/widgets/wh_empty_state.dart';
 export 'src/widgets/wh_refresh.dart';
 export 'src/widgets/wh_search.dart';
 export 'src/widgets/wh_snackbar.dart';
+export 'src/widgets/scanner/wh_scanner_page.dart';

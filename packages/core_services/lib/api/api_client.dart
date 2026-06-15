@@ -9,6 +9,7 @@ class ApiClient {
   ApiClient() {
     final configuredBaseUrl = dotenv.get('API_URL').trim();
     final baseUrl = _resolveBaseUrl(configuredBaseUrl);
+    debugPrint('[ApiClient] baseUrl=$baseUrl');
 
     dio = Dio(
       BaseOptions(

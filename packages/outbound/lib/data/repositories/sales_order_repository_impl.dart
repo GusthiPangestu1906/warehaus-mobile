@@ -43,6 +43,7 @@ class SalesOrderRepositoryImpl implements SalesOrderRepository {
     items: m.items
         .map(
           (e) => SoItem(
+            id: e.id,
             productId: e.productId,
             qtyOrdered: e.qtyOrdered,
             productName: e.productName,
@@ -51,6 +52,18 @@ class SalesOrderRepositoryImpl implements SalesOrderRepository {
             unitOfMeasure: e.unitOfMeasure,
             qtyPicked: e.qtyPicked,
             qtyVerified: e.qtyVerified,
+            suggestedLocations: e.suggestedLocations
+                .map(
+                  (location) => SoItemSuggestedLocation(
+                    shelfId: location.shelfId,
+                    shelfCode: location.shelfCode,
+                    zoneCode: location.zoneCode,
+                    zoneName: location.zoneName,
+                    aisle: location.aisle,
+                    availableQuantity: location.availableQuantity,
+                  ),
+                )
+                .toList(),
           ),
         )
         .toList(),

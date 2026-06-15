@@ -1,4 +1,5 @@
 import 'package:core_ui/core_ui.dart';
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:get_it/get_it.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
@@ -65,6 +66,16 @@ class _PickingPageState extends State<PickingPage> {
     });
 
     try {
+      final startJson = await _startPickingIfNeeded(orderId);
+      if (_hasTaskPayload(startJson)) {
+        if (!mounted) return;
+        setState(() {
+          _applyTaskResponse(startJson!);
+          _isLoading = false;
+        });
+        return;
+      }
+
       final json = await _api.getPickingNextTask(orderId);
       if (!mounted) return;
       setState(() {
@@ -73,11 +84,125 @@ class _PickingPageState extends State<PickingPage> {
       });
     } catch (e) {
       if (!mounted) return;
+      debugPrint('[PickingPage] next-task failed, trying fallback: $e');
+      final fallbackTask =
+          _fallbackTaskFromItems() ??
+          await _fallbackTaskFromOrderDetail(orderId);
+      if (!mounted) return;
+      if (fallbackTask != null) {
+        debugPrint(
+          '[PickingPage] using detail fallback task: '
+          'so=$orderId item=${fallbackTask.salesOrderItemId} '
+          'shelf=${fallbackTask.shelfId}',
+        );
+        setState(() => _applyFallbackTask(fallbackTask));
+        return;
+      }
+
       setState(() {
         _isLoading = false;
         _errorMessage = _friendlyError(e);
       });
     }
+  }
+
+  Future<Map<String, dynamic>?> _startPickingIfNeeded(int orderId) async {
+    try {
+      final json = await _api.startPicking(orderId);
+      debugPrint('[PickingPage] start picking response: $json');
+      return json;
+    } on DioException catch (error) {
+      final statusCode = error.response?.statusCode;
+      final body = error.response?.data?.toString() ?? '';
+      debugPrint(
+        '[PickingPage] start picking ignored status=$statusCode body=$body',
+      );
+
+      if (statusCode == 404) rethrow;
+    }
+
+    return null;
+  }
+
+  bool _hasTaskPayload(Map<String, dynamic>? json) {
+    if (json == null) return false;
+    return json['task'] is Map<String, dynamic> ||
+        json['nextTask'] is Map<String, dynamic> ||
+        json['isStageCompleted'] == true;
+  }
+
+  void _applyFallbackTask(_PickingTask task) {
+    _task = task;
+    _lastVerifiedTask = null;
+    _pendingNextTask = null;
+    _progress = _PickingProgress(
+      completedItems: 0,
+      totalItems: widget.items.isEmpty ? 1 : widget.items.length,
+    );
+    _isTaskVerified = false;
+    _isStageCompleted = false;
+    _isLoading = false;
+    _errorMessage = null;
+  }
+
+  _PickingTask? _fallbackTaskFromItems() {
+    for (final item in widget.items) {
+      final salesOrderItemId = item.salesOrderItemId;
+      if (salesOrderItemId == null || salesOrderItemId <= 0) continue;
+
+      final location = item.locations.isEmpty ? null : item.locations.first;
+      final shelfId = location?.shelfId;
+      if (location == null || shelfId == null || shelfId <= 0) continue;
+
+      return _PickingTask(
+        salesOrderItemId: salesOrderItemId,
+        productId: 0,
+        sku: item.sku,
+        productName: item.productName,
+        requiredQty: location.requiredQty,
+        unitOfMeasure: location.unit,
+        shelfId: shelfId,
+        shelfCode: location.shelf,
+        shelfQrCode: location.shelf,
+      );
+    }
+
+    return null;
+  }
+
+  Future<_PickingTask?> _fallbackTaskFromOrderDetail(int orderId) async {
+    try {
+      final order = await _api.getSalesOrderById(orderId);
+      for (final item in order.items) {
+        final salesOrderItemId = item.id;
+        if (salesOrderItemId == null || salesOrderItemId <= 0) continue;
+
+        if (item.qtyPicked >= item.qtyOrdered) continue;
+
+        final location = item.suggestedLocations.isEmpty
+            ? null
+            : item.suggestedLocations.first;
+        if (location == null || location.shelfId <= 0) continue;
+
+        return _PickingTask(
+          salesOrderItemId: salesOrderItemId,
+          productId: item.productId,
+          sku: item.sku ?? item.productId.toString(),
+          productName: item.productName ?? 'Product ${item.productId}',
+          requiredQty: item.qtyOrdered
+              .clamp(1, location.availableQuantity)
+              .toInt(),
+          unitOfMeasure: item.unitOfMeasure ?? 'PCS',
+          shelfId: location.shelfId,
+          shelfCode: location.shelfCode,
+          shelfQrCode: location.shelfCode,
+        );
+      }
+    } catch (error) {
+      debugPrint('[PickingPage] fallback detail failed: $error');
+    }
+
+    return null;
   }
 
   Future<void> _scanLocation() async {
@@ -108,12 +233,7 @@ class _PickingPageState extends State<PickingPage> {
     setState(() => _isCompleting = true);
 
     try {
-      final json = await _api.completePickingTask(
-        salesOrderId: orderId,
-        salesOrderItemId: task.salesOrderItemId,
-        shelfId: task.shelfId,
-        pickedQty: task.requiredQty,
-      );
+      final json = await _completePickingTaskWithRetry(orderId, task);
       if (!mounted) return;
       setState(() {
         _lastVerifiedTask = task;
@@ -128,12 +248,45 @@ class _PickingPageState extends State<PickingPage> {
     }
   }
 
+  Future<Map<String, dynamic>> _completePickingTaskWithRetry(
+    int orderId,
+    _PickingTask task,
+  ) async {
+    try {
+      return await _api.completePickingTask(
+        salesOrderId: orderId,
+        salesOrderItemId: task.salesOrderItemId,
+        shelfId: task.shelfId,
+        pickedQty: task.requiredQty,
+      );
+    } on DioException catch (error) {
+      if (!_isPickingTaskMissing(error)) rethrow;
+
+      debugPrint('[PickingPage] picking task missing, restarting picking');
+      await _startPickingIfNeeded(orderId);
+      return _api.completePickingTask(
+        salesOrderId: orderId,
+        salesOrderItemId: task.salesOrderItemId,
+        shelfId: task.shelfId,
+        pickedQty: task.requiredQty,
+      );
+    }
+  }
+
+  bool _isPickingTaskMissing(DioException error) {
+    if (error.response?.statusCode != 404) return false;
+    final body = error.response?.data?.toString().toLowerCase() ?? '';
+    return body.contains('picking task');
+  }
+
   void _applyTaskResponse(Map<String, dynamic> json) {
     _progress = _PickingProgress.fromJson(
       json['progress'] as Map<String, dynamic>?,
     );
 
-    final taskJson = json['task'] as Map<String, dynamic>?;
+    final taskJson =
+        json['task'] as Map<String, dynamic>? ??
+        json['nextTask'] as Map<String, dynamic>?;
     _task = taskJson == null ? null : _PickingTask.fromJson(taskJson);
     if (_task != null) _lastVerifiedTask = null;
     _pendingNextTask = null;
@@ -213,6 +366,26 @@ class _PickingPageState extends State<PickingPage> {
   }
 
   String _friendlyError(Object error) {
+    if (error is DioException) {
+      final statusCode = error.response?.statusCode;
+      final responseText = error.response?.data?.toString() ?? '';
+      debugPrint(
+        '[PickingPage] dio error status=$statusCode body=$responseText',
+      );
+
+      if (statusCode == 404) {
+        return 'Endpoint picking belum ditemukan di backend.';
+      }
+      if (statusCode == 400 || statusCode == 409) {
+        if (responseText.isNotEmpty) return responseText;
+        return 'Backend menolak picking. Periksa item, shelf, dan stok.';
+      }
+      if (statusCode != null && statusCode >= 500) {
+        return 'Backend error HTTP $statusCode saat picking.';
+      }
+      if (responseText.isNotEmpty) return responseText;
+    }
+
     final text = error.toString();
     if (text.contains('404')) {
       return 'Task picking belum tersedia untuk Sales Order ini.';
@@ -405,7 +578,7 @@ class _PickingTask {
       requiredQty: location?.requiredQty ?? item.expectedQty,
       unitOfMeasure: location?.unit ?? item.unitOfMeasure,
       shelfId: 0,
-      shelfCode: location?.label ?? 'ZONE B - AISLE 02 - SHELF 03',
+      shelfCode: location?.label ?? 'Lokasi tidak tersedia',
       shelfQrCode: '',
     );
   }

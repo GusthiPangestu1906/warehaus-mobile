@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:get_it/get_it.dart';
 import 'package:outbound/data/datasources/region_api_datasource.dart';
+import 'package:outbound/data/datasources/sales_order_api_datasource.dart';
 import 'package:outbound/domain/entities/sales_order.dart';
 import 'package:outbound/presentation/bloc/sales_order_bloc.dart';
 import 'package:outbound/presentation/bloc/sales_order_event.dart';
@@ -31,7 +32,10 @@ class _SalesOrderDetailPageState extends State<SalesOrderDetailPage> {
   String? _provinceName;
   String? _cityName;
   bool _startedFromTracking = false;
+  bool _isPrintingLabel = false;
   RegionApiDatasource get _regionApi => GetIt.instance<RegionApiDatasource>();
+  SalesOrderApiDatasource get _salesOrderApi =>
+      GetIt.instance<SalesOrderApiDatasource>();
 
   @override
   void initState() {
@@ -111,6 +115,26 @@ class _SalesOrderDetailPageState extends State<SalesOrderDetailPage> {
 
     context.read<SalesOrderBloc>().add(DeleteSalesOrderEvent(widget.order.id));
     Navigator.of(context).pop();
+  }
+
+  Future<void> _printLabel() async {
+    if (_isPrintingLabel) return;
+
+    setState(() => _isPrintingLabel = true);
+    try {
+      final path = await _salesOrderApi.downloadLabelPdf(
+        widget.order.id,
+        soNumber: _formatSalesOrderNumber(widget.order),
+      );
+      if (!mounted) return;
+      WHSnackBar.showSuccess(context, 'Label berhasil diunduh: $path');
+    } catch (e) {
+      if (!mounted) return;
+      debugPrint('[SalesOrderDetailPage] failed to download label PDF: $e');
+      WHSnackBar.showError(context, 'Gagal print label Sales Order.');
+    } finally {
+      if (mounted) setState(() => _isPrintingLabel = false);
+    }
   }
 
   Future<void> _resolveRegionLabels() async {
@@ -263,6 +287,13 @@ class _SalesOrderDetailPageState extends State<SalesOrderDetailPage> {
               onSave: _confirmTracking,
             ),
           ],
+          if (_isCompleted) ...[
+            const SizedBox(height: 24),
+            _PrintLabelButton(
+              isLoading: _isPrintingLabel,
+              onPressed: _printLabel,
+            ),
+          ],
           const SizedBox(height: 24),
           SoProductListSection(products: widget.order.items),
         ],
@@ -291,16 +322,26 @@ class _SalesOrderDetailPageState extends State<SalesOrderDetailPage> {
         },
       );
     }
-
-    if (_isCompleted) {
-      return _StickyActionButton(
-        label: 'Completed',
-        icon: Icons.check_circle,
-        onPressed: () {},
-      );
-    }
-
     return null;
+  }
+}
+
+class _PrintLabelButton extends StatelessWidget {
+  const _PrintLabelButton({
+    required this.isLoading,
+    required this.onPressed,
+  });
+
+  final bool isLoading;
+  final VoidCallback onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    return WhPrimaryButton(
+      text: isLoading ? 'Downloading Label...' : 'Print Label Sales Order',
+      icon: Icons.print_outlined,
+      onPressed: isLoading ? null : onPressed,
+    );
   }
 }
 
@@ -586,58 +627,32 @@ String? _clean(String? value) {
 }
 
 List<PickItem> _pickItems(SalesOrder order) {
-  if (order.items.isEmpty) {
-    return const [
-      PickItem(
-        sku: '395-9823',
-        productName: 'White pepper',
-        expectedQty: 100,
-        locations: [
-          PickLocation(
-            zone: 'ZONE B',
-            aisle: 'AISLE 02',
-            shelf: 'SHELF 03',
-            requiredQty: 100,
-          ),
-          PickLocation(
-            zone: 'ZONE B',
-            aisle: 'AISLE 02',
-            shelf: 'SHELF 04',
-            requiredQty: 5,
-          ),
-        ],
-      ),
-    ];
-  }
+  if (order.items.isEmpty) return const [];
 
   return order.items.asMap().entries.map((entry) {
-    final index = entry.key;
     final item = entry.value;
-    final shelfNumber = (index + 3).toString().padLeft(2, '0');
     final qty = item.qtyOrdered;
+    final suggestedLocations = item.suggestedLocations;
 
     return PickItem(
       sku: _clean(item.sku) ?? item.productId.toString(),
       productName: _clean(item.productName) ?? 'Product ${item.productId}',
       expectedQty: qty,
+      salesOrderItemId: item.id,
+      barcode: _clean(item.barcode),
       unitOfMeasure: _clean(item.unitOfMeasure) ?? 'Box',
-      locations: [
-        PickLocation(
-          zone: 'ZONE B',
-          aisle: 'AISLE 02',
-          shelf: 'SHELF $shelfNumber',
-          requiredQty: qty,
-          unit: _clean(item.unitOfMeasure) ?? 'Box',
-        ),
-        if (qty > 1)
-          PickLocation(
-            zone: 'ZONE B',
-            aisle: 'AISLE 02',
-            shelf: 'SHELF ${(index + 4).toString().padLeft(2, '0')}',
-            requiredQty: (qty / 20).ceil().clamp(1, qty),
-            unit: _clean(item.unitOfMeasure) ?? 'Box',
-          ),
-      ],
+      locations: suggestedLocations
+          .map(
+            (location) => PickLocation(
+              zone: location.zoneCode,
+              aisle: 'Aisle ${location.aisle}',
+              shelf: location.shelfCode,
+              shelfId: location.shelfId,
+              requiredQty: qty.clamp(1, location.availableQuantity).toInt(),
+              unit: _clean(item.unitOfMeasure) ?? 'Box',
+            ),
+          )
+          .toList(),
     );
   }).toList();
 }

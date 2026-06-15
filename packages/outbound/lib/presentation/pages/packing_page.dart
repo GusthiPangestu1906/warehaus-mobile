@@ -1,6 +1,9 @@
 import 'package:core_ui/core_ui.dart';
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:get_it/get_it.dart';
+import 'package:outbound/data/datasources/sales_order_api_datasource.dart';
 import 'package:outbound/presentation/bloc/sales_order_bloc.dart';
 import 'package:outbound/presentation/bloc/sales_order_event.dart';
 import 'package:outbound/presentation/models/pick_flow_item.dart';
@@ -24,36 +27,144 @@ class PackingPage extends StatefulWidget {
 
 class _PackingPageState extends State<PackingPage> {
   late final List<bool> _verifiedItems;
+  bool _isCompleting = false;
+
+  SalesOrderApiDatasource get _api => GetIt.instance<SalesOrderApiDatasource>();
 
   @override
   void initState() {
     super.initState();
     _verifiedItems = List.generate(widget.items.length, (index) => false);
-    if (_verifiedItems.isNotEmpty) {
-      _verifiedItems[_verifiedItems.length - 1] = true;
-    }
   }
 
   bool get _allVerified => _verifiedItems.every((verified) => verified);
   int get _verifiedCount => _verifiedItems.where((verified) => verified).length;
 
-  void _scanItem(int index) {
+  Future<void> _scanItem(int index) async {
+    if (_verifiedItems[index]) return;
+
+    final scannedCode = await Navigator.of(context).push<String>(
+      WHScannerPage.route(
+        title: 'Verify Barcode Item',
+        subtitle: 'Scan barcode ${widget.items[index].productName}',
+      ),
+    );
+
+    if (!mounted || scannedCode == null || scannedCode.trim().isEmpty) return;
+
+    final item = widget.items[index];
+    debugPrint(
+      '[PackingPage] scanned item="${scannedCode.trim()}" '
+      'targetBarcode="${item.barcode}" targetSku="${item.sku}"',
+    );
+
+    if (!_matchesItemBarcode(scannedCode, item)) {
+      WHSnackBar.showError(context, 'Barcode item tidak sesuai.');
+      return;
+    }
+
     setState(() => _verifiedItems[index] = true);
+    WHSnackBar.showSuccess(context, 'Barcode verified successfully.');
   }
 
-  void _complete() {
-    final orderId = widget.orderId;
-    if (orderId != null) {
-      context.read<SalesOrderBloc>().add(
-        UpdateSalesOrderLocalStatusEvent(
-          id: orderId,
-          status: 'Completed',
-          totalPickedItems: _totalQuantity,
-          totalVerifiedItems: _totalQuantity,
-          isCompleted: true,
-        ),
+  bool _matchesItemBarcode(String raw, PickItem item) {
+    final scanned = _normalize(raw);
+    final candidates = [
+      item.barcode,
+      item.sku,
+    ].map(_normalize).where((value) => value.isNotEmpty);
+
+    return candidates.any(
+      (candidate) => scanned == candidate || scanned.contains(candidate),
+    );
+  }
+
+  String _normalize(String? value) {
+    return (value ?? '')
+        .trim()
+        .toLowerCase()
+        .replaceAll(RegExp(r'\s+'), '')
+        .replaceAll('_', '-');
+  }
+
+  Future<void> _complete() async {
+    if (_isCompleting) return;
+
+    if (!_allVerified) {
+      WHSnackBar.showInfo(
+        context,
+        'Scan semua item packing sebelum complete dan print label.',
       );
+      return;
     }
+
+    final orderId = widget.orderId;
+    if (orderId == null) {
+      WHSnackBar.showError(context, 'Sales Order ID tidak ditemukan.');
+      return;
+    }
+
+    if (widget.items.any((item) => item.salesOrderItemId == null)) {
+      WHSnackBar.showError(context, 'Data item packing tidak lengkap.');
+      return;
+    }
+
+    setState(() => _isCompleting = true);
+
+    try {
+      await _api.completePacking(
+        orderId,
+        verifiedItems: widget.items
+            .map(
+              (item) => {
+                'salesOrderItemId': item.salesOrderItemId,
+                'packedQty': item.expectedQty,
+              },
+            )
+            .toList(),
+      );
+      if (!mounted) return;
+
+      _showCompleteSuccess(orderId);
+    } catch (e) {
+      if (!mounted) return;
+      debugPrint('[PackingPage] complete packing error: $e');
+
+      final completed = await _isCompletedOnBackend(orderId);
+      if (!mounted) return;
+
+      if (completed) {
+        _showCompleteSuccess(orderId);
+        return;
+      }
+
+      setState(() => _isCompleting = false);
+      WHSnackBar.showError(context, _friendlyError(e));
+    }
+  }
+
+  Future<bool> _isCompletedOnBackend(int orderId) async {
+    try {
+      final order = await _api.getSalesOrderById(orderId);
+      return order.isCompleted || order.status.toLowerCase() == 'completed';
+    } catch (e) {
+      debugPrint('[PackingPage] failed to refresh complete status: $e');
+      return false;
+    }
+  }
+
+  void _showCompleteSuccess(int orderId) {
+    context.read<SalesOrderBloc>().add(
+      UpdateSalesOrderLocalStatusEvent(
+        id: orderId,
+        status: 'Completed',
+        totalPickedItems: _totalQuantity,
+        totalVerifiedItems: _totalQuantity,
+        isCompleted: true,
+      ),
+    );
+
+    setState(() => _isCompleting = false);
 
     showWhPopUpDone(
       context: context,
@@ -134,9 +245,9 @@ class _PackingPageState extends State<PackingPage> {
               border: Border(top: BorderSide(color: WHColors.grey5)),
             ),
             child: WhPrimaryButton(
-              text: 'Complete & Print Label',
+              text: _isCompleting ? 'Processing...' : 'Complete & Print Label',
               icon: Icons.print_outlined,
-              onPressed: _allVerified ? _complete : null,
+              onPressed: _isCompleting ? null : _complete,
             ),
           ),
           WHBottomNav(
@@ -148,6 +259,35 @@ class _PackingPageState extends State<PackingPage> {
       ),
     );
   }
+}
+
+String _friendlyError(Object error) {
+  if (error is DioException) {
+    final statusCode = error.response?.statusCode;
+    final responseText = error.response?.data?.toString() ?? '';
+    debugPrint(
+      '[PackingPage] complete packing response status=$statusCode body=$responseText',
+    );
+
+    if (statusCode == 409 || statusCode == 400) {
+      return 'Backend menolak complete. Pastikan endpoint complete menerima verifiedItems.';
+    }
+    if (statusCode == 404) {
+      return 'Endpoint packing complete belum ditemukan di backend.';
+    }
+    if (responseText.isNotEmpty) {
+      return responseText;
+    }
+  }
+
+  final message = error.toString();
+  if (message.contains('409')) {
+    return 'Backend menolak complete. Pastikan endpoint complete menerima verifiedItems.';
+  }
+  if (message.contains('404')) {
+    return 'Endpoint packing complete belum ditemukan di backend.';
+  }
+  return 'Gagal complete packing. Coba lagi.';
 }
 
 class _PackingOrderCard extends StatelessWidget {

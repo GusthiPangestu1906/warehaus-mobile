@@ -3,6 +3,8 @@ class PickItem {
     required this.sku,
     required this.productName,
     required this.expectedQty,
+    this.salesOrderItemId,
+    this.barcode,
     this.unitOfMeasure = 'Box',
     this.locations = const [],
   });
@@ -10,6 +12,8 @@ class PickItem {
   final String sku;
   final String productName;
   final int expectedQty;
+  final int? salesOrderItemId;
+  final String? barcode;
   final String unitOfMeasure;
   final List<PickLocation> locations;
 }
@@ -20,6 +24,7 @@ class PickLocation {
     required this.aisle,
     required this.shelf,
     required this.requiredQty,
+    this.shelfId,
     this.unit = 'Box',
   });
 
@@ -27,6 +32,7 @@ class PickLocation {
   final String aisle;
   final String shelf;
   final int requiredQty;
+  final int? shelfId;
   final String unit;
 
   String get label => '$zone - $aisle - $shelf';
