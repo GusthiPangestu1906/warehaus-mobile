@@ -41,11 +41,7 @@ class ActivityLog {
   final int id;
   final String type;
   final String title;
-  final String productName;
-  final String sku;
-  final String locationName;
-  final int quantity;
-  final int stockAfterMovement;
+  final String subtitle;
   final String time;
   final DateTime createdAt;
 
@@ -53,11 +49,7 @@ class ActivityLog {
     required this.id,
     required this.type,
     required this.title,
-    required this.productName,
-    required this.sku,
-    required this.locationName,
-    required this.quantity,
-    required this.stockAfterMovement,
+    required this.subtitle,
     required this.time,
     required this.createdAt,
   });
@@ -67,11 +59,7 @@ class ActivityLog {
       id: json['id'] as int? ?? 0,
       type: json['type'] as String? ?? '',
       title: json['title'] as String? ?? '',
-      productName: json['productName'] as String? ?? '',
-      sku: json['sku'] as String? ?? '',
-      locationName: json['locationName'] as String? ?? '',
-      quantity: json['quantity'] as int? ?? 0,
-      stockAfterMovement: json['stockAfterMovement'] as int? ?? 0,
+      subtitle: json['subtitle'] as String? ?? '',
       time: json['time'] as String? ?? '',
       createdAt: DateTime.parse(
         json['createdAt'] as String? ?? DateTime.now().toIso8601String(),
@@ -79,6 +67,8 @@ class ActivityLog {
     );
   }
 
-  bool get isStockIn => type.toLowerCase() == 'stock in';
-  bool get isStockOut => type.toLowerCase() == 'stock out';
+  bool get isStockIn =>
+      type.toLowerCase().contains('in') || type.toLowerCase().contains('away');
+  bool get isStockOut =>
+      type.toLowerCase().contains('out') || type.toLowerCase().contains('pick');
 }

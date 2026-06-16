@@ -50,6 +50,8 @@ import 'package:zone/domain/usecases/get_zone_details.dart';
 import 'package:zone/domain/usecases/get_zones.dart';
 import 'package:zone/domain/usecases/update_zone.dart';
 import 'package:zone/presentation/bloc/zone_bloc.dart';
+import 'package:zone/zone.dart';
+import 'package:product/domain/usecases/get_categories.dart';
 
 final getIt = GetIt.instance;
 
@@ -257,6 +259,40 @@ Future<void> setupInjector() async {
     ),
   );
 
+  // ── Blocs ───────────────────────────────────────────────────────
+  getIt.registerFactory(
+    () => ZoneBloc(
+      getZonesUsecase: getIt<GetZones>(),
+      getZoneByAisleUsecase: getIt<GetZoneByAisle>(),
+      getZoneDetailsUsecase: getIt<GetZoneDetails>(),
+      createZoneUsecase: getIt<CreateZone>(),
+      updateZoneUsecase: getIt<UpdateZone>(),
+      deleteZoneUsecase: getIt<DeleteZone>(),
+      getShelfDetailsUsecase: getIt<GetShelfDetails>(),
+    ),
+  );
+
+  getIt.registerLazySingleton(
+        () => GetCategories(getIt<ProductRepositoryImpl>()),
+  );
+
+  getIt.registerFactory(
+    () => ProductBloc(
+      getProductsUsecase: getIt<GetProducts>(),
+      getProductDetailUsecase: getIt<GetProductDetail>(),
+      createProductUsecase: getIt<CreateProduct>(),
+      updateProductUsecase: getIt<UpdateProduct>(),
+      deleteProductUsecase: getIt<DeleteProduct>(),
+      addStockLocationUsecase: getIt<AddStockLocation>(),
+      updateStockLocationUsecase: getIt<UpdateStockLocation>(),
+      moveStockLocationUsecase: getIt<MoveStockLocation>(),
+      getCategoriesUsecase: getIt<GetCategories>(),
+    ),
+  );
+
+
+
+}
   // BLoC
   getIt.registerFactory(
     () => PurchaseOrderBloc(
