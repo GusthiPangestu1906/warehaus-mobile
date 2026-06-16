@@ -6,7 +6,7 @@ class DashboardService {
   DashboardService(this.dio);
 
   Future<int> getProductCount() async {
-    final response = await dio.get('/Product');
+    final response = await dio.get('/api/products');
     if (response.statusCode == 200) {
       final products = response.data as List;
       return products.length;
@@ -29,6 +29,9 @@ class DashboardService {
           .toList();
     } catch (e) {
       debugPrint('[DashboardService] Error: $e');
+      if (e is DioException && e.response?.statusCode == 404) {
+        return const [];
+      }
       rethrow;
     }
   }

@@ -1,0 +1,145 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "mobile",
+            "request": "launch",
+            "type": "dart"
+        },
+        {
+            "name": "mobile (profile mode)",
+            "request": "launch",
+            "type": "dart",
+            "flutterMode": "profile"
+        },
+        {
+            "name": "mobile (release mode)",
+            "request": "launch",
+            "type": "dart",
+            "flutterMode": "release"
+        },
+        {
+            "name": "core_services",
+            "cwd": "packages\\core_services",
+            "request": "launch",
+            "type": "dart"
+        },
+        {
+            "name": "core_services (profile mode)",
+            "cwd": "packages\\core_services",
+            "request": "launch",
+            "type": "dart",
+            "flutterMode": "profile"
+        },
+        {
+            "name": "core_services (release mode)",
+            "cwd": "packages\\core_services",
+            "request": "launch",
+            "type": "dart",
+            "flutterMode": "release"
+        },
+        {
+            "name": "core_ui",
+            "cwd": "packages\\core_ui",
+            "request": "launch",
+            "type": "dart"
+        },
+        {
+            "name": "core_ui (profile mode)",
+            "cwd": "packages\\core_ui",
+            "request": "launch",
+            "type": "dart",
+            "flutterMode": "profile"
+        },
+        {
+            "name": "core_ui (release mode)",
+            "cwd": "packages\\core_ui",
+            "request": "launch",
+            "type": "dart",
+            "flutterMode": "release"
+        },
+        {
+            "name": "dashboard",
+            "cwd": "packages\\dashboard",
+            "request": "launch",
+            "type": "dart"
+        },
+        {
+            "name": "dashboard (profile mode)",
+            "cwd": "packages\\dashboard",
+            "request": "launch",
+            "type": "dart",
+            "flutterMode": "profile"
+        },
+        {
+            "name": "dashboard (release mode)",
+            "cwd": "packages\\dashboard",
+            "request": "launch",
+            "type": "dart",
+            "flutterMode": "release"
+        },
+        {
+            "name": "inbound",
+            "cwd": "packages\\inbound",
+            "request": "launch",
+            "type": "dart"
+        },
+        {
+            "name": "inbound (profile mode)",
+            "cwd": "packages\\inbound",
+            "request": "launch",
+            "type": "dart",
+            "flutterMode": "profile"
+        },
+        {
+            "name": "inbound (release mode)",
+            "cwd": "packages\\inbound",
+            "request": "launch",
+            "type": "dart",
+            "flutterMode": "release"
+        },
+        {
+            "name": "product",
+            "cwd": "packages\\product",
+            "request": "launch",
+            "type": "dart"
+        },
+        {
+            "name": "product (profile mode)",
+            "cwd": "packages\\product",
+            "request": "launch",
+            "type": "dart",
+            "flutterMode": "profile"
+        },
+        {
+            "name": "product (release mode)",
+            "cwd": "packages\\product",
+            "request": "launch",
+            "type": "dart",
+            "flutterMode": "release"
+        },
+        {
+            "name": "zone",
+            "cwd": "packages\\zone",
+            "request": "launch",
+            "type": "dart"
+        },
+        {
+            "name": "zone (profile mode)",
+            "cwd": "packages\\zone",
+            "request": "launch",
+            "type": "dart",
+            "flutterMode": "profile"
+        },
+        {
+            "name": "zone (release mode)",
+            "cwd": "packages\\zone",
+            "request": "launch",
+            "type": "dart",
+            "flutterMode": "release"
+        }
+    ]
+}

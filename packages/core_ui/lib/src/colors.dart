@@ -38,11 +38,11 @@ class WHColors {
   static const Color error3 = Color(0xFFFDC3C3);
   static const Color error4 = Color(0xFFFFDAD6);
   // Neutral Colors
-  static const Color grey1 = Color(0xFF121E1F); // Text Primary Color
-  static const Color grey2 = Color(0xFF43474C); // Text Secondary Color
-  static const Color grey3 = Color(0xFF546162); // Main Color
-  static const Color grey4 = Color(0xFF879798);
-  static const Color grey5 = Color(0xFFD8E5E6);
+  static const Color grey1 = Color(0xFF1A1B1B); // Text Primary Color
+  static const Color grey2 = Color(0xFF444444); // Text Secondary Color
+  static const Color grey3 = Color(0xFF756E7E); // Main Color
+  static const Color grey4 = Color(0xFFD9D7D7);
+  static const Color grey5 = Color(0xFFECECEC);
 
   static const Color primary = primary3;
   static const Color secondary = secondary3;

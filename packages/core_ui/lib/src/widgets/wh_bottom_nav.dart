@@ -47,10 +47,16 @@ class WHBottomNav extends StatelessWidget {
                 index: 1,
               ),
               _buildNavItem(
+                icon: Icons.local_shipping_outlined,
+                activeIcon: Icons.local_shipping,
+                label: 'FLOWS',
+                index: 2,
+              ),
+              _buildNavItem(
                 icon: Icons.layers_outlined,
                 activeIcon: Icons.layers,
                 label: 'ZONES',
-                index: 2,
+                index: 3,
               ),
             ],
           ),

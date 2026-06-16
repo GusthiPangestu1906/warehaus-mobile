@@ -1,16 +1,11 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:product/data/models/stock_location_input_model.dart';
 import 'package:product/domain/entities/product.dart';
-import 'package:product/domain/entities/stock_location_input.dart';
-import 'package:product/domain/usecases/add_stock_location.dart';
 import 'package:product/domain/usecases/create_product.dart';
 import 'package:product/domain/usecases/delete_product.dart';
 import 'package:product/domain/usecases/get_product_detail.dart';
 import 'package:product/domain/usecases/get_products.dart';
-import 'package:product/domain/usecases/move_stock_location.dart';
 import 'package:product/domain/usecases/update_product.dart';
-import 'package:product/domain/usecases/update_stock_location.dart';
 import 'package:product/presentation/bloc/product_event.dart';
 import 'package:product/presentation/bloc/product_state.dart';
 import 'package:product/domain/usecases/get_categories.dart';
@@ -51,7 +46,9 @@ class ProductBloc extends Bloc<ProductEvent, ProductState> {
       emit(ProductLoading());
       try {
         final product = await getProductDetailUsecase(event.id);
-        debugPrint('[ProductBloc] GetProductDetailsEvent success: ${product.id}');
+        debugPrint(
+          '[ProductBloc] GetProductDetailsEvent success: ${product.id}',
+        );
         emit(ProductDetailLoaded(product));
       } catch (e) {
         debugPrint('[ProductBloc] GetProductDetailsEvent error: $e');

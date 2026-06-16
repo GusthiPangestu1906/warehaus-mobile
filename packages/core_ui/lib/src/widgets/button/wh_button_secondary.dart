@@ -1,12 +1,13 @@
 import 'package:flutter/material.dart';
-import '../../colors.dart'; 
 
-class WhSecondaryButton extends StatelessWidget {
+import '../../colors.dart';
+
+class WHSecondaryButton extends StatelessWidget {
   final String text;
   final VoidCallback? onPressed; // Tombol mati (disabled) jika null
   final IconData? icon;
 
-  const WhSecondaryButton({
+  const WHSecondaryButton({
     super.key,
     required this.text,
     this.onPressed,
@@ -19,10 +20,14 @@ class WhSecondaryButton extends StatelessWidget {
     final bool isDisabled = onPressed == null;
 
     // Menentukan warna latar belakang tombol berdasarkan status
-    final Color backgroundColor = isDisabled ? WHColors.grey4 : WHColors.primary3;
+    final Color backgroundColor = isDisabled
+        ? WHColors.grey4
+        : WHColors.primary3;
 
     // Menentukan warna konten (teks dan ikon) berdasarkan status
-    final Color contentColor = isDisabled ? WHColors.grey5 : WHColors.surface; // Abu-abu pudar konten
+    final Color contentColor = isDisabled
+        ? WHColors.grey5
+        : WHColors.surface; // Abu-abu pudar konten
 
     return Container(
       height: 56, // Tinggi tombol
@@ -32,11 +37,14 @@ class WhSecondaryButton extends StatelessWidget {
       ),
       child: InkWell(
         onTap: onPressed, // Pasang aksi tekan
-        borderRadius: BorderRadius.circular(32), // Agar ripple effect ikut membulat
+        borderRadius: BorderRadius.circular(
+          32,
+        ), // Agar ripple effect ikut membulat
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 24),
           child: Row(
-            mainAxisAlignment: MainAxisAlignment.center, // Pusatkan konten secara horizontal
+            mainAxisAlignment:
+                MainAxisAlignment.center, // Pusatkan konten secara horizontal
             mainAxisSize: MainAxisSize.min, // Isi konten secukupnya
             children: [
               Text(
