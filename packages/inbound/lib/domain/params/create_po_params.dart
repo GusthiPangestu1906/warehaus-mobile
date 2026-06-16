@@ -28,12 +28,15 @@ class CreatePoParams {
   );
 
   Map<String, dynamic> toJson() {
-    final utcEta = DateTime.utc(eta.year, eta.month, eta.day);
+    final etaDate =
+        '${eta.year.toString().padLeft(4, '0')}-'
+        '${eta.month.toString().padLeft(2, '0')}-'
+        '${eta.day.toString().padLeft(2, '0')}';
 
     return {
-      "supplierName": supplierName,
-      "eta": utcEta.toIso8601String(),
-      "carrier": carrier,
+      "supplierName": supplierName.trim(),
+      "eta": etaDate,
+      "carrier": carrier.trim(),
       "items": List<dynamic>.from(items.map((x) => x.toJson())),
     };
   }

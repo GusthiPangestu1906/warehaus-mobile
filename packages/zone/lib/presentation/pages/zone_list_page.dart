@@ -64,18 +64,16 @@ class _ZoneListPageState extends State<ZoneListPage> with RouteAware {
     if (edited == null || !mounted) return;
 
     final zoneName = toOptionalValue(zone.zoneName, edited.zoneName);
-    final categoryId = zone.categoryId == edited.categoryId
-        ? null
-        : edited.categoryId;
+    final category = toOptionalValue(zone.category, edited.category);
     final description = toOptionalValue(zone.description, edited.description);
 
-    if (zoneName == null && categoryId == null && description == null) return;
+    if (zoneName == null && category == null && description == null) return;
 
     bloc.add(
       UpdateZoneEvent(
         id: zone.id,
         zoneName: zoneName,
-        categoryId: categoryId,
+        category: category,
         description: description,
       ),
     );

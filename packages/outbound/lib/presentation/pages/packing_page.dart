@@ -235,27 +235,17 @@ class _PackingPageState extends State<PackingPage> {
           }),
         ],
       ),
-      bottomNavigationBar: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Container(
-            padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
-            decoration: const BoxDecoration(
-              color: WHColors.surface,
-              border: Border(top: BorderSide(color: WHColors.grey5)),
-            ),
-            child: WhPrimaryButton(
-              text: _isCompleting ? 'Processing...' : 'Complete & Print Label',
-              icon: Icons.print_outlined,
-              onPressed: _isCompleting ? null : _complete,
-            ),
-          ),
-          WHBottomNav(
-            currentIndex: 2,
-            onTap: (_) =>
-                Navigator.of(context).popUntil((route) => route.isFirst),
-          ),
-        ],
+      bottomNavigationBar: Container(
+        padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
+        decoration: const BoxDecoration(
+          color: WHColors.surface,
+          border: Border(top: BorderSide(color: WHColors.grey5)),
+        ),
+        child: WhPrimaryButton(
+          text: _isCompleting ? 'Processing...' : 'Complete & Print Label',
+          icon: Icons.print_outlined,
+          onPressed: _isCompleting ? null : _complete,
+        ),
       ),
     );
   }

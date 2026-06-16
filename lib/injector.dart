@@ -30,25 +30,25 @@ import 'package:outbound/presentation/bloc/sales_order_bloc.dart';
 import 'package:outbound/presentation/bloc/sales_order_form_cubit.dart';
 import 'package:product/data/datasources/product_api_datasource.dart';
 import 'package:product/data/repositories/product_repository_impl.dart';
+import 'package:product/domain/usecases/add_stock_location.dart';
 import 'package:product/domain/usecases/create_product.dart';
 import 'package:product/domain/usecases/delete_product.dart';
+import 'package:product/domain/usecases/delete_product_stock_location.dart';
 import 'package:product/domain/usecases/get_product_detail.dart';
 import 'package:product/domain/usecases/get_products.dart';
-import 'package:product/domain/usecases/update_product.dart';
-import 'package:product/domain/usecases/add_stock_location.dart';
-import 'package:product/domain/usecases/update_stock_location.dart';
 import 'package:product/domain/usecases/move_stock_location.dart';
-import 'package:product/domain/usecases/delete_product_stock_location.dart';
+import 'package:product/domain/usecases/update_product.dart';
+import 'package:product/domain/usecases/update_stock_location.dart';
 import 'package:product/presentation/bloc/product_bloc.dart';
 import 'package:zone/data/datasources/zone_api_datasource.dart';
 import 'package:zone/data/repositories/zone_repository_impl.dart';
 import 'package:zone/domain/usecases/create_zone.dart';
 import 'package:zone/domain/usecases/delete_zone.dart';
+import 'package:zone/domain/usecases/get_shelf_details.dart';
 import 'package:zone/domain/usecases/get_zone_by_aisle.dart';
 import 'package:zone/domain/usecases/get_zone_details.dart';
 import 'package:zone/domain/usecases/get_zones.dart';
 import 'package:zone/domain/usecases/update_zone.dart';
-import 'package:zone/domain/usecases/get_shelf_details.dart';
 import 'package:zone/presentation/bloc/zone_bloc.dart';
 
 final getIt = GetIt.instance;
@@ -101,7 +101,7 @@ Future<void> setupInjector() async {
       createZoneUsecase: getIt<CreateZone>(),
       updateZoneUsecase: getIt<UpdateZone>(),
       deleteZoneUsecase: getIt<DeleteZone>(),
-      getShelfDetailsUsecase: getIt<GetShelfDetails>(),
+      // getShelfDetailsUsecase: getIt<GetShelfDetails>(),
     ),
   );
 
@@ -154,9 +154,9 @@ Future<void> setupInjector() async {
       createProductUsecase: getIt<CreateProduct>(),
       updateProductUsecase: getIt<UpdateProduct>(),
       deleteProductUsecase: getIt<DeleteProduct>(),
-      addStockLocationUsecase: getIt<AddStockLocation>(),
-      updateStockLocationUsecase: getIt<UpdateStockLocation>(),
-      moveStockLocationUsecase: getIt<MoveStockLocation>(),
+      // addStockLocationUsecase: getIt<AddStockLocation>(),
+      // updateStockLocationUsecase: getIt<UpdateStockLocation>(),
+      // moveStockLocationUsecase: getIt<MoveStockLocation>(),
     ),
   );
 
@@ -207,6 +207,7 @@ Future<void> setupInjector() async {
   );
   getIt.registerLazySingleton(
     () => GetCarriers(getIt<PurchaseOrderRepositoryImpl>()),
+  );
 
   // ── Outbound ──────────────────────────────────────────────────
   getIt.registerLazySingleton<SalesOrderApiDatasource>(
@@ -236,7 +237,7 @@ Future<void> setupInjector() async {
     () => UpdateSalesOrder(getIt<SalesOrderRepositoryImpl>()),
   );
   getIt.registerLazySingleton(
-      () => UpdateSalesOrderTracking(getIt<SalesOrderRepositoryImpl>()),
+    () => UpdateSalesOrderTracking(getIt<SalesOrderRepositoryImpl>()),
   );
 
   getIt.registerFactory(
@@ -253,19 +254,6 @@ Future<void> setupInjector() async {
     () => SalesOrderFormCubit(
       productApi: getIt<OutboundProductApiDatasource>(),
       regionApi: getIt<RegionApiDatasource>(),
-    ),
-  );
-
-  // ── Blocs ───────────────────────────────────────────────────────
-  getIt.registerFactory(
-    () => ZoneBloc(
-      getZonesUsecase: getIt<GetZones>(),
-      getZoneByAisleUsecase: getIt<GetZoneByAisle>(),
-      getZoneDetailsUsecase: getIt<GetZoneDetails>(),
-      createZoneUsecase: getIt<CreateZone>(),
-      updateZoneUsecase: getIt<UpdateZone>(),
-      deleteZoneUsecase: getIt<DeleteZone>(),
-      getShelfDetailsUsecase: getIt<GetShelfDetails>(),
     ),
   );
 

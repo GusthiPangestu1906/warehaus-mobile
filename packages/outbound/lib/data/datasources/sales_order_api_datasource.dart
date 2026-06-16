@@ -7,10 +7,18 @@ class SalesOrderApiDatasource {
   final Dio dio;
   SalesOrderApiDatasource(this.dio);
 
-  static const String _salesOrderPath = '/api/outbound/sales-orders';
+  static const String _salesOrderPath = '/outbound/sales-orders';
 
-  Future<List<SalesOrderModel>> getSalesOrders() async {
-    final response = await dio.get(_salesOrderPath);
+  Future<List<SalesOrderModel>> getSalesOrders({String? date}) async {
+    final queryParams = <String, dynamic>{};
+    if (date != null && date.isNotEmpty) {
+      queryParams['date'] = date;
+    }
+
+    final response = await dio.get(
+      _salesOrderPath,
+      queryParameters: queryParams.isNotEmpty ? queryParams : null,
+    );
     final data = response.data;
     final rawList = data is List
         ? data

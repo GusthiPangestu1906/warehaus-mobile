@@ -68,8 +68,33 @@ class _CreatePurchaseOrderPageState extends State<CreatePurchaseOrderPage> {
     super.dispose();
   }
 
-  void _onSUbmit() {
+  void _onSubmit() {
     if (_formKey.currentState!.validate()) {
+      final supplierName = _supplierName.text.trim();
+      final etaText = _eta.text.trim();
+      final carrier = _carrier.text.trim();
+
+      if (supplierName.isEmpty) {
+        WHSnackBar.showError(context, 'Supplier name wajib diisi.');
+        return;
+      }
+
+      if (etaText.isEmpty) {
+        WHSnackBar.showError(context, 'ETA wajib dipilih.');
+        return;
+      }
+
+      final eta = DateTime.tryParse(etaText);
+      if (eta == null) {
+        WHSnackBar.showError(context, 'Format ETA tidak valid.');
+        return;
+      }
+
+      if (carrier.isEmpty) {
+        WHSnackBar.showError(context, 'Carrier wajib dipilih.');
+        return;
+      }
+
       if (_selectedItems.isEmpty) {
         WHSnackBar.showError(context, 'Pilih minimal 1 item produk!');
         return;
@@ -89,9 +114,9 @@ class _CreatePurchaseOrderPageState extends State<CreatePurchaseOrderPage> {
       }
 
       final params = CreatePoParams(
-        supplierName: _supplierName.text,
-        eta: DateTime.parse(_eta.text),
-        carrier: _carrier.text,
+        supplierName: supplierName,
+        eta: eta,
+        carrier: carrier,
         items: _selectedItems,
       );
 
@@ -139,7 +164,7 @@ class _CreatePurchaseOrderPageState extends State<CreatePurchaseOrderPage> {
               icon: Icons.check_circle_outline,
               backgroundColor: WHColors.secondary,
               isLoading: isLoading,
-              onPressed: isLoading ? null : _onSUbmit,
+              onPressed: isLoading ? null : _onSubmit,
             ),
           ),
 

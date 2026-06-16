@@ -2,7 +2,10 @@ import 'package:outbound/domain/params/create_sales_order_params.dart';
 
 abstract class SalesOrderEvent {}
 
-class GetSalesOrdersEvent extends SalesOrderEvent {}
+class GetSalesOrdersEvent extends SalesOrderEvent {
+  final String? date;
+  GetSalesOrdersEvent({this.date});
+}
 
 class CreateSalesOrderEvent extends SalesOrderEvent {
   final String customerName;

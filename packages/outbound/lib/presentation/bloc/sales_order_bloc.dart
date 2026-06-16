@@ -28,10 +28,10 @@ class SalesOrderBloc extends Bloc<SalesOrderEvent, SalesOrderState> {
     required this.updateSalesOrderTrackingUsecase,
   }) : super(SalesOrderInitial()) {
     on<GetSalesOrdersEvent>((event, emit) async {
-      debugPrint('[SalesOrderBloc] GetSalesOrdersEvent');
+      debugPrint('[SalesOrderBloc] GetSalesOrdersEvent date=${event.date}');
       emit(SalesOrderLoading());
       try {
-        final orders = await getSalesOrdersUsecase();
+        final orders = await getSalesOrdersUsecase(date: event.date);
         debugPrint('[SalesOrderBloc] loaded ${orders.length} orders');
         emit(SalesOrderLoaded(orders));
       } catch (e) {

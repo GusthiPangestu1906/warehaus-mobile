@@ -4,31 +4,31 @@ class RegionApiDatasource {
   final Dio dio;
   RegionApiDatasource(this.dio);
 
-  /// GET /api/couriers
+  /// GET /couriers
   Future<List<Map<String, dynamic>>> getCouriers() async {
-    final response = await dio.get('/api/couriers');
+    final response = await dio.get('/couriers');
     return _asMapList(response.data);
   }
 
-  /// GET /api/regions/province
+  /// GET /regions/province
   Future<List<Map<String, dynamic>>> getProvinces() async {
-    final response = await dio.get('/api/regions/province');
+    final response = await dio.get('/regions/province');
     return _asMapList(response.data);
   }
 
-  /// GET /api/regions/city?provinceCode=X
+  /// GET /regions/city?provinceCode=X
   Future<List<Map<String, dynamic>>> getCities(String provinceCode) async {
     final response = await dio.get(
-      '/api/regions/city',
+      '/regions/city',
       queryParameters: {'provinceCode': provinceCode},
     );
     return _asMapList(response.data);
   }
 
-  /// GET /api/regions/district?cityCode=X
+  /// GET /regions/district?cityCode=X
   Future<List<Map<String, dynamic>>> getDistricts(String cityCode) async {
     final response = await dio.get(
-      '/api/regions/district',
+      '/regions/district',
       queryParameters: {'cityCode': cityCode},
     );
     return _asMapList(response.data);

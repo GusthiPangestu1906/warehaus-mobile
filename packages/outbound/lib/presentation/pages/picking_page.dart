@@ -755,7 +755,6 @@ class _PickProductBanner extends StatelessWidget {
       ),
     );
   }
-
 }
 
 class _ErrorState extends StatelessWidget {
@@ -795,23 +794,13 @@ class _FlowBottomBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Container(
-          padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
-          decoration: const BoxDecoration(
-            color: WHColors.surface,
-            border: Border(top: BorderSide(color: WHColors.grey5)),
-          ),
-          child: WhPrimaryButton(text: label, icon: icon, onPressed: onPressed),
-        ),
-        WHBottomNav(
-          currentIndex: 2,
-          onTap: (_) =>
-              Navigator.of(context).popUntil((route) => route.isFirst),
-        ),
-      ],
+    return Container(
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
+      decoration: const BoxDecoration(
+        color: WHColors.surface,
+        border: Border(top: BorderSide(color: WHColors.grey5)),
+      ),
+      child: WhPrimaryButton(text: label, icon: icon, onPressed: onPressed),
     );
   }
 }

@@ -106,9 +106,8 @@ class _SalesOrderDetailPageState extends State<SalesOrderDetailPage> {
   Future<void> _confirmDeleteSalesOrder() async {
     final confirmed = await showDialog<bool>(
       context: context,
-      builder: (context) => _DeleteSalesOrderDialog(
-        soNumber: _formatSalesOrderNumber(widget.order),
-      ),
+      builder: (context) =>
+          _DeleteSalesOrderDialog(soNumber: widget.order.soNumber),
     );
 
     if (confirmed != true || !mounted) return;
@@ -124,7 +123,7 @@ class _SalesOrderDetailPageState extends State<SalesOrderDetailPage> {
     try {
       final path = await _salesOrderApi.downloadLabelPdf(
         widget.order.id,
-        soNumber: _formatSalesOrderNumber(widget.order),
+        soNumber: widget.order.soNumber,
       );
       if (!mounted) return;
       WHSnackBar.showSuccess(context, 'Label berhasil diunduh: $path');
@@ -179,7 +178,8 @@ class _SalesOrderDetailPageState extends State<SalesOrderDetailPage> {
       ])?.trim().toLowerCase();
 
       if (rowCode == target) {
-        final name = _valueFrom(row, const [
+        final name =
+            _valueFrom(row, const [
               'name',
               'Name',
               'provinceName',
@@ -250,7 +250,7 @@ class _SalesOrderDetailPageState extends State<SalesOrderDetailPage> {
         ),
         children: [
           SoDetailHeader(
-            soNumber: _formatSalesOrderNumber(widget.order),
+            soNumber: widget.order.soNumber,
             createdAt: _formatDate(widget.order.orderDate),
             status: _status,
             showActions: _isQueued && !_isEditingTracking && !_hasTracking,
@@ -312,7 +312,7 @@ class _SalesOrderDetailPageState extends State<SalesOrderDetailPage> {
             PageRouteBuilder(
               pageBuilder: (_, _, _) => PickingPage(
                 orderId: widget.order.id,
-                soNumber: _formatSalesOrderNumber(widget.order),
+                soNumber: widget.order.soNumber,
                 items: _pickItems(widget.order),
               ),
               transitionDuration: Duration.zero,
@@ -327,10 +327,7 @@ class _SalesOrderDetailPageState extends State<SalesOrderDetailPage> {
 }
 
 class _PrintLabelButton extends StatelessWidget {
-  const _PrintLabelButton({
-    required this.isLoading,
-    required this.onPressed,
-  });
+  const _PrintLabelButton({required this.isLoading, required this.onPressed});
 
   final bool isLoading;
   final VoidCallback onPressed;
@@ -580,18 +577,6 @@ String _formatDate(String value) {
   final day = local.day.toString().padLeft(2, '0');
   final month = local.month.toString().padLeft(2, '0');
   return '$day/$month/${local.year}';
-}
-
-String _formatSalesOrderNumber(SalesOrder order) {
-  final parsed = DateTime.tryParse(order.orderDate);
-  if (parsed == null) return order.soNumber;
-
-  final local = parsed.toLocal();
-  final day = local.day.toString().padLeft(2, '0');
-  final month = local.month.toString().padLeft(2, '0');
-  final sequence = order.id.toString().padLeft(2, '0');
-
-  return 'SO-$day$month${local.year}-$sequence';
 }
 
 String _address(SalesOrder order) {

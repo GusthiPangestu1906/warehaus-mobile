@@ -70,8 +70,8 @@ class SalesOrderRepositoryImpl implements SalesOrderRepository {
   );
 
   @override
-  Future<List<SalesOrder>> getSalesOrders() async {
-    final list = await apiDatasource.getSalesOrders();
+  Future<List<SalesOrder>> getSalesOrders({String? date}) async {
+    final list = await apiDatasource.getSalesOrders(date: date);
     return list.map(_toEntity).toList();
   }
 

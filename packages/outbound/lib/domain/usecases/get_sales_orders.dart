@@ -4,5 +4,6 @@ import 'package:outbound/domain/repositories/sales_order_repository.dart';
 class GetSalesOrders {
   final SalesOrderRepository repository;
   const GetSalesOrders(this.repository);
-  Future<List<SalesOrder>> call() => repository.getSalesOrders();
+  Future<List<SalesOrder>> call({String? date}) =>
+      repository.getSalesOrders(date: date);
 }

@@ -195,12 +195,32 @@ class PurchaseOrderRepositoryImpl extends PurchaseOrderRepository {
       String errorMessage = 'Terjadi kesalahan validasi (400).';
 
       if (responseData is Map<String, dynamic>) {
-        errorMessage = responseData['detail']?.toString() ?? errorMessage;
+        errorMessage =
+            responseData['detail']?.toString() ??
+            responseData['message']?.toString() ??
+            _extractValidationErrors(responseData) ??
+            errorMessage;
       }
 
       return BadRequestFailure(errorMessage);
     }
 
     return ServerFailure();
+  }
+
+  String? _extractValidationErrors(Map<String, dynamic> responseData) {
+    final errors = responseData['errors'];
+    if (errors is! Map) return null;
+
+    final messages = <String>[];
+    errors.forEach((field, value) {
+      if (value is List) {
+        messages.addAll(value.map((message) => '$field: $message'));
+      } else if (value != null) {
+        messages.add('$field: $value');
+      }
+    });
+
+    return messages.isEmpty ? null : messages.join('\n');
   }
 }

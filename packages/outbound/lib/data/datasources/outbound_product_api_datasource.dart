@@ -5,7 +5,7 @@ class OutboundProductApiDatasource {
   OutboundProductApiDatasource(this.dio);
 
   Future<List<Map<String, dynamic>>> getProducts() async {
-    final response = await dio.get('/api/products');
+    final response = await dio.get('/products');
     return (response.data as List).cast<Map<String, dynamic>>();
   }
 }

@@ -4,7 +4,7 @@ import 'package:outbound/domain/params/update_sales_order_params.dart';
 import 'package:outbound/domain/params/update_sales_order_tracking_params.dart';
 
 abstract class SalesOrderRepository {
-  Future<List<SalesOrder>> getSalesOrders();
+  Future<List<SalesOrder>> getSalesOrders({String? date});
   Future<SalesOrder> getSalesOrderById(int id);
   Future<void> createSalesOrder(CreateSalesOrderParams params);
   Future<void> updateSalesOrder(UpdateSalesOrderParams params);
