@@ -58,9 +58,7 @@ class _CreateZonePageState extends State<CreateZonePage> {
           totalAisle: _totalAisle,
           shelfPerAisle: _shelfPerAisle,
           capacityPerShelf: _capacityPerShelf,
-          description: _descriptionController.text.trim().isEmpty
-              ? null
-              : _descriptionController.text.trim(),
+          description: _descriptionController.text.trim(),
         )
       ),
     );
