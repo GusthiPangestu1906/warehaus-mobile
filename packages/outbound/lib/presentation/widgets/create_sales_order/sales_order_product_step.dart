@@ -32,12 +32,7 @@ class SalesOrderProductStep extends StatelessWidget {
     return ListView(
       padding: const EdgeInsets.fromLTRB(24, 24, 24, 24),
       children: [
-        _DateCard(
-          value: requiredDeliveryDate == null
-              ? 'Select Date'
-              : _formatDate(requiredDeliveryDate!),
-          onTap: onPickDate,
-        ),
+        _DateCard(value: requiredDeliveryDate, onTap: onPickDate),
         const SizedBox(height: 20),
         const Text(
           'Product List',
@@ -70,49 +65,24 @@ class SalesOrderProductStep extends StatelessWidget {
 }
 
 class _DateCard extends StatelessWidget {
-  final String value;
+  final DateTime? value;
   final VoidCallback onTap;
 
   const _DateCard({required this.value, required this.onTap});
 
+  String _formatDate(DateTime date) {
+    final day = date.day.toString().padLeft(2, '0');
+    final month = date.month.toString().padLeft(2, '0');
+    return '$day/$month/${date.year}';
+  }
+
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.fromLTRB(16, 14, 16, 16),
-      decoration: salesOrderCardDecoration(24),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text(
-            'Required Delivery Date / SLA',
-            style: TextStyle(color: WHColors.grey1, fontSize: 16),
-          ),
-          const SizedBox(height: 8),
-          InkWell(
-            onTap: onTap,
-            borderRadius: BorderRadius.circular(14),
-            child: Container(
-              height: 44,
-              padding: const EdgeInsets.symmetric(horizontal: 12),
-              decoration: salesOrderFilledInputDecoration(14),
-              child: Row(
-                children: [
-                  const Icon(
-                    Icons.calendar_today_outlined,
-                    color: WHColors.grey3,
-                    size: 20,
-                  ),
-                  const SizedBox(width: 10),
-                  Text(
-                    value,
-                    style: const TextStyle(color: WHColors.grey1, fontSize: 16),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ],
-      ),
+    return WHDateField(
+      label: 'Required Delivery Date / SLA',
+      selectedDate: value,
+      onDateSelected: (date) => onTap(),
+      hintText: 'Select Date',
     );
   }
 }
@@ -204,21 +174,12 @@ class _ProductLineCard extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 10),
-        Container(
-          height: 78,
-          padding: const EdgeInsets.symmetric(horizontal: 16),
-          decoration: salesOrderPlainCardDecoration(22),
-          child: Row(
-            children: [
-              const Expanded(
-                child: Text(
-                  'Qty',
-                  style: TextStyle(color: WHColors.grey1, fontSize: 16),
-                ),
-              ),
-              _QtyStepper(qty: line.qty, onChanged: onQtyChanged),
-            ],
-          ),
+        WHStepperField(
+          label: 'Qty',
+          value: line.qty,
+          onChanged: onQtyChanged,
+          minValue: 0,
+          allowManualInput: true,
         ),
         const SizedBox(height: 10),
         SizedBox(

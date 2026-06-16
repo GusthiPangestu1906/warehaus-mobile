@@ -75,6 +75,7 @@ class ProductBloc extends Bloc<ProductEvent, ProductState> {
       try {
         await updateProductUsecase(_productFromEvent(event));
         debugPrint('[ProductBloc] UpdateProductEvent success');
+        emit(ProductActionSuccess('updated'));
         add(GetProductDetailsEvent(event.id));
       } catch (e) {
         debugPrint('[ProductBloc] UpdateProductEvent error: $e');
@@ -88,6 +89,7 @@ class ProductBloc extends Bloc<ProductEvent, ProductState> {
         await deleteProductUsecase(event.id);
         debugPrint('[ProductBloc] DeleteProductEvent success');
         add(GetProductsEvent());
+        emit(ProductActionSuccess('deleted'));
       } catch (e) {
         debugPrint('[ProductBloc] DeleteProductEvent error: $e');
         emit(ProductError(e.toString()));
@@ -125,6 +127,7 @@ class ProductBloc extends Bloc<ProductEvent, ProductState> {
         sku: event.sku ?? '',
         productName: event.productName ?? '',
         barcode: event.barcode ?? '',
+        categoryId: event.categoryId,
         unitOfMeasure: event.unitOfMeasure ?? '',
       );
     }

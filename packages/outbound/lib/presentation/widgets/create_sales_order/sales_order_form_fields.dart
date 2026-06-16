@@ -1,6 +1,5 @@
 import 'package:core_ui/core_ui.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:outbound/presentation/widgets/create_sales_order/sales_order_form_styles.dart';
 
 class SalesOrderFieldCard extends StatelessWidget {
@@ -59,6 +58,7 @@ class SalesOrderFieldCard extends StatelessWidget {
 
 class SalesOrderTextInput extends StatelessWidget {
   final TextEditingController controller;
+  final String label;
   final String hint;
   final TextInputType? keyboardType;
   final String? Function(String?)? validator;
@@ -69,16 +69,16 @@ class SalesOrderTextInput extends StatelessWidget {
     required this.hint,
     this.keyboardType,
     this.validator,
+    this.label = '',
   });
 
   @override
   Widget build(BuildContext context) {
-    return TextFormField(
+    return WHTextField(
+      label: label,
+      hintText: hint,
       controller: controller,
-      keyboardType: keyboardType,
-      validator: validator,
-      style: const TextStyle(color: Colors.black, fontSize: 13),
-      decoration: salesOrderInputDecoration(hint),
+      keyboardType: keyboardType ?? TextInputType.text,
     );
   }
 }
@@ -95,30 +95,13 @@ class SalesOrderNoteInput extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.end,
-      children: [
-        TextFormField(
-          controller: controller,
-          minLines: 4,
-          maxLines: 4,
-          maxLength: 150,
-          inputFormatters: [LengthLimitingTextInputFormatter(150)],
-          style: const TextStyle(color: Colors.black, fontSize: 13),
-          decoration: salesOrderInputDecoration('Text here...').copyWith(
-            counterText: '',
-            contentPadding: const EdgeInsets.symmetric(
-              horizontal: 12,
-              vertical: 12,
-            ),
-          ),
-        ),
-        const SizedBox(height: 2),
-        Text(
-          '$count/150',
-          style: const TextStyle(color: WHColors.grey2, fontSize: 10),
-        ),
-      ],
+    return WHDescriptionField(
+      label: '',
+      hintText: 'Text here...',
+      controller: controller,
+      maxLength: 150,
+      isOptional: true,
+      maxLines: 4,
     );
   }
 }
@@ -144,23 +127,37 @@ class SalesOrderSelectField<T> extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final hasItems = items.isNotEmpty;
-    final selectedValue = items.any((item) => item.value == value)
-        ? value
-        : null;
-    return DropdownButtonFormField<T>(
-      key: ValueKey('${T.toString()}-$selectedValue-${items.length}'),
-      initialValue: hasItems ? selectedValue : null,
-      isExpanded: true,
-      decoration: salesOrderInputDecoration(
-        isLoading
-            ? 'Loading...'
-            : hasItems
-            ? hint
-            : emptyHint,
-      ),
-      icon: const Icon(Icons.keyboard_arrow_down, size: 18),
-      style: const TextStyle(color: Colors.black, fontSize: 13),
-      items: items,
+
+    // Convert DropdownMenuItem to WHDropdownItem
+    final whItems = items
+        .map(
+          (item) => WHDropdownItem<T>(
+            value: item.value as T,
+            label: item.child.toString(),
+          ),
+        )
+        .toList();
+
+    // Find selected value that exists in items
+    T? selectedValue;
+    if (value != null) {
+      for (final item in items) {
+        if (item.value == value) {
+          selectedValue = value;
+          break;
+        }
+      }
+    }
+
+    return WHDropdownField<T>(
+      label: '',
+      hintText: isLoading
+          ? 'Loading...'
+          : hasItems
+          ? hint
+          : emptyHint,
+      selectedValue: selectedValue,
+      items: whItems,
       onChanged: isLoading || !hasItems ? null : onChanged,
     );
   }
