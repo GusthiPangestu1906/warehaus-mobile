@@ -23,16 +23,11 @@ class CreateSalesOrderPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MultiBlocProvider(
-      providers: [
-        BlocProvider(
-          create: (_) => SalesOrderFormCubit(
-            productApi: GetIt.instance<OutboundProductApiDatasource>(),
-            regionApi: GetIt.instance<RegionApiDatasource>(),
-          ),
-        ),
-        BlocProvider(create: (_) => GetIt.instance<SalesOrderBloc>()),
-      ],
+    return BlocProvider(
+      create: (_) => SalesOrderFormCubit(
+        productApi: GetIt.instance<OutboundProductApiDatasource>(),
+        regionApi: GetIt.instance<RegionApiDatasource>(),
+      ),
       child: _CreateSalesOrderView(initialOrder: initialOrder),
     );
   }

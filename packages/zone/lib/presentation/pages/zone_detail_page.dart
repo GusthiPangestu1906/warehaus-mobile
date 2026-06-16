@@ -10,7 +10,7 @@ import 'package:zone/presentation/widgets/zone_detail_card.dart';
 import 'package:zone/zone.dart';
 
 class ZoneDetailPage extends StatefulWidget {
-  final String? zoneId;
+  final int? zoneId;
   final String? zoneName;
 
   const ZoneDetailPage({super.key, this.zoneId, this.zoneName});
@@ -41,7 +41,7 @@ class _ZoneDetailPageState extends State<ZoneDetailPage> {
     super.initState();
     final zoneId = widget.zoneId;
     stdout.writeln(
-      'ZoneDetailPage initState: zoneId=$zoneId, zoneName=${widget.zoneName}',
+      'ZoneDetailPage initState: zoneId=$zoneId, zoneName=${widget.zoneName ?? zoneId?.toString() ?? ''}',
     );
 
     if (zoneId != null) {
@@ -64,7 +64,7 @@ class _ZoneDetailPageState extends State<ZoneDetailPage> {
       return Scaffold(
         backgroundColor: WHColors.background,
         appBar: WHAppbar(
-          title: 'Zone ${widget.zoneName ?? widget.zoneId ?? ''}',
+          title: 'Zone ${widget.zoneName ?? widget.zoneId?.toString() ?? ''}',
         ),
         body: Container(
           color: WHColors.background,
@@ -74,7 +74,7 @@ class _ZoneDetailPageState extends State<ZoneDetailPage> {
             children: [
               const SizedBox(height: 16),
               Text(
-                "All Zones > ${widget.zoneName}",
+                "All Zones > ${widget.zoneName ?? widget.zoneId?.toString() ?? ''}",
                 style: WHTypography.caption,
               ),
               const SizedBox(height: 16),

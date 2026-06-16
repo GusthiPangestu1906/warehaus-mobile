@@ -1,7 +1,6 @@
 abstract class ProductEvent {}
 
 class GetProductsEvent extends ProductEvent {}
-
 class LoadCategoriesEvent extends ProductEvent {}
 
 class GetProductDetailsEvent extends ProductEvent {
@@ -32,7 +31,6 @@ class UpdateProductEvent extends ProductEvent {
   final String? productName;
   final String? barcode;
   final String? unitOfMeasure;
-  final int? categoryId;
 
   UpdateProductEvent({
     required this.id,
@@ -40,7 +38,6 @@ class UpdateProductEvent extends ProductEvent {
     this.productName,
     this.barcode,
     this.unitOfMeasure,
-    this.categoryId,
   });
 }
 

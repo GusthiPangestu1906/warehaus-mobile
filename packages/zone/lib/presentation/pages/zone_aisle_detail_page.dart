@@ -10,7 +10,7 @@ import 'package:zone/presentation/widgets/download_qr.dart';
 import 'package:zone/presentation/widgets/zone_aisle_visualizer.dart';
 
 class ZoneAisleDetailPage extends StatefulWidget {
-  final String zoneId;
+  final int zoneId;
   final String zoneCode;
   final int aisleNumber;
 
@@ -28,8 +28,8 @@ class ZoneAisleDetailPage extends StatefulWidget {
 class _ZoneAisleDetailPageState extends State<ZoneAisleDetailPage>
     with RouteAware {
   String get _downloadUrl {
-    final zoneId = int.tryParse(widget.zoneId);
-    if (zoneId == null) return '';
+    final zoneId = widget.zoneId;
+    if (zoneId == 0) return '';
 
     final base = ApiClient().dio.options.baseUrl ?? '';
     final suffix = 'zone/qr/$zoneId/${widget.aisleNumber}';

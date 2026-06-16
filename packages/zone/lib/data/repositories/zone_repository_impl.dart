@@ -1,7 +1,6 @@
 import 'package:zone/data/datasources/zone_api_datasource.dart';
-import 'package:zone/data/models/zone_model.dart';
-import 'package:zone/domain/entities/zone.dart';
 import 'package:zone/domain/entities/shelf_detail.dart';
+import 'package:zone/domain/entities/zone.dart';
 import 'package:zone/domain/params/create_zone_param.dart';
 import 'package:zone/domain/repositories/zone_repository.dart';
 
@@ -22,12 +21,12 @@ class ZoneRepositoryImpl implements ZoneRepository {
   }
 
   @override
-  Future<List<Zone>> getZonesByAisle(String zoneId, int aisleNumber) async {
+  Future<List<Zone>> getZonesByAisle(int zoneId, int aisleNumber) async {
     return await apiDatasource.getZonesByAisle(zoneId, aisleNumber);
   }
 
   @override
-  Future<Zone> getZoneDetails(String id) async {
+  Future<Zone> getZoneDetails(int id) async {
     final zone = await apiDatasource.getZoneById(id);
     if (zone == null) {
       throw Exception('Zone with id $id not found');
@@ -42,7 +41,7 @@ class ZoneRepositoryImpl implements ZoneRepository {
 
   @override
   Future<void> updateZone({
-    required String id,
+    required int id,
     String? zoneName,
     String? category,
     String? description,
@@ -56,7 +55,7 @@ class ZoneRepositoryImpl implements ZoneRepository {
   }
 
   @override
-  Future<void> deleteZone(String id) async {
+  Future<void> deleteZone(int id) async {
     await apiDatasource.deleteZone(id);
   }
 
