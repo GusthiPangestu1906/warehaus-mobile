@@ -86,14 +86,6 @@ class _DownloadQRButtonState extends State<DownloadQRButton> {
   Future<void> _handleDownload() async {
     if (_loading) return;
 
-    // Debug hint: show a short snackbar so we can verify this code runs
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Opening custom format dialog...'),
-        duration: Duration(milliseconds: 700),
-      ),
-    );
-
     // Ask user which format they want (custom bottom sheet)
     final option = await FormatDialogQr.show(context);
 
