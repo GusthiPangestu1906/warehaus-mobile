@@ -24,12 +24,8 @@ class DashboardService {
 
       debugPrint('[DashboardService] Raw Data Type: ${response}');
 
-      final logsList = response.data as List<dynamic>? ?? [];
-      final logsList = response.data as List<dynamic>? ?? [];
-
-      return logsList
-          .map((log) => ActivityLog.fromJson(log as Map<String, dynamic>))
-          .toList();
+      final responseData = response.data as Map<String, dynamic>;
+      return DashboardResponse.fromJson(responseData);
     } catch (e) {
       debugPrint('[DashboardService] Error di getDashboardData: $e');
       if (e is DioException && e.response?.statusCode == 404) {
