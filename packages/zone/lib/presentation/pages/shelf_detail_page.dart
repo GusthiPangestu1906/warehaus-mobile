@@ -132,10 +132,7 @@ class _ShelfDetailPageState extends State<ShelfDetailPage> {
 
                   setState(() => _loading = true);
                   try {
-                    final base = ApiClient().dio.options.baseUrl ?? '';
-                    final url = base.endsWith('/')
-                        ? '${base}zone/qr/${widget.shelfId}'
-                        : '$base/zone/qr/${widget.shelfId}';
+                    final url = '/Zones/qr/${widget.shelfId}';
                     final savedPath = await QRDownloader().downloadWithOption(
                       url,
                       option,
