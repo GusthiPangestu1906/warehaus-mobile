@@ -40,17 +40,15 @@ class QRDownloader {
     String option,
     String code,
   ) async {
-    // Append _pdf if the user selected pdf
+    // Append -pdf if the user selected pdf
     var finalUrl = url;
     if (option.toLowerCase() == 'pdf') {
       if (finalUrl.endsWith('download')) {
-        finalUrl = '${finalUrl}_pdf';
+        finalUrl = '$finalUrl-pdf';
       } else {
-        // Fallback if URL doesn't end with download but they want PDF
-        finalUrl = '${finalUrl}/download_pdf';
+        finalUrl = '$finalUrl/download-pdf';
       }
     }
-
     // Request bytes from backend (use GET because no option needed for QR zip/pdf)
     final response = await _dio.get<List<int>>(
       finalUrl,

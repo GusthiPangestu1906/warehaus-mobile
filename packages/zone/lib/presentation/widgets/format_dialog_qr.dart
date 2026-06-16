@@ -109,7 +109,7 @@ class FormatDialogQr extends StatelessWidget {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     _FormatOption(
-                      icon: Icons.picture_as_pdf_rounded,
+                      icon: Icons.picture_as_pdf,
                       iconColor: _accentRed,
                       title: 'PDF',
                       subtitle: 'Untuk cetak atau dokumen',

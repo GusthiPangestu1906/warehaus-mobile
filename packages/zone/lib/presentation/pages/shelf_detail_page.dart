@@ -132,7 +132,7 @@ class _ShelfDetailPageState extends State<ShelfDetailPage> {
 
                   setState(() => _loading = true);
                   try {
-                    final url = '/Zones/qr/${widget.shelfId}';
+                    final url = '/Zones/shelves/${widget.shelfId}/qrcode';
                     final savedPath = await QRDownloader().downloadWithOption(
                       url,
                       option,
