@@ -6,6 +6,7 @@ class Zone {
   final String zoneCode;
   final String zoneName;
   final String category;
+  final int categoryId;
   final String description;
   final int totalAisle;
   final int shelfPerAisle;
@@ -19,6 +20,7 @@ class Zone {
     required this.zoneCode,
     required this.zoneName,
     required this.category,
+    required this.categoryId,
     required this.description,
     required this.totalAisle,
     required this.shelfPerAisle,
@@ -34,6 +36,7 @@ class Zone {
       zoneCode: json['zoneCode'] as String? ?? '',
       zoneName: json['zoneName'] as String? ?? '',
       category: json['category'] as String? ?? '',
+      categoryId: json['categoryId'] as int? ?? 0,
       description: json['description'] as String? ?? '',
       totalAisle: (json['totalAisle'] ?? json['totalAisles']) as int? ?? 0,
       shelfPerAisle:

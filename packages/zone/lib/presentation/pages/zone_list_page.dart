@@ -54,6 +54,11 @@ class _ZoneListPageState extends State<ZoneListPage> with RouteAware {
       return current;
     }
 
+    int? toOptionalInt(int initial, int current) {
+      if (initial == current) return null;
+      return current;
+    }
+
     final edited = await showZoneEditDialog(context, zone);
 
     // Tunggu hingga frame berikutnya selesai di-render agar dialog
@@ -64,16 +69,16 @@ class _ZoneListPageState extends State<ZoneListPage> with RouteAware {
     if (edited == null || !mounted) return;
 
     final zoneName = toOptionalValue(zone.zoneName, edited.zoneName);
-    final category = toOptionalValue(zone.category, edited.category);
+    final categoryId = toOptionalInt(zone.categoryId, edited.categoryId);
     final description = toOptionalValue(zone.description, edited.description);
 
-    if (zoneName == null && category == null && description == null) return;
+    if (zoneName == null && categoryId == null && description == null) return;
 
     bloc.add(
       UpdateZoneEvent(
         id: zone.id,
         zoneName: zoneName,
-        category: category,
+        categoryId: categoryId,
         description: description,
       ),
     );
@@ -169,12 +174,15 @@ class _ZoneListPageState extends State<ZoneListPage> with RouteAware {
         }
       },
       child: BlocListener<ZoneBloc, ZoneState>(
-        listenWhen: (previous, current) => current is ZoneError,
+        listenWhen: (previous, current) => current is ZoneError || current is ZoneOperationSuccess,
         listener: (context, state) {
           // Hanya tampilkan snackbar jika halaman ini yang aktif (bukan create_zone di atas)
-          if (state is ZoneError &&
-              (ModalRoute.of(context)?.isCurrent ?? false)) {
-            WHSnackBar.showError(context, state.message);
+          if ((ModalRoute.of(context)?.isCurrent ?? false)) {
+            if (state is ZoneError) {
+              WHSnackBar.showError(context, state.message);
+            } else if (state is ZoneOperationSuccess && state.message != null) {
+              WHSnackBar.showSuccess(context, state.message!);
+            }
           }
         },
         child: BlocBuilder<ZoneBloc, ZoneState>(

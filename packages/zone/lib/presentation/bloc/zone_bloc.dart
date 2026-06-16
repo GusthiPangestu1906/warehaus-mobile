@@ -90,7 +90,7 @@ class ZoneBloc extends Bloc<ZoneEvent, ZoneState> {
         debugPrint('[ZoneBloc] CreateZoneEvent success');
         // Emit ZoneOperationSuccess agar listener (CreateZonePage) bisa pop,
         // lalu emit ZoneLoaded agar ZoneListPage punya data terbaru.
-        emit(ZoneOperationSuccess(zones));
+        emit(ZoneOperationSuccess(zones, message: 'Zone Saved'));
       } catch (e) {
         debugPrint('[ZoneBloc] CreateZoneEvent error: $e');
         emit(ZoneError(_extractErrorMessage(e)));
@@ -103,14 +103,14 @@ class ZoneBloc extends Bloc<ZoneEvent, ZoneState> {
         await updateZoneUsecase(
           id: event.id,
           zoneName: event.zoneName,
-          category: event.category,
+          categoryId: event.categoryId,
           description: event.description,
         );
         final zones = await getZonesUsecase();
         debugPrint('[ZoneBloc] UpdateZoneEvent success');
         // Emit ZoneOperationSuccess lalu ZoneLoaded agar list ter-refresh
         // tanpa race condition saat dialog/page sedang di-dispose.
-        emit(ZoneOperationSuccess(zones));
+        emit(ZoneOperationSuccess(zones, message: 'Zone Saved'));
         emit(ZoneLoaded(zones));
       } catch (e) {
         debugPrint('[ZoneBloc] UpdateZoneEvent error: $e');
@@ -124,7 +124,7 @@ class ZoneBloc extends Bloc<ZoneEvent, ZoneState> {
         await deleteZoneUsecase(event.id);
         final zones = await getZonesUsecase();
         debugPrint('[ZoneBloc] DeleteZoneEvent success');
-        emit(ZoneOperationSuccess(zones));
+        emit(ZoneOperationSuccess(zones, message: 'Zone Deleted'));
         emit(ZoneLoaded(zones));
       } catch (e) {
         debugPrint('[ZoneBloc] DeleteZoneEvent error: $e');

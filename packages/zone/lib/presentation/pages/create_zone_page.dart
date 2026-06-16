@@ -101,7 +101,7 @@ class _CreateZonePageState extends State<CreateZonePage> {
     return BlocConsumer<ZoneBloc, ZoneState>(
       listener: (context, state) {
         if (state is ZoneOperationSuccess) {
-          WHSnackBar.showSuccess(context, 'Zone berhasil disimpan!');
+          WHSnackBar.showSuccess(context, state.message ?? 'Zone Saved');
           Navigator.of(context).pop(true);
         } else if (state is ZoneError) {
           setState(() => _isSubmitting = false);

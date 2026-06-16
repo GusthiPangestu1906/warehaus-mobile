@@ -7,13 +7,13 @@ class UpdateZone {
   Future<void> call({
     required String id,
     String? zoneName,
-    String? category,
+    int? categoryId,
     String? description,
-  }) {
-    return repository.updateZone(
+  }) async {
+    return await repository.updateZone(
       id: id,
       zoneName: zoneName,
-      category: category,
+      categoryId: categoryId,
       description: description,
     );
   }
