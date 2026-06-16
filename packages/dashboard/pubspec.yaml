@@ -18,6 +18,8 @@ dependencies:
   get_it: ^9.2.1
   product:
     path: ../product
+  zone:
+    path: ../zone
 
 dev_dependencies:
   flutter_test:

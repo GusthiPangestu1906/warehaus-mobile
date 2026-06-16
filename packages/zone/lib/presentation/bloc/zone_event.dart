@@ -1,3 +1,5 @@
+import 'package:zone/domain/params/create_zone_param.dart';
+
 abstract class ZoneEvent {}
 
 class GetZonesEvent extends ZoneEvent {}
@@ -16,23 +18,9 @@ class GetZoneDetailsEvent extends ZoneEvent {
 }
 
 class CreateZoneEvent extends ZoneEvent {
-  final String zoneName;
-  final String zoneCode;
-  final String category;
-  final int totalAisle;
-  final int shelfPerAisle;
-  final int capacityPerShelf;
-  String? description;
+  final CreateZoneParam zone;
 
-  CreateZoneEvent({
-    required this.zoneName,
-    required this.zoneCode,
-    required this.category,
-    required this.totalAisle,
-    required this.shelfPerAisle,
-    required this.capacityPerShelf,
-    this.description,
-  });
+  CreateZoneEvent(this.zone);
 }
 
 class UpdateZoneEvent extends ZoneEvent {
