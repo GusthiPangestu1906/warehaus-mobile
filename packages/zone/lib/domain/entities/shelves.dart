@@ -17,7 +17,7 @@ class Shelf {
 
   factory Shelf.fromJson(Map<String, dynamic> json) {
     return Shelf(
-      id: json['id']?.toString() ?? '',
+      id: (json['shelfId'] ?? json['id'])?.toString() ?? '',
       shelfCode: (json['shelfCode'] ?? json['binCode']) as String? ?? '',
       aisle: json['aisle'] as int? ?? 0,
       capacity: json['capacity'] as int? ?? 0,

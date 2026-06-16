@@ -1,4 +1,4 @@
-// import 'package:zone/domain/entities/shelf_detail.dart'; // TODO: /v1/Zone/shelves/{shelfId} belum ada di backend
+import 'package:zone/domain/entities/shelf_detail.dart';
 import 'package:zone/domain/repositories/zone_repository.dart';
 
 class GetShelfDetails {
@@ -6,7 +6,7 @@ class GetShelfDetails {
 
   GetShelfDetails(this.repository);
 
-  // Future<ShelfDetail> call(int shelfId) {
-  //   return repository.getShelfDetails(shelfId);
-  // }
+  Future<ShelfDetail> call(int shelfId) {
+    return repository.getShelfDetails(shelfId);
+  }
 }

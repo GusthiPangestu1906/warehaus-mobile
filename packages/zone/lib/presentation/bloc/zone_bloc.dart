@@ -73,10 +73,9 @@ class ZoneBloc extends Bloc<ZoneEvent, ZoneState> {
       debugPrint('[ZoneBloc] GetShelfDetailsEvent: ${event.shelfId}');
       emit(ZoneLoading());
       try {
-        // GetShelfDetails use case is not yet implemented - emit empty for now
-        // final shelfDetail = await getShelfDetailsUsecase(event.shelfId);
-        debugPrint('[ZoneBloc] GetShelfDetailsEvent not implemented yet');
-        emit(ShelfDetailLoaded(shelfId: event.shelfId, shelfDetail: null));
+        final shelfDetail = await getShelfDetailsUsecase(event.shelfId);
+        debugPrint('[ZoneBloc] GetShelfDetailsEvent success');
+        emit(ShelfDetailLoaded(shelfId: event.shelfId, shelfDetail: shelfDetail));
       } catch (e) {
         debugPrint('[ZoneBloc] GetShelfDetailsEvent error: $e');
         emit(ZoneError(_extractErrorMessage(e)));
