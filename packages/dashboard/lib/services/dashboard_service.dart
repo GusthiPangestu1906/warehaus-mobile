@@ -25,6 +25,7 @@ class DashboardService {
       debugPrint('[DashboardService] Raw Data Type: ${response}');
 
       final logsList = response.data as List<dynamic>? ?? [];
+      final logsList = response.data as List<dynamic>? ?? [];
 
       return logsList
           .map((log) => ActivityLog.fromJson(log as Map<String, dynamic>))
