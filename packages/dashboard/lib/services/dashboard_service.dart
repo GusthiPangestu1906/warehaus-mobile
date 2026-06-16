@@ -24,10 +24,7 @@ class DashboardService {
 
       debugPrint('[DashboardService] Response data: ${response.data}');
 
-      // PERUBAHAN DI SINI:
-      // Parsing response sebagai Map, lalu ekstrak value dari key 'logs'
-      final responseData = response.data as Map<String, dynamic>;
-      final logsList = responseData['logs'] as List<dynamic>? ?? [];
+      final logsList = response.data as List<dynamic>? ?? [];
 
       return logsList
           .map((log) => ActivityLog.fromJson(log as Map<String, dynamic>))
@@ -43,10 +40,7 @@ class DashboardService {
 
   Future<DashboardResponse?> getDashboardData({int limit = 10}) async {
     try {
-      final response = await dio.get(
-        '/dashboard/recent-logs',
-        queryParameters: {'limit': limit},
-      );
+      final response = await dio.get('/dashboard');
 
       // Casting response.data ke Map
       final responseData = response.data as Map<String, dynamic>;
