@@ -87,20 +87,9 @@ class ZoneBloc extends Bloc<ZoneEvent, ZoneState> {
       }
     });
     on<CreateZoneEvent>((event, emit) async {
-      debugPrint('[ZoneBloc] CreateZoneEvent');
       emit(ZoneLoading());
       try {
-        final zone = Zone(
-          id: '',
-          zoneCode: event.zoneCode,
-          zoneName: event.zoneName,
-          category: event.category,
-          description: event.description ?? '',
-          totalAisle: event.totalAisle,
-          shelfPerAisle: event.shelfPerAisle,
-          capacityPerShelf: event.capacityPerShelf,
-          shelves: const [],
-        );
+        final zone = event.zone;
         await createZoneUsecase(zone);
         final zones = await getZonesUsecase();
         debugPrint('[ZoneBloc] CreateZoneEvent success');

@@ -249,6 +249,7 @@ class _ZoneListPageState extends State<ZoneListPage> with RouteAware {
                   ],
                 ),
                 floatingActionButton: FloatingActionButton(
+                  heroTag: 'create_zone',
                   onPressed: () async {
                     final navigator = Navigator.of(context);
                     await navigator.push(

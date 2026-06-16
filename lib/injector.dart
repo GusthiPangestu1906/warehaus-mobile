@@ -17,6 +17,7 @@ import 'package:zone/domain/usecases/get_zone_by_aisle.dart';
 import 'package:zone/domain/usecases/get_shelf_details.dart';
 import 'package:zone/presentation/bloc/zone_bloc.dart';
 import 'package:zone/zone.dart';
+import 'package:product/domain/usecases/get_categories.dart';
 
 final getIt = GetIt.instance;
 
@@ -99,6 +100,10 @@ void setupInjector() {
     ),
   );
 
+  getIt.registerLazySingleton(
+        () => GetCategories(getIt<ProductRepositoryImpl>()),
+  );
+
   getIt.registerFactory(
     () => ProductBloc(
       getProductsUsecase: getIt<GetProducts>(),
@@ -109,6 +114,10 @@ void setupInjector() {
       addStockLocationUsecase: getIt<AddStockLocation>(),
       updateStockLocationUsecase: getIt<UpdateStockLocation>(),
       moveStockLocationUsecase: getIt<MoveStockLocation>(),
+      getCategoriesUsecase: getIt<GetCategories>(),
     ),
   );
+
+
+
 }

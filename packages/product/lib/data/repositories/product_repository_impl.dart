@@ -4,6 +4,7 @@ import 'package:product/data/models/stock_location_input_model.dart';
 import 'package:product/domain/entities/product.dart';
 import 'package:product/domain/entities/stock_location_input.dart';
 import 'package:product/domain/repositories/product_repository.dart';
+import 'package:product/domain/entities/category.dart';
 
 class ProductRepositoryImpl implements ProductRepository {
   final ProductApiDatasource apiDatasource;
@@ -12,6 +13,14 @@ class ProductRepositoryImpl implements ProductRepository {
   @override
   Future<List<Product>> getProducts() async {
     return await apiDatasource.getProducts();
+  }
+
+  @override
+  Future<List<Category>> getCategories() async {
+    final models = await apiDatasource.getCategories();
+    return models
+        .map((m) => Category(id: m.id, name: m.name))
+        .toList();
   }
 
   @override
@@ -29,9 +38,8 @@ class ProductRepositoryImpl implements ProductRepository {
             sku: product.sku,
             productName: product.productName,
             barcode: product.barcode,
+            categoryId: product.categoryId,
             unitOfMeasure: product.unitOfMeasure,
-            currentStock: product.currentStock,
-            stocks: product.stocks,
           );
     await apiDatasource.createProduct(model);
   }
@@ -45,6 +53,7 @@ class ProductRepositoryImpl implements ProductRepository {
             sku: product.sku,
             productName: product.productName,
             barcode: product.barcode,
+            categoryId: product.categoryId,
             unitOfMeasure: product.unitOfMeasure,
             currentStock: product.currentStock,
             stocks: product.stocks,

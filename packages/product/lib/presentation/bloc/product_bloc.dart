@@ -13,6 +13,7 @@ import 'package:product/domain/usecases/update_product.dart';
 import 'package:product/domain/usecases/update_stock_location.dart';
 import 'package:product/presentation/bloc/product_event.dart';
 import 'package:product/presentation/bloc/product_state.dart';
+import 'package:product/domain/usecases/get_categories.dart';
 
 class ProductBloc extends Bloc<ProductEvent, ProductState> {
   final GetProducts getProductsUsecase;
@@ -23,6 +24,7 @@ class ProductBloc extends Bloc<ProductEvent, ProductState> {
   final AddStockLocation addStockLocationUsecase;
   final UpdateStockLocation updateStockLocationUsecase;
   final MoveStockLocation moveStockLocationUsecase;
+  final GetCategories getCategoriesUsecase;
 
   ProductBloc({
     required this.getProductsUsecase,
@@ -33,16 +35,14 @@ class ProductBloc extends Bloc<ProductEvent, ProductState> {
     required this.addStockLocationUsecase,
     required this.updateStockLocationUsecase,
     required this.moveStockLocationUsecase,
+    required this.getCategoriesUsecase,
   }) : super(ProductInitial()) {
     on<GetProductsEvent>((event, emit) async {
-      debugPrint('[ProductBloc] GetProductsEvent');
       emit(ProductLoading());
       try {
         final products = await getProductsUsecase();
-        debugPrint('[ProductBloc] GetProductsEvent success: ${products.length}');
         emit(ProductLoaded(products));
       } catch (e) {
-        debugPrint('[ProductBloc] GetProductsEvent error: $e');
         emit(ProductError(e.toString()));
       }
     });
@@ -159,6 +159,15 @@ class ProductBloc extends Bloc<ProductEvent, ProductState> {
         emit(ProductError(e.toString()));
       }
     });
+    on<LoadCategoriesEvent>((event, emit) async {
+      emit(CategoriesLoading());
+      try {
+        final categories = await getCategoriesUsecase();
+        emit(CategoriesLoaded(categories));
+      } catch (e) {
+        emit(CategoriesError(e.toString()));
+      }
+    });
   }
 
   Product _productFromEvent(ProductEvent event) {
@@ -168,6 +177,7 @@ class ProductBloc extends Bloc<ProductEvent, ProductState> {
         sku: event.sku,
         productName: event.productName,
         barcode: event.barcode,
+        categoryId: event.categoryId,
         unitOfMeasure: event.unitOfMeasure,
       );
     }

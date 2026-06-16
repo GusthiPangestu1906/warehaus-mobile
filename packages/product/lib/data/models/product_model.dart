@@ -8,6 +8,7 @@ class ProductModel extends Product {
     required super.sku,
     required super.productName,
     required super.barcode,
+    required super.categoryId,
     required super.unitOfMeasure,
     super.currentStock,
     List<Stock>? stocks,
@@ -21,6 +22,7 @@ class ProductModel extends Product {
       sku: (json['sku'] ?? json['SKU']) as String? ?? '',
       productName: json['productName'] as String? ?? '',
       barcode: json['barcode'] as String? ?? '',
+      categoryId: json['categoryId'],
       unitOfMeasure: json['unitOfMeasure'] as String? ?? '',
       currentStock: json['currentStock'] as int? ?? 0,
       stocks: (json['stock'] ?? json['stocks']) != null
@@ -34,11 +36,12 @@ class ProductModel extends Product {
   }
 
   Map<String, dynamic> toJson() => {
-    'id': id,
+    'id': int.tryParse(id) ?? 0,
     'sku': sku,
     'productName': productName,
     'barcode': barcode,
     'unitOfMeasure': unitOfMeasure,
     'stocks': stocks?.map((stock) => (stock as StockModel).toJson()).toList(),
+    'categoryId': int ?? 0,
   };
 }

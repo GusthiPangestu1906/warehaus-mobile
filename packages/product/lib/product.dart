@@ -1,6 +1,8 @@
 export 'domain/entities/product.dart';
 export 'domain/entities/stock_location_input.dart';
+export 'domain/entities/category.dart';
 export 'domain/repositories/product_repository.dart';
+export 'presentation/bloc/product_bloc.dart';
 export 'presentation/bloc/product_bloc.dart';
 export 'presentation/bloc/product_event.dart';
 export 'presentation/bloc/product_state.dart';

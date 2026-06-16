@@ -2,6 +2,7 @@ import 'package:zone/data/datasources/zone_api_datasource.dart';
 import 'package:zone/data/models/zone_model.dart';
 import 'package:zone/domain/entities/zone.dart';
 import 'package:zone/domain/entities/shelf_detail.dart';
+import 'package:zone/domain/params/create_zone_param.dart';
 import 'package:zone/domain/repositories/zone_repository.dart';
 
 class ZoneRepositoryImpl implements ZoneRepository {
@@ -35,23 +36,8 @@ class ZoneRepositoryImpl implements ZoneRepository {
   }
 
   @override
-  Future<void> createZone(Zone zone) async {
-    final model = zone is ZoneModel
-        ? zone
-        : ZoneModel(
-            id: zone.id,
-            zoneCode: zone.zoneCode,
-            zoneName: zone.zoneName,
-            category: zone.category,
-            description: zone.description,
-            totalAisle: zone.totalAisle,
-            shelfPerAisle: zone.shelfPerAisle,
-            capacityPerShelf: zone.capacityPerShelf,
-            emptyShelves: zone.emptyShelves,
-            shelves: zone.shelves,
-            aisles: zone.aisles,
-          );
-    await apiDatasource.createZone(model);
+  Future<void> createZone(CreateZoneParam zone) async {
+    await apiDatasource.createZone(zone);
   }
 
   @override

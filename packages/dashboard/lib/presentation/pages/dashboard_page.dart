@@ -2,6 +2,9 @@ import 'package:core_ui/core_ui.dart';
 import 'package:flutter/material.dart';
 import 'package:zone/presentation/pages/create_zone_page.dart';
 import 'package:product/presentation/pages/create_product_page.dart';
+import 'package:get_it/get_it.dart';
+import 'package:dio/dio.dart';
+import 'package:dashboard/services/dashboard_service.dart';
 
 class DashboardPage extends StatefulWidget {
   const DashboardPage({super.key});
@@ -11,36 +14,33 @@ class DashboardPage extends StatefulWidget {
 }
 
 class _DashboardPageState extends State<DashboardPage> {
-  // Mock data for UI development
-  final List<Map<String, dynamic>> mockLogs = [
-    {
-      'productName': 'Indomie Goreng',
-      'sku': 'SKU-001',
-      'locationName': 'A-12',
-      'quantity': 50,
-      'stockAfterMovement': 1250,
-      'isStockIn': true,
-      'time': '10:45 AM',
-    },
-    {
-      'productName': 'Mineral Water 600ml',
-      'sku': 'SKU-002',
-      'locationName': 'B-04',
-      'quantity': 20,
-      'stockAfterMovement': 480,
-      'isStockIn': false,
-      'time': '09:30 AM',
-    },
-    {
-      'productName': 'Cooking Oil 2L',
-      'sku': 'SKU-003',
-      'locationName': 'C-01',
-      'quantity': 100,
-      'stockAfterMovement': 2100,
-      'isStockIn': true,
-      'time': '08:15 AM',
-    },
-  ];
+  late final DashboardService _service;
+  List<ActivityLog> _logs = [];
+  bool _isLoading = true;
+  String? _error;
+
+  @override
+  void initState() {
+    super.initState();
+    _service = DashboardService(GetIt.instance<Dio>());
+    _fetchLogs();
+  }
+
+  Future<void> _fetchLogs() async {
+    try {
+      setState(() => _isLoading = true);
+      final logs = await _service.getRecentLogs();
+      setState(() {
+        _logs = logs;
+        _isLoading = false;
+      });
+    } catch (e) {
+      setState(() {
+        _error = e.toString();
+        _isLoading = false;
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -66,7 +66,6 @@ class _DashboardPageState extends State<DashboardPage> {
                       title: 'PENDING TASKS',
                       value: '15',
                       subtitle: 'Tasks Waiting',
-                      icon: Icons.assignment_outlined,
                     ),
                   ),
                   const SizedBox(width: 12),
@@ -75,7 +74,6 @@ class _DashboardPageState extends State<DashboardPage> {
                       title: 'TOTAL PRODUCTS',
                       value: '1,240',
                       subtitle: 'Items Registered',
-                      icon: Icons.inventory_2_outlined,
                     ),
                   ),
                 ],
@@ -98,7 +96,15 @@ class _DashboardPageState extends State<DashboardPage> {
                     child: _buildOperationCard(
                       title: 'Create PO',
                       icon: Icons.description_outlined,
-                      color: WHColors.primary3,
+                      color: WHColors.surface,
+                      bgColor: WHColors.secondary4,
+                      onTap: () {
+                        Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (context) => const CreateZonePage(),
+                          ),
+                        );
+                      },
                     ),
                   ),
                   const SizedBox(width: 12),
@@ -107,6 +113,7 @@ class _DashboardPageState extends State<DashboardPage> {
                       title: 'Add Zone',
                       icon: Icons.layers_outlined,
                       color: WHColors.secondary3,
+                      bgColor: WHColors.surface,
                       onTap: () {
                         Navigator.of(context).push(
                           MaterialPageRoute(
@@ -126,6 +133,7 @@ class _DashboardPageState extends State<DashboardPage> {
                       title: 'Add Product',
                       icon: Icons.inventory_2_outlined,
                       color: WHColors.secondary3,
+                      bgColor: WHColors.surface,
                       onTap: () {
                         Navigator.of(context).push(
                           MaterialPageRoute(
@@ -140,7 +148,15 @@ class _DashboardPageState extends State<DashboardPage> {
                     child: _buildOperationCard(
                       title: 'Create SO',
                       icon: Icons.assignment_outlined,
-                      color: WHColors.primary3,
+                      color: WHColors.surface,
+                      bgColor: WHColors.secondary4,
+                      onTap: () {
+                        Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (context) => const CreateZonePage(),
+                          ),
+                        );
+                      },
                     ),
                   ),
                 ],
@@ -160,8 +176,14 @@ class _DashboardPageState extends State<DashboardPage> {
               const Divider(height: 1, color: WHColors.grey5),
               const SizedBox(height: 12),
 
-              // Mock Logs List
-              ...mockLogs.map((log) => _buildLogItem(log)),
+              if (_isLoading)
+                const Center(child: CircularProgressIndicator())
+              else if (_error != null)
+                Center(child: Text('Error: $_error'))
+              else if (_logs.isEmpty)
+                const Center(child: Text('No recent logs found.'))
+              else
+                ..._logs.map((log) => _buildLogItem(log)),
             ],
           ),
         ),
@@ -174,7 +196,6 @@ class _DashboardPageState extends State<DashboardPage> {
     required String title,
     required String value,
     required String subtitle,
-    required IconData icon,
   }) {
     return Container(
       padding: const EdgeInsets.all(16),
@@ -186,15 +207,6 @@ class _DashboardPageState extends State<DashboardPage> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: WHColors.secondary3.withValues(alpha: 0.1),
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Icon(icon, color: WHColors.secondary3, size: 20),
-          ),
-          const SizedBox(height: 12),
           Text(
             title,
             style: WHTypography.caption.copyWith(
@@ -227,6 +239,7 @@ class _DashboardPageState extends State<DashboardPage> {
     required String title,
     required IconData icon,
     required Color color,
+    required Color bgColor,
     VoidCallback? onTap,
   }) {
     return Material(
@@ -237,19 +250,19 @@ class _DashboardPageState extends State<DashboardPage> {
         child: Container(
           padding: const EdgeInsets.symmetric(vertical: 20),
           decoration: BoxDecoration(
-            color: WHColors.surface,
+            color: bgColor,
             borderRadius: BorderRadius.circular(10),
             border: Border.all(color: WHColors.grey5),
           ),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(icon, color: color, size: 28),
+              Icon(icon, color: WHColors.textPrimary, size: 28),
               const SizedBox(height: 8),
               Text(
                 title,
                 style: WHTypography.caption.copyWith(
-                  color: WHColors.grey2,
+                  color: WHColors.grey1,
                   fontWeight: FontWeight.w700,
                   fontSize: 10,
                   letterSpacing: 0.5,
@@ -262,11 +275,9 @@ class _DashboardPageState extends State<DashboardPage> {
     );
   }
 
-  Widget _buildLogItem(Map<String, dynamic> log) {
-    final bool isStockIn = log['isStockIn'];
-    final color = isStockIn ? WHColors.primary3 : WHColors.secondary3;
-    final icon = isStockIn ? Icons.arrow_downward : Icons.arrow_upward;
-    final label = isStockIn ? 'Stock In' : 'Stock Out';
+  Widget _buildLogItem(ActivityLog log) {
+    final color = log.isStockIn ? WHColors.primary3 : WHColors.secondary3;
+    final icon = log.isStockIn ? Icons.login_rounded : Icons.logout_rounded;
 
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
@@ -279,7 +290,7 @@ class _DashboardPageState extends State<DashboardPage> {
       child: Row(
         children: [
           Container(
-            padding: const EdgeInsets.all(10),
+            padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
               color: color.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(8),
@@ -291,49 +302,22 @@ class _DashboardPageState extends State<DashboardPage> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Row(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                      decoration: BoxDecoration(
-                        color: color.withValues(alpha: 0.1),
-                        borderRadius: BorderRadius.circular(4),
-                      ),
-                      child: Text(
-                        label,
-                        style: WHTypography.caption.copyWith(
-                          color: color,
-                          fontWeight: FontWeight.w600,
-                          fontSize: 10,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: Text(
-                        log['productName'],
-                        style: WHTypography.bodyText.copyWith(fontWeight: FontWeight.w600),
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                  ],
+                Text(
+                  log.title, // e.g., "Put Away - AP-1-1"
+                  style: WHTypography.bodyText.copyWith(fontWeight: FontWeight.w600),
+                  overflow: TextOverflow.ellipsis,
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  '${log['sku']} • ${log['locationName']}',
+                  log.subtitle, // e.g., "Order: PO-10062026-2 - Permen Melati Enak"
                   style: WHTypography.caption.copyWith(color: WHColors.grey2),
                   overflow: TextOverflow.ellipsis,
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  'Qty: ${log['quantity']} → After: ${log['stockAfterMovement']}',
-                  style: WHTypography.caption.copyWith(color: WHColors.grey2),
                 ),
               ],
             ),
           ),
           Text(
-            log['time'],
+            'log.time',
             style: WHTypography.caption.copyWith(color: WHColors.grey2),
           ),
         ],

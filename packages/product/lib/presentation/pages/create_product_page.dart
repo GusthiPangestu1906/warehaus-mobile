@@ -1,11 +1,10 @@
 import 'package:core_ui/core_ui.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:get_it/get_it.dart';
-import 'package:dio/dio.dart';
 import 'package:product/presentation/bloc/product_bloc.dart';
 import 'package:product/presentation/bloc/product_event.dart';
 import 'package:product/presentation/bloc/product_state.dart';
+import 'package:product/domain/entities/category.dart';
 
 class CreateProductPage extends StatefulWidget {
   const CreateProductPage({super.key});
@@ -18,18 +17,21 @@ class _CreateProductPageState extends State<CreateProductPage> {
   final _formKey = GlobalKey<FormState>();
   final _skuController = TextEditingController();
   final _productNameController = TextEditingController();
+  final _qrCodeController = TextEditingController();
   final _unitOfMeasureController = TextEditingController();
   // local-only UI selection for category (not sent to backend in current model)
   String? _selectedCategory;
   String? _selectedUnit;
-  // categories loaded from backend
-  List<String> _categories = [];
-  bool _isLoadingCategories = false;
+  int? _selectedCategoryId;
 
   // Use shared style tokens
   static const _primaryOrange = WHStyles.primary;
   static const _borderColor = WHStyles.border;
   static const _hintColor = WHStyles.hint;
+
+  List<Category> _categories = [];
+
+  final List<String> _unitOptions = ['PCS', 'BOX', 'KG', 'L'];
 
   @override
   void dispose() {
@@ -42,70 +44,22 @@ class _CreateProductPageState extends State<CreateProductPage> {
   @override
   void initState() {
     super.initState();
-    _loadCategories();
+    context.read<ProductBloc>().add(LoadCategoriesEvent());
   }
-
-  Future<void> _loadCategories() async {
-    setState(() {
-      _isLoadingCategories = true;
-    });
-
-    try {
-      final dio = GetIt.instance.get<Dio>();
-      final resp = await dio.get('/api/categories');
-
-      final data = resp.data;
-      final List<String> parsed = [];
-      if (data is List) {
-        for (final e in data) {
-          if (e == null) continue;
-          if (e is String) {
-            parsed.add(e);
-          } else if (e is Map) {
-            if (e.containsKey('name')) {
-              parsed.add(e['name']?.toString() ?? '');
-            } else if (e.containsKey('categoryName')) {
-              parsed.add(e['categoryName']?.toString() ?? '');
-            } else if (e.containsKey('title')) {
-              parsed.add(e['title']?.toString() ?? '');
-            } else if (e.containsKey('label')) {
-              parsed.add(e['label']?.toString() ?? '');
-            } else {
-              parsed.add(e.toString());
-            }
-          } else {
-            parsed.add(e.toString());
-          }
-        }
-      }
-
-      setState(() {
-        _categories = parsed.where((s) => s.isNotEmpty).toList();
-        if (_selectedCategory != null && !_categories.contains(_selectedCategory)) {
-          _selectedCategory = null;
-        }
-      });
-    } catch (err, st) {
-      // debug print; production should handle errors properly
-      // ignore: avoid_print
-      print('Failed to load categories: $err\\n$st');
-    } finally {
-      setState(() {
-        _isLoadingCategories = false;
-      });
-    }
-  }
-
   void _submit() {
     if (!(_formKey.currentState?.validate() ?? false)) return;
 
-    // barcode was removed per request; pass empty string for barcode to keep
-    // existing event signature unchanged. Category is currently UI-only.
+    if (_selectedCategoryId == null) {
+      WHSnackBar.showError(context, 'Please select a category');
+      return;
+    }
+
     context.read<ProductBloc>().add(
       CreateProductEvent(
         sku: _skuController.text.trim(),
         productName: _productNameController.text.trim(),
-        barcode: '',
+        barcode: _qrCodeController.text.trim(),
+        categoryId: _selectedCategoryId,
         unitOfMeasure: (_selectedUnit ?? _unitOfMeasureController.text).trim(),
       ),
     );
@@ -205,7 +159,7 @@ class _CreateProductPageState extends State<CreateProductPage> {
             padding: const EdgeInsets.symmetric(horizontal: 12),
             child: DropdownButtonFormField<String>(
               isExpanded: true,
-              initialValue: value,
+              value: value,
               items: items.map((e) => DropdownMenuItem(
                   value: e,
                   child: Text(e))).toList(),
@@ -219,6 +173,21 @@ class _CreateProductPageState extends State<CreateProductPage> {
       ],
     );
   }
+  Future<void> _onScanQrPressed() async {
+    final result = await Navigator.of(context).push(
+      WHScannerPage.route(
+        title: 'Scan Barcode',
+        subtitle: 'Arahkan kamera ke barcode produk',
+      ),
+    );
+
+    if (result != null && mounted) {
+      setState(() {
+        _qrCodeController.text = result;
+      });
+    }
+  }
+
 
   @override
   Widget build(BuildContext context) {
@@ -245,59 +214,61 @@ class _CreateProductPageState extends State<CreateProductPage> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      _buildField(
+                      WHTextField(
                         label: 'SKU Number',
                         controller: _skuController,
-                        hint: 'e.g., LTP-ASUS-001',
-                        validator: (value) =>
-                            (value == null || value.trim().isEmpty)
-                                ? 'SKU required'
-                                : null,
+                        hintText: 'e.g., LTP-ASUS-001',
                       ),
                       const SizedBox(height: 16),
-                      _buildField(
+                      WHTextField(
                         label: 'Product Name',
                         controller: _productNameController,
-                        hint: 'e.g., Electronic',
-                        validator: (value) =>
-                            (value == null || value.trim().isEmpty)
-                                ? 'Product name required'
-                                : null,
+                        hintText: 'e.g., Electronic',
                       ),
                       const SizedBox(height: 16),
-                      // Category dropdown (UI only for now)
-                      _buildDropdownField(
-                        label: 'Category',
-                        value: _selectedCategory,
-                        hint: 'Select Category',
-                        items: _isLoadingCategories
-                            ? ['Loading...']
-                            : (['Select Category'] + (_categories.isNotEmpty ? _categories : ['Uncategorized'])),
-                        onChanged: (v) {
-                          setState(() {
-                            if (v == 'Select Category' || v == 'Loading...') {
-                              _selectedCategory = null;
-                            } else {
-                              _selectedCategory = v;
-                            }
-                          });
+                      WHTextField(
+                          label: 'QR Code',
+                          controller: _qrCodeController,
+                          hintText: 'Scan or enter barcode',
+                          suffixIcon: Icons.qr_code_scanner_rounded,
+                          onSuffixTap: _onScanQrPressed,
+                      ),
+                      const SizedBox(height: 16),
+                      BlocBuilder<ProductBloc, ProductState>(
+                        buildWhen: (prev, curr) => curr is CategoriesLoaded || curr is CategoriesLoading,
+                        builder: (context, state) {
+                          // FIX: Added explicit List<Category> type so cat.id is recognized
+                          final List<Category> categories = state is CategoriesLoaded ? state.categories : <Category>[];
+
+                          return WHDropdownField<int>(
+                            label: 'Category',
+                            hintText: state is CategoriesLoading ? 'Loading categories...' : 'Select Category',
+                            selectedValue: _selectedCategoryId,
+                            // Now cat.id and cat.name will be recognized perfectly
+                            items: categories.map((cat) => WHDropdownItem<int>(
+                              value: cat.id,
+                              label: cat.name,
+                            )).toList(),
+                            onChanged: (val) {
+                              setState(() => _selectedCategoryId = val);
+                            },
+                          );
                         },
                       ),
+
                       const SizedBox(height: 16),
                       // Unit of measure dropdown
-                      _buildDropdownField(
+                      WHDropdownField<String>(
                         label: 'Unit of Measure',
-                        value: _selectedUnit,
-                        items: const [
-                          'PCS',
-                          'BOX',
-                          'KG',
-                          'L',
-                        ],
-                        onChanged: (v) => setState(() {
-                          _selectedUnit = v;
-                          _unitOfMeasureController.text = v ?? '';
-                        }),
+                        hintText: 'Select Unit',
+                        selectedValue: _selectedUnit,
+                        items: _unitOptions.map((u) {
+                          return WHDropdownItem(
+                            value: u,
+                            label: u,
+                          );
+                        }).toList(),
+                        onChanged: (val) => setState(() => _selectedUnit = val)
                       ),
                     ],
                   ),

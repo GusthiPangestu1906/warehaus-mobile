@@ -474,51 +474,6 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                             .toList(),
                       ),
                     const SizedBox(height: 16),
-                    SizedBox(
-                      width: double.infinity,
-                      child: OutlinedButton(
-                        onPressed: () {
-                          final product =
-                              (context.read<ProductBloc>().state
-                                      as ProductDetailLoaded)
-                                  .product;
-                          Navigator.of(context).push(
-                            MaterialPageRoute(
-                              builder: (_) => BlocProvider.value(
-                                value: context.read<ProductBloc>(),
-                                child: AddStockPage(product: product),
-                              ),
-                            ),
-                          );
-                        },
-                        style: OutlinedButton.styleFrom(
-                          side: const BorderSide(color: WHColors.grey4),
-                          padding: const EdgeInsets.symmetric(vertical: 12),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                          backgroundColor: WHColors.surface,
-                        ),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            const Icon(
-                              Icons.add,
-                              size: 22,
-                              color: WHColors.grey1,
-                            ),
-                            const SizedBox(width: 8),
-                            Text(
-                              'Add Location and Stock',
-                              style: WHTypography.bodyText.copyWith(
-                                color: WHColors.grey1,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 16),
                   ],
                 ),
               ),

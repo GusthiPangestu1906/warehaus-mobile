@@ -1,3 +1,5 @@
+import 'package:zone/domain/params/create_zone_param.dart';
+
 import '../entities/zone.dart';
 import '../entities/shelf_detail.dart';
 
@@ -6,7 +8,7 @@ abstract class ZoneRepository {
   Future<List<Zone>> getZonesByAisle(String zoneId, int aisleNumber);
   Future<Zone> getZoneDetails(String id);
   Future<ShelfDetail> getShelfDetails(int shelfId);
-  Future<void> createZone(Zone zone);
+  Future<void> createZone(CreateZoneParam zone);
   Future<void> updateZone({
     required String id,
     String? zoneName,

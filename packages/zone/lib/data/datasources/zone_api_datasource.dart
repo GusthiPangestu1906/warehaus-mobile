@@ -1,5 +1,6 @@
 import 'package:dio/dio.dart';
 import 'package:zone/data/models/zone_model.dart';
+import 'package:zone/domain/params/create_zone_param.dart';
 
 class ZoneApiDatasource {
   final Dio dio;
@@ -37,7 +38,7 @@ class ZoneApiDatasource {
     return ZoneModel.fromJson(response.data);
   }
 
-  Future<void> createZone(ZoneModel zone) async {
+  Future<void> createZone(CreateZoneParam zone) async {
     await dio.post(_zonePath, data: zone.toJson());
   }
 
