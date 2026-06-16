@@ -5,10 +5,9 @@ import 'package:product/domain/entities/stock.dart';
 import 'package:product/presentation/bloc/product_bloc.dart';
 import 'package:product/presentation/bloc/product_event.dart';
 import 'package:product/presentation/bloc/product_state.dart';
-import 'package:product/presentation/pages/add_stock.dart';
-import 'package:product/presentation/widgets/product_edit_dialog.dart';
-import 'package:product/presentation/widgets/stock_edit_dialog.dart';
+import 'package:product/presentation/pages/edit_product_page.dart';
 import 'package:product/presentation/widgets/move_stock_dialog.dart';
+import 'package:product/presentation/widgets/stock_edit_dialog.dart';
 
 class ProductDetailPage extends StatefulWidget {
   final String productId;
@@ -86,6 +85,26 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
       // Reload product details after delete
       context.read<ProductBloc>().add(GetProductDetailsEvent(productId));
     }
+  }
+
+  Future<void> _openEditProductPage(ProductDetailLoaded state) async {
+    final product = state.product;
+    await Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => EditProductPage(
+          productId: widget.productId,
+          initialSku: product.sku,
+          initialProductName: product.productName,
+          initialBarcode: product.barcode,
+          initialUnitOfMeasure: product.unitOfMeasure,
+          initialCategoryId: product.categoryId,
+        ),
+      ),
+    );
+    // No manual refresh needed here: ProductBloc already re-dispatches
+    // GetProductDetailsEvent internally right after a successful update,
+    // so this BlocBuilder will pick up the latest ProductDetailLoaded state
+    // automatically once we're back on this page.
   }
 
   Widget _buildShelfStockCard(
@@ -356,26 +375,7 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                             children: [
                               Expanded(
                                 child: OutlinedButton.icon(
-                                  onPressed: () async {
-                                    final result = await showProductEditDialog(
-                                      context,
-                                      initialName: product.productName,
-                                      initialSku: product.sku,
-                                      initialUom: product.unitOfMeasure,
-                                    );
-
-                                    if (result != null) {
-                                      context.read<ProductBloc>().add(
-                                        UpdateProductEvent(
-                                          id: widget.productId,
-                                          productName: result.productName,
-                                          sku: result.sku,
-                                          barcode: product.barcode,
-                                          unitOfMeasure: result.unitOfMeasure,
-                                        ),
-                                      );
-                                    }
-                                  },
+                                  onPressed: () => _openEditProductPage(state),
                                   icon: const Icon(
                                     Icons.edit_outlined,
                                     size: 16,

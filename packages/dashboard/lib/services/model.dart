@@ -1,3 +1,7 @@
+import 'dart:convert';
+
+import 'package:flutter/foundation.dart';
+
 class PendingTask {
   final int totalPendingTask;
   final int inboundPendingTask;
@@ -9,11 +13,23 @@ class PendingTask {
     required this.outboundPendingTask,
   });
 
-  factory PendingTask.fromJson(Map<String, dynamic> json) {
+  factory PendingTask.fromJson(dynamic json) {
+    if (json is Map) {
+      final map = Map<String, dynamic>.from(json);
+      return PendingTask(
+        // Menggunakan int.tryParse + toString() agar kebal dari TypeError jika backend mengirim String/Int/Double
+        totalPendingTask:
+            int.tryParse(map['totalPendingTask']?.toString() ?? '0') ?? 0,
+        inboundPendingTask:
+            int.tryParse(map['inboundPendingTask']?.toString() ?? '0') ?? 0,
+        outboundPendingTask:
+            int.tryParse(map['outboundPendingTask']?.toString() ?? '0') ?? 0,
+      );
+    }
     return PendingTask(
-      totalPendingTask: json['totalPendingTask'] as int? ?? 0,
-      inboundPendingTask: json['inboundPendingTask'] as int? ?? 0,
-      outboundPendingTask: json['outboundPendingTask'] as int? ?? 0,
+      totalPendingTask: 0,
+      inboundPendingTask: 0,
+      outboundPendingTask: 0,
     );
   }
 }
@@ -29,18 +45,49 @@ class DashboardResponse {
     required this.logs,
   });
 
-  factory DashboardResponse.fromJson(Map<String, dynamic> json) {
-    return DashboardResponse(
-      pendingTask: json['pendingTask'] != null
-          ? PendingTask.fromJson(json['pendingTask'] as Map<String, dynamic>)
-          : null,
-      totalThroughput: json['totalThroughput'] as int? ?? 0,
-      logs:
-          (json['logs'] as List<dynamic>?)
-              ?.map((log) => ActivityLog.fromJson(log as Map<String, dynamic>))
-              .toList() ??
-          [],
-    );
+  factory DashboardResponse.fromJson(dynamic json) {
+    // 1. ANTISIPASI: Jika data dari API ternyata berupa String JSON mentah, decode otomatis
+    if (json is String) {
+      try {
+        json = jsonDecode(json);
+      } catch (e) {
+        debugPrint('[DashboardResponse] Gagal men-decode String JSON: $e');
+        return DashboardResponse(
+          pendingTask: null,
+          totalThroughput: 0,
+          logs: [],
+        );
+      }
+    }
+
+    // KONDISI A: Jika API ternyata masih mengirim FORMAT LAMA (Berupa List langsung)
+    if (json is List) {
+      return DashboardResponse(
+        pendingTask: null,
+        totalThroughput: 0,
+        logs: json.map((log) => ActivityLog.fromJson(log)).toList(),
+      );
+    }
+
+    // KONDISI B: Jika API sudah menggunakan FORMAT BARU (Berupa Map/Object)
+    if (json is Map) {
+      final map = Map<String, dynamic>.from(json);
+
+      return DashboardResponse(
+        pendingTask: map['pendingTask'] != null
+            ? PendingTask.fromJson(map['pendingTask'])
+            : null,
+        totalThroughput:
+            int.tryParse(map['totalThroughput']?.toString() ?? '0') ?? 0,
+        logs:
+            (map['logs'] as List<dynamic>?)
+                ?.map((log) => ActivityLog.fromJson(log))
+                .toList() ??
+            [],
+      );
+    }
+
+    return DashboardResponse(pendingTask: null, totalThroughput: 0, logs: []);
   }
 }
 
@@ -61,16 +108,27 @@ class ActivityLog {
     required this.createdAt,
   });
 
-  factory ActivityLog.fromJson(Map<String, dynamic> json) {
+  factory ActivityLog.fromJson(dynamic json) {
+    if (json is Map) {
+      final map = Map<String, dynamic>.from(json);
+      return ActivityLog(
+        id: int.tryParse(map['id']?.toString() ?? '0') ?? 0,
+        type: map['type']?.toString() ?? '',
+        title: map['title']?.toString() ?? '',
+        subtitle: map['subtitle']?.toString() ?? '',
+        time: map['time']?.toString() ?? '',
+        createdAt:
+            DateTime.tryParse(map['createdAt']?.toString() ?? '') ??
+            DateTime.now(),
+      );
+    }
     return ActivityLog(
-      id: json['id'] as int? ?? 0,
-      type: json['type'] as String? ?? '',
-      title: json['title'] as String? ?? '',
-      subtitle: json['subtitle'] as String? ?? '',
-      time: json['time'] as String? ?? '',
-      createdAt: DateTime.parse(
-        json['createdAt'] as String? ?? DateTime.now().toIso8601String(),
-      ),
+      id: 0,
+      type: '',
+      title: '',
+      subtitle: '',
+      time: '',
+      createdAt: DateTime.now(),
     );
   }
 

@@ -15,46 +15,49 @@ class DashboardService {
     return 0;
   }
 
-  Future<List<ActivityLog>> getRecentLogs({int limit = 10}) async {
+  Future<DashboardResponse?> getDashboardData({int limit = 10}) async {
     try {
       final response = await dio.get(
-        '/dashboard/recent-logs',
+        '/dashboard',
         queryParameters: {'limit': limit},
       );
 
-      debugPrint('[DashboardService] Response data: ${response.data}');
+      debugPrint('[DashboardService] Raw Data Type: ${response}');
 
-      // PERUBAHAN DI SINI:
-      // Parsing response sebagai Map, lalu ekstrak value dari key 'logs'
-      final responseData = response.data as Map<String, dynamic>;
-      final logsList = responseData['logs'] as List<dynamic>? ?? [];
-
-      return logsList
-          .map((log) => ActivityLog.fromJson(log as Map<String, dynamic>))
-          .toList();
+      // FIX: Kirim data langsung tanpa ada embel-embel 'as Map<String, dynamic>'
+      return DashboardResponse.fromJson(response.data);
     } catch (e) {
-      debugPrint('[DashboardService] Error: $e');
+      debugPrint('[DashboardService] Error di getDashboardData: $e');
       if (e is DioException && e.response?.statusCode == 404) {
-        return const [];
+        return null;
       }
       rethrow;
     }
   }
 
-  Future<DashboardResponse?> getDashboardData({int limit = 10}) async {
+  Future<List<ActivityLog>> getRecentLogs({int limit = 10}) async {
     try {
       final response = await dio.get(
-        '/dashboard/recent-logs',
+        '/dashboard',
         queryParameters: {'limit': limit},
       );
 
-      // Casting response.data ke Map
-      final responseData = response.data as Map<String, dynamic>;
-      return DashboardResponse.fromJson(responseData);
+      List<dynamic> logsList = [];
+
+      if (response.data is Map) {
+        final responseData = response.data as Map<String, dynamic>;
+        logsList = responseData['logs'] as List<dynamic>? ?? [];
+      } else if (response.data is List) {
+        logsList = response.data as List<dynamic>;
+      }
+
+      return logsList
+          .map((log) => ActivityLog.fromJson(log as Map<String, dynamic>))
+          .toList();
     } catch (e) {
-      debugPrint('[DashboardService] Error: $e');
+      debugPrint('[DashboardService] Error di getRecentLogs: $e');
       if (e is DioException && e.response?.statusCode == 404) {
-        return null;
+        return const [];
       }
       rethrow;
     }

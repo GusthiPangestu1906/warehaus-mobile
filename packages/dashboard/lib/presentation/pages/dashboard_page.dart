@@ -75,8 +75,7 @@ class _DashboardPageState extends State<DashboardPage> {
                     child: _buildStatCard(
                       title: 'PENDING TASKS',
                       // Mengambil data dari API
-                      value:
-                          '${_dashboardData?.pendingTask?.totalPendingTask ?? 0}',
+                      value: '${_dashboardData?.pendingTask?.totalPendingTask}',
                       subtitle: 'Tasks Waiting',
                     ),
                   ),
