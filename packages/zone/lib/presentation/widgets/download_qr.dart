@@ -40,9 +40,20 @@ class QRDownloader {
     String option,
     String code,
   ) async {
-    // Request bytes from backend (use GET because no option needed for QR zip)
+    // Append _pdf if the user selected pdf
+    var finalUrl = url;
+    if (option.toLowerCase() == 'pdf') {
+      if (finalUrl.endsWith('download')) {
+        finalUrl = '${finalUrl}_pdf';
+      } else {
+        // Fallback if URL doesn't end with download but they want PDF
+        finalUrl = '${finalUrl}/download_pdf';
+      }
+    }
+
+    // Request bytes from backend (use GET because no option needed for QR zip/pdf)
     final response = await _dio.get<List<int>>(
-      url,
+      finalUrl,
       options: Options(
         responseType: ResponseType.bytes,
       ),
@@ -51,8 +62,8 @@ class QRDownloader {
     final bytes = response.data;
     if (bytes == null) throw Exception('Empty response from server');
 
-    // The backend always generates a zip
-    final ext = 'zip';
+    // The backend generates either a zip (for PNGs) or a pdf
+    final ext = option.toLowerCase() == 'pdf' ? 'pdf' : 'zip';
     final fileName = '$code.$ext';
 
     // Target directory on Android
