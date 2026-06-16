@@ -31,29 +31,28 @@ class QRDownloader {
     } catch (_) {}
   }
 
-  /// Sends a JSON payload {"option": "pdf"|"png"} to [url], expects raw bytes
-  /// response and saves the file to external Download/WareHaus folder on Android.
-  /// [code] is used as the filename (e.g. 'LZ-1-1' -> 'LZ-1-1.pdf' or 'LZ-1-1.png').
+  /// Sends a GET request to [url], expects raw bytes response and saves the file 
+  /// to external Download/WareHaus folder on Android.
+  /// The backend ignores the [option] and always returns a zip file containing the QR codes.
+  /// [code] is used as the filename (e.g. 'LZ-1-1' -> 'LZ-1-1.zip').
   Future<String> downloadWithOption(
     String url,
     String option,
     String code,
   ) async {
-    // Request bytes from backend
-    final response = await _dio.post<List<int>>(
+    // Request bytes from backend (use GET because no option needed for QR zip)
+    final response = await _dio.get<List<int>>(
       url,
-      data: {'option': option},
       options: Options(
         responseType: ResponseType.bytes,
-        headers: {Headers.contentTypeHeader: 'application/json'},
       ),
     );
 
     final bytes = response.data;
     if (bytes == null) throw Exception('Empty response from server');
 
-    // Determine extension
-    final ext = option.toLowerCase() == 'pdf' ? 'pdf' : 'png';
+    // The backend always generates a zip
+    final ext = 'zip';
     final fileName = '$code.$ext';
 
     // Target directory on Android

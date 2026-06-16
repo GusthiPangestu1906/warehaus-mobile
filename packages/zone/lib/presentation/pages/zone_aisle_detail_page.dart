@@ -31,9 +31,7 @@ class _ZoneAisleDetailPageState extends State<ZoneAisleDetailPage>
     final zoneId = int.tryParse(widget.zoneId);
     if (zoneId == null) return '';
 
-    final base = ApiClient().dio.options.baseUrl ?? '';
-    final suffix = 'zone/qr/$zoneId/${widget.aisleNumber}';
-    return base.endsWith('/') ? '$base$suffix' : '$base/$suffix';
+    return '/Zones/$zoneId/aisles/${widget.aisleNumber}/qrcodes/download';
   }
 
   @override
