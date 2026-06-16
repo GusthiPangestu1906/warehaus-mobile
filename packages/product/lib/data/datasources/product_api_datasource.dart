@@ -1,15 +1,14 @@
 import 'package:dio/dio.dart';
-import 'package:product/data/models/product_model.dart';
-import 'package:product/data/models/stock_location_input_model.dart';
 import 'package:product/data/models/category_model.dart';
+import 'package:product/data/models/product_model.dart';
 
 class ProductApiDatasource {
   final Dio dio;
   ProductApiDatasource(this.dio);
 
-  static const String _productPath = '/api/Products';
-  static const String _stockLocationsPath = '/api/product/stock-locations';
-  static const String _categoriesPath = '/api/categories';
+  static const String _productPath = '/Products';
+  static const String _stockLocationsPath = '/product/stock-locations';
+  static const String _categoriesPath = '/categories';
 
   Future<List<ProductModel>> getProducts() async {
     final response = await dio.get(_productPath);

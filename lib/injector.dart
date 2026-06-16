@@ -34,6 +34,7 @@ import 'package:product/domain/usecases/add_stock_location.dart';
 import 'package:product/domain/usecases/create_product.dart';
 import 'package:product/domain/usecases/delete_product.dart';
 import 'package:product/domain/usecases/delete_product_stock_location.dart';
+import 'package:product/domain/usecases/get_categories.dart';
 import 'package:product/domain/usecases/get_product_detail.dart';
 import 'package:product/domain/usecases/get_products.dart';
 import 'package:product/domain/usecases/move_stock_location.dart';
@@ -50,8 +51,6 @@ import 'package:zone/domain/usecases/get_zone_details.dart';
 import 'package:zone/domain/usecases/get_zones.dart';
 import 'package:zone/domain/usecases/update_zone.dart';
 import 'package:zone/presentation/bloc/zone_bloc.dart';
-import 'package:zone/zone.dart';
-import 'package:product/domain/usecases/get_categories.dart';
 
 final getIt = GetIt.instance;
 
@@ -103,7 +102,7 @@ Future<void> setupInjector() async {
       createZoneUsecase: getIt<CreateZone>(),
       updateZoneUsecase: getIt<UpdateZone>(),
       deleteZoneUsecase: getIt<DeleteZone>(),
-      // getShelfDetailsUsecase: getIt<GetShelfDetails>(),
+      getShelfDetailsUsecase: getIt<GetShelfDetails>(),
     ),
   );
 
@@ -148,6 +147,11 @@ Future<void> setupInjector() async {
     () => DeleteProductStockLocation(getIt<ProductRepositoryImpl>()),
   );
 
+  // ── Categories ─────────────────────────────────────────────────
+  getIt.registerLazySingleton(
+    () => GetCategories(getIt<ProductRepositoryImpl>()),
+  );
+
   // BLoC
   getIt.registerFactory(
     () => ProductBloc(
@@ -156,9 +160,7 @@ Future<void> setupInjector() async {
       createProductUsecase: getIt<CreateProduct>(),
       updateProductUsecase: getIt<UpdateProduct>(),
       deleteProductUsecase: getIt<DeleteProduct>(),
-      // addStockLocationUsecase: getIt<AddStockLocation>(),
-      // updateStockLocationUsecase: getIt<UpdateStockLocation>(),
-      // moveStockLocationUsecase: getIt<MoveStockLocation>(),
+      getCategoriesUsecase: getIt<GetCategories>(),
     ),
   );
 
@@ -211,7 +213,27 @@ Future<void> setupInjector() async {
     () => GetCarriers(getIt<PurchaseOrderRepositoryImpl>()),
   );
 
-  // ── Outbound ──────────────────────────────────────────────────
+  // ── Purchase Order BLoC ──────────────────────────────────────────
+  getIt.registerFactory(
+    () => PurchaseOrderBloc(
+      getPurchaseOrdersUsecase: getIt<GetPurchaseOrders>(),
+      getPurchaseOrderDetailUsecase: getIt<GetPurchaseOrderDetail>(),
+      createPurchaseOrderUsecase: getIt<CreatePurchaseOrder>(),
+      updatePurchaseOrderUsecase: getIt<UpdatePurchaseOrder>(),
+      invoiceUpdateUsecase: getIt<InvoiceUpdate>(),
+      deletePurchaseOrderUsecase: getIt<DeletePurchaseOrder>(),
+      downloadPurchaseOrderPdfUsecase: getIt<DownloadPurchaseOrderPdf>(),
+      getQcNextItemUsecase: getIt<GetQcNextItem>(),
+      submitQcUsecase: getIt<SubmitQc>(),
+      getPaNextItem: getIt<GetPaNextItem>(),
+      submitPaUsecase: getIt<SubmitPa>(),
+      getCarriers: getIt<GetCarriers>(),
+    ),
+  );
+
+  // ===========================================================================
+  // FEATURE: OUTBOUND / SALES ORDER
+  // ===========================================================================
   getIt.registerLazySingleton<SalesOrderApiDatasource>(
     () => SalesOrderApiDatasource(getIt<Dio>()),
   );
@@ -256,58 +278,6 @@ Future<void> setupInjector() async {
     () => SalesOrderFormCubit(
       productApi: getIt<OutboundProductApiDatasource>(),
       regionApi: getIt<RegionApiDatasource>(),
-    ),
-  );
-
-  // ── Blocs ───────────────────────────────────────────────────────
-  getIt.registerFactory(
-    () => ZoneBloc(
-      getZonesUsecase: getIt<GetZones>(),
-      getZoneByAisleUsecase: getIt<GetZoneByAisle>(),
-      getZoneDetailsUsecase: getIt<GetZoneDetails>(),
-      createZoneUsecase: getIt<CreateZone>(),
-      updateZoneUsecase: getIt<UpdateZone>(),
-      deleteZoneUsecase: getIt<DeleteZone>(),
-      getShelfDetailsUsecase: getIt<GetShelfDetails>(),
-    ),
-  );
-
-  getIt.registerLazySingleton(
-        () => GetCategories(getIt<ProductRepositoryImpl>()),
-  );
-
-  getIt.registerFactory(
-    () => ProductBloc(
-      getProductsUsecase: getIt<GetProducts>(),
-      getProductDetailUsecase: getIt<GetProductDetail>(),
-      createProductUsecase: getIt<CreateProduct>(),
-      updateProductUsecase: getIt<UpdateProduct>(),
-      deleteProductUsecase: getIt<DeleteProduct>(),
-      addStockLocationUsecase: getIt<AddStockLocation>(),
-      updateStockLocationUsecase: getIt<UpdateStockLocation>(),
-      moveStockLocationUsecase: getIt<MoveStockLocation>(),
-      getCategoriesUsecase: getIt<GetCategories>(),
-    ),
-  );
-
-
-
-}
-  // BLoC
-  getIt.registerFactory(
-    () => PurchaseOrderBloc(
-      getPurchaseOrdersUsecase: getIt<GetPurchaseOrders>(),
-      getPurchaseOrderDetailUsecase: getIt<GetPurchaseOrderDetail>(),
-      createPurchaseOrderUsecase: getIt<CreatePurchaseOrder>(),
-      updatePurchaseOrderUsecase: getIt<UpdatePurchaseOrder>(),
-      invoiceUpdateUsecase: getIt<InvoiceUpdate>(),
-      deletePurchaseOrderUsecase: getIt<DeletePurchaseOrder>(),
-      downloadPurchaseOrderPdfUsecase: getIt<DownloadPurchaseOrderPdf>(),
-      getQcNextItemUsecase: getIt<GetQcNextItem>(),
-      submitQcUsecase: getIt<SubmitQc>(),
-      getPaNextItem: getIt<GetPaNextItem>(),
-      submitPaUsecase: getIt<SubmitPa>(),
-      getCarriers: getIt<GetCarriers>(),
     ),
   );
 }

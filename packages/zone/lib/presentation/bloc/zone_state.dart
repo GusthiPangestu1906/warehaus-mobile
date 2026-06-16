@@ -31,7 +31,7 @@ class ZoneError extends ZoneState {
 
 class ShelfDetailLoaded extends ZoneState {
   final int shelfId;
-  final ShelfDetail shelfDetail;
+  final ShelfDetail? shelfDetail;
 
-  ShelfDetailLoaded({required this.shelfId, required this.shelfDetail});
+  ShelfDetailLoaded({required this.shelfId, this.shelfDetail});
 }

@@ -1,10 +1,13 @@
 import 'package:core_ui/core_ui.dart';
-import 'package:flutter/material.dart';
-import 'package:zone/presentation/pages/create_zone_page.dart';
-import 'package:product/presentation/pages/create_product_page.dart';
-import 'package:get_it/get_it.dart';
-import 'package:dio/dio.dart';
 import 'package:dashboard/services/dashboard_service.dart';
+import 'package:dashboard/services/model.dart';
+import 'package:dio/dio.dart';
+import 'package:flutter/material.dart';
+import 'package:get_it/get_it.dart';
+import 'package:inbound/presentation/pages/create_purchase_order_page.dart';
+import 'package:outbound/presentation/pages/create_sales_order_page.dart';
+import 'package:product/presentation/pages/create_product_page.dart';
+import 'package:zone/presentation/pages/create_zone_page.dart';
 
 class DashboardPage extends StatefulWidget {
   const DashboardPage({super.key});
@@ -15,7 +18,9 @@ class DashboardPage extends StatefulWidget {
 
 class _DashboardPageState extends State<DashboardPage> {
   late final DashboardService _service;
-  List<ActivityLog> _logs = [];
+
+  // Menggunakan model DashboardResponse untuk menyimpan semua data
+  DashboardResponse? _dashboardData;
   bool _isLoading = true;
   String? _error;
 
@@ -23,15 +28,18 @@ class _DashboardPageState extends State<DashboardPage> {
   void initState() {
     super.initState();
     _service = DashboardService(GetIt.instance<Dio>());
-    _fetchLogs();
+    _fetchDashboardData();
   }
 
-  Future<void> _fetchLogs() async {
+  Future<void> _fetchDashboardData() async {
     try {
       setState(() => _isLoading = true);
-      final logs = await _service.getRecentLogs();
+
+      // Pastikan nama method di DashboardService adalah getDashboardData()
+      final data = await _service.getDashboardData();
+
       setState(() {
-        _logs = logs;
+        _dashboardData = data;
         _isLoading = false;
       });
     } catch (e) {
@@ -44,13 +52,15 @@ class _DashboardPageState extends State<DashboardPage> {
 
   @override
   Widget build(BuildContext context) {
+    // Ambil list logs dari data, jika null berikan list kosong
+    final logs = _dashboardData?.logs ?? [];
+
     return Scaffold(
       backgroundColor: WHColors.background,
       appBar: const WHAppbar(title: 'WAREHAUS'),
       body: WHRefresh(
         onRefresh: () async {
-          // Placeholder for refresh logic
-          await Future.delayed(const Duration(seconds: 1));
+          await _fetchDashboardData(); // Memanggil ulang API saat di-refresh
         },
         child: SingleChildScrollView(
           physics: const AlwaysScrollableScrollPhysics(),
@@ -64,22 +74,26 @@ class _DashboardPageState extends State<DashboardPage> {
                   Expanded(
                     child: _buildStatCard(
                       title: 'PENDING TASKS',
-                      value: '15',
+                      // Mengambil data dari API
+                      value:
+                          '${_dashboardData?.pendingTask?.totalPendingTask ?? 0}',
                       subtitle: 'Tasks Waiting',
                     ),
                   ),
                   const SizedBox(width: 12),
                   Expanded(
                     child: _buildStatCard(
-                      title: 'TOTAL PRODUCTS',
-                      value: '1,240',
-                      subtitle: 'Items Registered',
+                      title:
+                          'TOTAL THROUGHPUT', // Diubah agar sesuai dengan API
+                      // Mengambil data dari API
+                      value: '${_dashboardData?.totalThroughput ?? 0}',
+                      subtitle: 'System Throughput',
                     ),
                   ),
                 ],
               ),
               const SizedBox(height: 24),
-              
+
               Text(
                 'OPERATIONS',
                 style: WHTypography.caption.copyWith(
@@ -101,7 +115,8 @@ class _DashboardPageState extends State<DashboardPage> {
                       onTap: () {
                         Navigator.of(context).push(
                           MaterialPageRoute(
-                            builder: (context) => const CreateZonePage(),
+                            builder: (context) =>
+                                const CreatePurchaseOrderPage(),
                           ),
                         );
                       },
@@ -117,7 +132,7 @@ class _DashboardPageState extends State<DashboardPage> {
                       onTap: () {
                         Navigator.of(context).push(
                           MaterialPageRoute(
-                              builder: (context) => const CreateZonePage(),
+                            builder: (context) => const CreateZonePage(),
                           ),
                         );
                       },
@@ -137,7 +152,7 @@ class _DashboardPageState extends State<DashboardPage> {
                       onTap: () {
                         Navigator.of(context).push(
                           MaterialPageRoute(
-                              builder: (context) => const CreateProductPage()
+                            builder: (context) => const CreateProductPage(),
                           ),
                         );
                       },
@@ -153,7 +168,7 @@ class _DashboardPageState extends State<DashboardPage> {
                       onTap: () {
                         Navigator.of(context).push(
                           MaterialPageRoute(
-                            builder: (context) => const CreateZonePage(),
+                            builder: (context) => const CreateSalesOrderPage(),
                           ),
                         );
                       },
@@ -180,17 +195,16 @@ class _DashboardPageState extends State<DashboardPage> {
                 const Center(child: CircularProgressIndicator())
               else if (_error != null)
                 Center(child: Text('Error: $_error'))
-              else if (_logs.isEmpty)
+              else if (logs.isEmpty)
                 const Center(child: Text('No recent logs found.'))
               else
-                ..._logs.map((log) => _buildLogItem(log)),
+                ...logs.map((log) => _buildLogItem(log)),
             ],
           ),
         ),
       ),
     );
   }
-
 
   Widget _buildStatCard({
     required String title,
@@ -303,13 +317,15 @@ class _DashboardPageState extends State<DashboardPage> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  log.title, // e.g., "Put Away - AP-1-1"
-                  style: WHTypography.bodyText.copyWith(fontWeight: FontWeight.w600),
+                  log.title,
+                  style: WHTypography.bodyText.copyWith(
+                    fontWeight: FontWeight.w600,
+                  ),
                   overflow: TextOverflow.ellipsis,
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  log.subtitle, // e.g., "Order: PO-10062026-2 - Permen Melati Enak"
+                  log.subtitle,
                   style: WHTypography.caption.copyWith(color: WHColors.grey2),
                   overflow: TextOverflow.ellipsis,
                 ),
@@ -317,7 +333,7 @@ class _DashboardPageState extends State<DashboardPage> {
             ),
           ),
           Text(
-            'log.time',
+            log.time, // FIX: Menghapus tanda kutip agar membaca variabel log.time yang asli
             style: WHTypography.caption.copyWith(color: WHColors.grey2),
           ),
         ],
