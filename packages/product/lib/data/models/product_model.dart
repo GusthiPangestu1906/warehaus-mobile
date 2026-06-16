@@ -42,6 +42,6 @@ class ProductModel extends Product {
     'barcode': barcode,
     'unitOfMeasure': unitOfMeasure,
     'stocks': stocks?.map((stock) => (stock as StockModel).toJson()).toList(),
-    'categoryId': int ?? 0,
+    'categoryId': categoryId ?? 0,
   };
 }
