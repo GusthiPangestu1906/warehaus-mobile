@@ -5,7 +5,7 @@ class UpdateZone {
   UpdateZone(this.repository);
 
   Future<void> call({
-    required String id,
+    required int id,
     String? zoneName,
     int? categoryId,
     String? description,

@@ -515,83 +515,12 @@ class _ReceivedQtyField extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      children: [
-        const SizedBox(width: 16),
-        Text(
-          'Received Qty',
-          style: WHTypography.bodyText.copyWith(fontSize: 16),
-        ),
-        const Spacer(),
-        _QtyStepper(
-          value: value,
-          onDecrement: value > 0 ? () => onChanged(value - 1) : null,
-          onIncrement: () => onChanged(value + 1),
-        ),
-        const SizedBox(width: 16),
-      ],
-    );
-  }
-}
-
-class _QtyStepper extends StatelessWidget {
-  const _QtyStepper({
-    required this.value,
-    required this.onDecrement,
-    required this.onIncrement,
-  });
-
-  final int value;
-  final VoidCallback? onDecrement;
-  final VoidCallback onIncrement;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      height: 44,
-      decoration: BoxDecoration(
-        color: WHColors.surface,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: WHColors.grey4),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          _StepperButton(icon: Icons.remove, onTap: onDecrement),
-          Container(width: 1, height: 44, color: WHColors.grey4),
-          SizedBox(
-            width: 64,
-            child: Text(
-              '$value',
-              textAlign: TextAlign.center,
-              style: WHTypography.bodyText.copyWith(
-                fontWeight: FontWeight.w700,
-              ),
-            ),
-          ),
-          Container(width: 1, height: 44, color: WHColors.grey4),
-          _StepperButton(icon: Icons.add, onTap: onIncrement),
-        ],
-      ),
-    );
-  }
-}
-
-class _StepperButton extends StatelessWidget {
-  const _StepperButton({required this.icon, required this.onTap});
-
-  final IconData icon;
-  final VoidCallback? onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return InkWell(
-      onTap: onTap,
-      child: SizedBox(
-        width: 42,
-        height: 44,
-        child: Icon(icon, color: WHColors.primary1),
-      ),
+    return WHStepperField(
+      label: 'Received Qty',
+      value: value,
+      onChanged: onChanged,
+      minValue: 0,
+      allowManualInput: true,
     );
   }
 }

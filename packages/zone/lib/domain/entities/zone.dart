@@ -2,7 +2,7 @@ import 'package:zone/domain/entities/aisle.dart';
 import 'package:zone/domain/entities/shelves.dart';
 
 class Zone {
-  final String id;
+  final int id;
   final String zoneCode;
   final String zoneName;
   final String category;

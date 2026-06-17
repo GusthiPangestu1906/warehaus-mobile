@@ -12,9 +12,7 @@ class ProductModel extends Product {
     required super.unitOfMeasure,
     super.currentStock,
     List<Stock>? stocks,
-  }) : super(
-         stocks: stocks ?? [],
-       );
+  }) : super(stocks: stocks ?? []);
 
   factory ProductModel.fromJson(Map<String, dynamic> json) {
     return ProductModel(

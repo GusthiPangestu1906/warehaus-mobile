@@ -48,8 +48,9 @@ class ProductFormCard extends StatelessWidget {
           WHStepperField(
             label: 'Qty',
             value: quantity,
-            minValue: 0,
             onChanged: onQtyChanged,
+            minValue: 0,
+            allowManualInput: true,
           ),
           const SizedBox(height: 12),
           const Divider(),
