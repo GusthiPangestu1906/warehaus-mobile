@@ -1,7 +1,7 @@
 name: mobile
 description: "Warehouse Management System — Platform operasional gudang: inbound, put-away, picking, packing, shipping, dan utilisasi ruang gudang."
 publish_to: "none"
-version: 1.0.0+4
+version: 2.0.1+6
 
 workspace:
   - packages/core_ui
