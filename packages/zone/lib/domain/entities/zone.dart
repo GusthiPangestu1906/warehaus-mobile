@@ -32,7 +32,7 @@ class Zone {
 
   factory Zone.fromJson(Map<String, dynamic> json) {
     return Zone(
-      id: json['id']?.toString() ?? '',
+      id: json['id'] as int? ?? 0,
       zoneCode: json['zoneCode'] as String? ?? '',
       zoneName: json['zoneName'] as String? ?? '',
       category: json['category'] as String? ?? '',
@@ -43,16 +43,24 @@ class Zone {
           (json['shelfPerAisle'] ?? json['totalShelves']) as int? ?? 0,
       capacityPerShelf: json['capacityPerShelf'] as int? ?? 0,
       emptyShelves: json['emptyShelves'] as int? ?? 0,
-      shelves: (json['shelves'] ?? json['bins']) != null
-          ? ((json['shelves'] ?? json['bins']) as List)
+      shelves: (json['shelves'] is List)
+          ? (json['shelves'] as List)
                 .map((shelf) => Shelf.fromJson(shelf as Map<String, dynamic>))
                 .toList()
-          : null,
-      aisles: (json['aisle'] ?? json['aisles']) != null
-          ? ((json['aisle'] ?? json['aisles']) as List)
+          : (json['bins'] is List)
+              ? (json['bins'] as List)
+                    .map((shelf) => Shelf.fromJson(shelf as Map<String, dynamic>))
+                    .toList()
+              : null,
+      aisles: (json['aisles'] is List)
+          ? (json['aisles'] as List)
                 .map((aisle) => Aisle.fromJson(aisle as Map<String, dynamic>))
                 .toList()
-          : null,
+          : (json['aisle'] is List)
+              ? (json['aisle'] as List)
+                    .map((aisle) => Aisle.fromJson(aisle as Map<String, dynamic>))
+                    .toList()
+              : null,
     );
   }
 }

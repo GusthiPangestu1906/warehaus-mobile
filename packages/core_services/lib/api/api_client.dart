@@ -20,18 +20,21 @@ class ApiClient {
       ),
     );
 
-    dio.interceptors.add(InterceptorsWrapper(
-      onRequest: (options, handler) {
-        if (!options.path.startsWith('/api/') && !options.path.startsWith('api/')) {
-          if (options.path.startsWith('/')) {
-            options.path = '/api${options.path}';
-          } else {
-            options.path = 'api/${options.path}';
+    dio.interceptors.add(
+      InterceptorsWrapper(
+        onRequest: (options, handler) {
+          if (!options.path.startsWith('/api/') &&
+              !options.path.startsWith('api/')) {
+            if (options.path.startsWith('/')) {
+              options.path = options.path;
+            } else {
+              options.path = options.path;
+            }
           }
-        }
-        return handler.next(options);
-      },
-    ));
+          return handler.next(options);
+        },
+      ),
+    );
 
     dio.interceptors.add(ErrorInterceptor());
     dio.interceptors.add(LogInterceptor(requestBody: true));

@@ -25,7 +25,8 @@ class ShelfDetail {
       capacity: json['capacity'] as int? ?? 0,
       currentVolume: json['currentVolume'] as int? ?? 0,
       qrCodePath: json['qrCodePath'] as String? ?? '',
-      stocks: (json['stocks'] as List<dynamic>?)
+      stocks:
+          (json['stocks'] as List<dynamic>?)
               ?.map((e) => ShelfStock.fromJson(e as Map<String, dynamic>))
               .toList() ??
           [],
@@ -54,7 +55,9 @@ class ShelfStock {
       shelfId: json['shelfId'] as int? ?? 0,
       productId: json['productId'] as int? ?? 0,
       quantity: json['quantity'] as int? ?? 0,
-      product: ShelfProduct.fromJson(json['product'] as Map<String, dynamic>? ?? {}),
+      product: ShelfProduct.fromJson(
+        json['product'] as Map<String, dynamic>? ?? {},
+      ),
     );
   }
 }

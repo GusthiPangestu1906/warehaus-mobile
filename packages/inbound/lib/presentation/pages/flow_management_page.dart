@@ -9,6 +9,9 @@ import 'package:inbound/presentation/bloc/purchase_order/purchase_order_state.da
 import 'package:inbound/presentation/pages/create_purchase_order_page.dart';
 import 'package:inbound/presentation/pages/purchase_order_detail_page.dart';
 import 'package:intl/intl.dart';
+import 'package:mobile/presentation/bloc/navigation_bloc.dart';
+import 'package:mobile/presentation/bloc/navigation_state.dart';
+import 'package:mobile/route_observer.dart';
 import 'package:outbound/outbound.dart';
 
 enum _OrderFilter { all, queued, active, completed }
@@ -21,7 +24,7 @@ class FlowManagementPage extends StatefulWidget {
 }
 
 class _FlowManagementPageState extends State<FlowManagementPage>
-    with SingleTickerProviderStateMixin {
+    with SingleTickerProviderStateMixin, RouteAware {
   late TabController _tabController;
   late SalesOrderBloc _salesOrderBloc;
   late PurchaseOrderBloc _purchaseOrderBloc;
@@ -30,6 +33,8 @@ class _FlowManagementPageState extends State<FlowManagementPage>
   String _searchQuery = '';
   _OrderFilter _filter = _OrderFilter.all;
   DateTime? _selectedDate;
+
+  List<SalesOrder>? _lastSalesOrders;
 
   @override
   void initState() {
@@ -44,11 +49,29 @@ class _FlowManagementPageState extends State<FlowManagementPage>
   }
 
   @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final modalRoute = ModalRoute.of(context);
+    if (modalRoute != null) {
+      routeObserver.subscribe(this, modalRoute);
+    }
+  }
+
+  @override
   void dispose() {
+    routeObserver.unsubscribe(this);
     _tabController.dispose();
     _searchController.dispose();
     _salesOrderBloc.close();
     super.dispose();
+  }
+
+  @override
+  void didPopNext() {
+    final navigationState = context.read<NavigationBloc>().state;
+    if (navigationState.currentIndex == 2) {
+      _fetchOrders();
+    }
   }
 
   void _onFabPressed() {
@@ -135,186 +158,199 @@ class _FlowManagementPageState extends State<FlowManagementPage>
         BlocProvider.value(value: _salesOrderBloc),
         BlocProvider.value(value: _purchaseOrderBloc),
       ],
-      child: Scaffold(
-        backgroundColor: WHColors.background,
-        appBar: const WHAppbar(title: 'FLOW MANAGEMENT'),
-        body: Column(
-          children: [
-            // Tab Bar INBOUND / OUTBOUND
-            Container(
-              color: WHColors.surface,
-              child: TabBar(
-                controller: _tabController,
-                indicatorColor: WHColors.secondary3,
-                indicatorWeight: 3,
-                labelColor: WHColors.grey1,
-                unselectedLabelColor: WHColors.grey1,
-                labelStyle: const TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w700,
+      child: BlocListener<NavigationBloc, NavigationState>(
+        listener: (context, state) {
+          if (state.currentIndex == 2) {
+            _fetchOrders();
+          }
+        },
+        child: Scaffold(
+          backgroundColor: WHColors.background,
+          appBar: const WHAppbar(title: 'FLOW MANAGEMENT'),
+          body: Column(
+            children: [
+              // Tab Bar INBOUND / OUTBOUND
+              Container(
+                color: WHColors.surface,
+                child: TabBar(
+                  controller: _tabController,
+                  indicatorColor: WHColors.secondary3,
+                  indicatorWeight: 3,
+                  labelColor: WHColors.grey1,
+                  unselectedLabelColor: WHColors.grey1,
+                  labelStyle: const TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w700,
+                  ),
+                  unselectedLabelStyle: const TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w400,
+                  ),
+                  tabs: const [
+                    Tab(text: 'INBOUND'),
+                    Tab(text: 'OUTBOUND'),
+                  ],
                 ),
-                unselectedLabelStyle: const TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w400,
-                ),
-                tabs: const [
-                  Tab(text: 'INBOUND'),
-                  Tab(text: 'OUTBOUND'),
-                ],
               ),
-            ),
 
-            // Search Bar with Date Filter
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: WHSearch(
-                      controller: _searchController,
-                      hintText:
-                          'Search by order number, customer/supplier, or status',
-                      onChanged: (value) {
-                        setState(() {
-                          _searchQuery = value;
-                        });
+              // Search Bar with Date Filter
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: WHSearch(
+                        controller: _searchController,
+                        hintText:
+                            'Search by order number, customer/supplier, or status',
+                        onChanged: (value) {
+                          setState(() {
+                            _searchQuery = value;
+                          });
+                        },
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    _DateFilterButton(
+                      isActive: _selectedDate != null,
+                      onPressed: _pickFilterDate,
+                    ),
+                  ],
+                ),
+              ),
+
+              // Date Filter Summary
+              if (_selectedDate != null) ...[
+                const SizedBox(height: 10),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: _DateFilterSummary(
+                    label: DateFormat('dd/MM/yyyy').format(_selectedDate!),
+                    onClear: _clearFilterDate,
+                  ),
+                ),
+              ],
+
+              const SizedBox(height: 12),
+
+              // Filter Chips
+              SizedBox(
+                height: 28,
+                child: ListView.separated(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  scrollDirection: Axis.horizontal,
+                  itemCount: _OrderFilter.values.length,
+                  separatorBuilder: (_, _) => const SizedBox(width: 8),
+                  itemBuilder: (context, index) {
+                    final filter = _OrderFilter.values[index];
+                    return _FilterChip(
+                      label: _filterLabel(filter),
+                      isSelected: _filter == filter,
+                      onTap: () => setState(() => _filter = filter),
+                    );
+                  },
+                ),
+              ),
+
+              const SizedBox(height: 16),
+
+              // Tab Content
+              Expanded(
+                child: TabBarView(
+                  controller: _tabController,
+                  children: [
+                    // INBOUND TAB
+                    _InboundTabContent(
+                      searchQuery: _searchQuery,
+                      filter: _filter,
+                      selectedDate: _selectedDate,
+                      onRefresh: _fetchOrders,
+                    ),
+                    // OUTBOUND TAB
+                    BlocBuilder<SalesOrderBloc, SalesOrderState>(
+                      builder: (context, state) {
+                        if (state is SalesOrderLoaded) {
+                          _lastSalesOrders = state.salesOrders;
+                        }
+
+                        final salesOrdersToShow = _lastSalesOrders;
+                        if (salesOrdersToShow != null) {
+                          final orders = _filteredOutboundOrders(
+                            salesOrdersToShow,
+                          );
+
+                          if (salesOrdersToShow.isEmpty) {
+                            return _RefreshableEmpty(
+                              onRefresh: () => _fetchOrders(),
+                              message:
+                                  'Belum ada Sales Order.\nTap + untuk membuat baru.',
+                            );
+                          }
+
+                          if (orders.isEmpty) {
+                            return _RefreshableEmpty(
+                              onRefresh: () => _fetchOrders(),
+                              message: 'Sales Order tidak ditemukan.',
+                            );
+                          }
+
+                          return WHRefresh(
+                            onRefresh: () => _fetchOrders(),
+                            child: ListView.separated(
+                              physics: const AlwaysScrollableScrollPhysics(),
+                              padding: const EdgeInsets.fromLTRB(16, 0, 16, 96),
+                              itemCount: orders.length,
+                              separatorBuilder: (_, _) =>
+                                  const SizedBox(height: 12),
+                              itemBuilder: (context, index) {
+                                final order = orders[index];
+                                return OrderCard(
+                                  data: _toOutboundCardData(order),
+                                  onTap: () {
+                                    Navigator.of(context).push(
+                                      MaterialPageRoute(
+                                        builder: (_) => BlocProvider.value(
+                                          value: _salesOrderBloc,
+                                          child: SalesOrderDetailPage(
+                                            order: order,
+                                          ),
+                                        ),
+                                      ),
+                                    );
+                                  },
+                                );
+                              },
+                            ),
+                          );
+                        }
+
+                        if (state is SalesOrderLoading) {
+                          return const Center(child: CircularProgressIndicator());
+                        }
+                        if (state is SalesOrderError) {
+                          return _RefreshableEmpty(
+                            onRefresh: () => _fetchOrders(),
+                            message: state.message,
+                          );
+                        }
+                        return _RefreshableEmpty(
+                          onRefresh: () => _fetchOrders(),
+                          message:
+                              'Belum ada Sales Order.\nTap + untuk membuat baru.',
+                        );
                       },
                     ),
-                  ),
-                  const SizedBox(width: 10),
-                  _DateFilterButton(
-                    isActive: _selectedDate != null,
-                    onPressed: _pickFilterDate,
-                  ),
-                ],
-              ),
-            ),
-
-            // Date Filter Summary
-            if (_selectedDate != null) ...[
-              const SizedBox(height: 10),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                child: _DateFilterSummary(
-                  label: DateFormat('dd/MM/yyyy').format(_selectedDate!),
-                  onClear: _clearFilterDate,
+                  ],
                 ),
               ),
             ],
-
-            const SizedBox(height: 12),
-
-            // Filter Chips
-            SizedBox(
-              height: 28,
-              child: ListView.separated(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                scrollDirection: Axis.horizontal,
-                itemCount: _OrderFilter.values.length,
-                separatorBuilder: (_, _) => const SizedBox(width: 8),
-                itemBuilder: (context, index) {
-                  final filter = _OrderFilter.values[index];
-                  return _FilterChip(
-                    label: _filterLabel(filter),
-                    isSelected: _filter == filter,
-                    onTap: () => setState(() => _filter = filter),
-                  );
-                },
-              ),
-            ),
-
-            const SizedBox(height: 16),
-
-            // Tab Content
-            Expanded(
-              child: TabBarView(
-                controller: _tabController,
-                children: [
-                  // INBOUND TAB
-                  _InboundTabContent(
-                    searchQuery: _searchQuery,
-                    filter: _filter,
-                    selectedDate: _selectedDate,
-                    onRefresh: _fetchOrders,
-                  ),
-                  // OUTBOUND TAB
-                  BlocBuilder<SalesOrderBloc, SalesOrderState>(
-                    builder: (context, state) {
-                      if (state is SalesOrderLoading) {
-                        return const Center(child: CircularProgressIndicator());
-                      }
-                      if (state is SalesOrderError) {
-                        return _RefreshableEmpty(
-                          onRefresh: () => _fetchOrders(),
-                          message: state.message,
-                        );
-                      }
-                      if (state is SalesOrderLoaded) {
-                        final orders = _filteredOutboundOrders(
-                          state.salesOrders,
-                        );
-
-                        if (state.salesOrders.isEmpty) {
-                          return _RefreshableEmpty(
-                            onRefresh: () => _fetchOrders(),
-                            message:
-                                'Belum ada Sales Order.\nTap + untuk membuat baru.',
-                          );
-                        }
-
-                        if (orders.isEmpty) {
-                          return _RefreshableEmpty(
-                            onRefresh: () => _fetchOrders(),
-                            message: 'Sales Order tidak ditemukan.',
-                          );
-                        }
-
-                        return WHRefresh(
-                          onRefresh: () => _fetchOrders(),
-                          child: ListView.separated(
-                            physics: const AlwaysScrollableScrollPhysics(),
-                            padding: const EdgeInsets.fromLTRB(16, 0, 16, 96),
-                            itemCount: orders.length,
-                            separatorBuilder: (_, _) =>
-                                const SizedBox(height: 12),
-                            itemBuilder: (context, index) {
-                              final order = orders[index];
-                              return OrderCard(
-                                data: _toOutboundCardData(order),
-                                onTap: () {
-                                  Navigator.of(context).push(
-                                    MaterialPageRoute(
-                                      builder: (_) => BlocProvider.value(
-                                        value: _salesOrderBloc,
-                                        child: SalesOrderDetailPage(
-                                          order: order,
-                                        ),
-                                      ),
-                                    ),
-                                  );
-                                },
-                              );
-                            },
-                          ),
-                        );
-                      }
-                      return _RefreshableEmpty(
-                        onRefresh: () => _fetchOrders(),
-                        message:
-                            'Belum ada Sales Order.\nTap + untuk membuat baru.',
-                      );
-                    },
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-        floatingActionButton: FloatingActionButton(
-          heroTag: 'flow-create-fab',
-          onPressed: _onFabPressed,
-          backgroundColor: WHColors.primary3,
-          child: const Icon(Icons.add, color: WHColors.surface),
+          ),
+          floatingActionButton: FloatingActionButton(
+            heroTag: 'flow-create-fab',
+            onPressed: _onFabPressed,
+            backgroundColor: WHColors.primary3,
+            child: const Icon(Icons.add, color: WHColors.surface),
+          ),
         ),
       ),
     );
@@ -492,7 +528,7 @@ class _DateFilterSummary extends StatelessWidget {
 }
 
 // INBOUND TAB CONTENT
-class _InboundTabContent extends StatelessWidget {
+class _InboundTabContent extends StatefulWidget {
   final String searchQuery;
   final _OrderFilter filter;
   final DateTime? selectedDate;
@@ -506,55 +542,40 @@ class _InboundTabContent extends StatelessWidget {
   });
 
   @override
+  State<_InboundTabContent> createState() => _InboundTabContentState();
+}
+
+class _InboundTabContentState extends State<_InboundTabContent> {
+  List<PurchaseOrder>? _lastOrders;
+
+  @override
   Widget build(BuildContext context) {
     return BlocBuilder<PurchaseOrderBloc, PurchaseOrderState>(
       builder: (context, state) {
-        if (state is PurchaseOrderLoading) {
-          return const Center(child: CircularProgressIndicator());
-        }
-
-        if (state is PurchaseOrderError) {
-          return _RefreshableEmpty(
-            onRefresh: () async {
-              context.read<PurchaseOrderBloc>().add(
-                GetPurchaseOrdersEvent(date: selectedDate),
-              );
-            },
-            message: state.message,
-          );
-        }
-
         if (state is PurchaseOrderLoaded) {
-          final orders = _filteredInboundOrders(state.purchaseOrders);
+          _lastOrders = state.purchaseOrders;
+        }
 
-          if (state.purchaseOrders.isEmpty) {
+        final ordersToShow = _lastOrders;
+        if (ordersToShow != null) {
+          final orders = _filteredInboundOrders(ordersToShow);
+
+          if (ordersToShow.isEmpty) {
             return _RefreshableEmpty(
-              onRefresh: () async {
-                context.read<PurchaseOrderBloc>().add(
-                  GetPurchaseOrdersEvent(date: selectedDate),
-                );
-              },
+              onRefresh: widget.onRefresh,
               message: 'Belum ada Purchase Order.\nTap + untuk membuat baru.',
             );
           }
 
           if (orders.isEmpty) {
             return _RefreshableEmpty(
-              onRefresh: () async {
-                context.read<PurchaseOrderBloc>().add(
-                  GetPurchaseOrdersEvent(date: selectedDate),
-                );
-              },
+              onRefresh: widget.onRefresh,
               message: 'Purchase Order tidak ditemukan.',
             );
           }
 
           return WHRefresh(
-            onRefresh: () async {
-              context.read<PurchaseOrderBloc>().add(
-                GetPurchaseOrdersEvent(date: selectedDate),
-              );
-            },
+            onRefresh: widget.onRefresh,
             child: ListView.separated(
               physics: const AlwaysScrollableScrollPhysics(),
               padding: const EdgeInsets.fromLTRB(16, 0, 16, 96),
@@ -576,7 +597,7 @@ class _InboundTabContent extends StatelessWidget {
                         .then((result) {
                           if (!context.mounted || result == null) return;
                           context.read<PurchaseOrderBloc>().add(
-                            GetPurchaseOrdersEvent(date: selectedDate),
+                            GetPurchaseOrdersEvent(date: widget.selectedDate),
                           );
 
                           final message =
@@ -592,12 +613,19 @@ class _InboundTabContent extends StatelessWidget {
           );
         }
 
+        if (state is PurchaseOrderLoading) {
+          return const Center(child: CircularProgressIndicator());
+        }
+
+        if (state is PurchaseOrderError) {
+          return _RefreshableEmpty(
+            onRefresh: widget.onRefresh,
+            message: state.message,
+          );
+        }
+
         return _RefreshableEmpty(
-          onRefresh: () async {
-            context.read<PurchaseOrderBloc>().add(
-              GetPurchaseOrdersEvent(date: selectedDate),
-            );
-          },
+          onRefresh: widget.onRefresh,
           message: 'Belum ada Purchase Order.\nTap + untuk membuat baru.',
         );
       },
@@ -605,15 +633,15 @@ class _InboundTabContent extends StatelessWidget {
   }
 
   List<PurchaseOrder> _filteredInboundOrders(List<PurchaseOrder> orders) {
-    final query = searchQuery.trim().toLowerCase();
+    final query = widget.searchQuery.trim().toLowerCase();
 
     final filtered = orders.where((order) {
       final status = _mapOrderStatus(order.status);
       final matchesFilter =
-          filter == _OrderFilter.all ||
-          (filter == _OrderFilter.queued && status == OrderStatus.queued) ||
-          (filter == _OrderFilter.active && status == OrderStatus.active) ||
-          (filter == _OrderFilter.completed && status == OrderStatus.completed);
+          widget.filter == _OrderFilter.all ||
+          (widget.filter == _OrderFilter.queued && status == OrderStatus.queued) ||
+          (widget.filter == _OrderFilter.active && status == OrderStatus.active) ||
+          (widget.filter == _OrderFilter.completed && status == OrderStatus.completed);
 
       if (!matchesFilter) return false;
       if (query.isEmpty) return true;

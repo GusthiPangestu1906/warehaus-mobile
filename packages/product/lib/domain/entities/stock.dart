@@ -32,21 +32,22 @@ class Stock {
   });
 
   factory Stock.fromJson(Map<String, dynamic> json) {
+    final shelfJson = json['shelf'] as Map<String, dynamic>?;
     return Stock(
       id: json['id']?.toString() ?? '',
       shelfId: json['shelfId'] as int? ?? 0,
-      productId: json['productId'] as String? ?? '',
+      productId: json['productId']?.toString() ?? '',
       quantity: json['quantity'] as int? ?? 0,
-      shelfCode: json['shelfCode'] as String?,
+      shelfCode: shelfJson?['shelfCode']?.toString() ?? json['shelfCode']?.toString(),
       zoneId: json['zoneId'] as int?,
       zoneCode: json['zoneCode'] as String?,
       zoneName: json['zoneName'] as String?,
-      aisle: json['aisle'] as int?,
+      aisle: shelfJson?['aisle'] as int? ?? json['aisle'] as int?,
       locationName: json['locationName'] as String?,
-      shelfCapacity: json['shelfCapacity'] as int?,
-      shelfCurrentVolume: json['shelfCurrentVolume'] as int?,
+      shelfCapacity: shelfJson?['capacity'] as int? ?? json['shelfCapacity'] as int?,
+      shelfCurrentVolume: shelfJson?['currentVolume'] as int? ?? json['shelfCurrentVolume'] as int?,
       shelfAvailableCapacity: json['shelfAvailableCapacity'] as int?,
-      qrCodePath: json['qrCodePath'] as String?,
+      qrCodePath: shelfJson?['qrCodePath']?.toString() ?? json['qrCodePath']?.toString(),
     );
   }
 }

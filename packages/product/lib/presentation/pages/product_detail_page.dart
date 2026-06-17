@@ -6,8 +6,6 @@ import 'package:product/presentation/bloc/product_bloc.dart';
 import 'package:product/presentation/bloc/product_event.dart';
 import 'package:product/presentation/bloc/product_state.dart';
 import 'package:product/presentation/pages/edit_product_page.dart';
-import 'package:product/presentation/widgets/move_stock_dialog.dart';
-import 'package:product/presentation/widgets/stock_edit_dialog.dart';
 
 class ProductDetailPage extends StatefulWidget {
   final String productId;
@@ -45,34 +43,7 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
     context.read<ProductBloc>().add(DeleteProductEvent(productId));
   }
 
-  Future<void> _confirmDeleteStockLocation({
-    required String productId,
-    required int shelfId,
-  }) async {
-    final shouldDelete = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Delete Shelf Location'),
-        content: const Text('Delete this shelf location from the product?'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(false),
-            child: const Text('Cancel'),
-          ),
-          ElevatedButton(
-            onPressed: () => Navigator.of(ctx).pop(true),
-            style: ElevatedButton.styleFrom(backgroundColor: WHColors.error2),
-            child: const Text('Delete', style: TextStyle(color: Colors.white)),
-          ),
-        ],
-      ),
-    );
 
-    if (shouldDelete == true && mounted) {
-      // Reload product details after delete
-      context.read<ProductBloc>().add(GetProductDetailsEvent(productId));
-    }
-  }
 
   Future<void> _openEditProductPage(ProductDetailLoaded state) async {
     final product = state.product;
@@ -113,11 +84,8 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
         borderRadius: BorderRadius.circular(10),
         border: Border.all(color: WHColors.grey5),
       ),
-      child: ExpansionTile(
-        tilePadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
-        childrenPadding: const EdgeInsets.fromLTRB(14, 0, 14, 12),
-        iconColor: WHColors.grey3,
-        collapsedIconColor: WHColors.grey3,
+      child: ListTile(
+        contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
         title: Text(
           title,
           style: WHTypography.bodyText.copyWith(fontWeight: FontWeight.w700),
@@ -126,110 +94,6 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
           '${stock.quantity} $uomLabel',
           style: WHTypography.bodyText.copyWith(color: WHColors.grey2),
         ),
-        children: [
-          Row(
-            children: [
-              SizedBox(
-                width: 44,
-                height: 36,
-                child: OutlinedButton(
-                  onPressed: () => _confirmDeleteStockLocation(
-                    productId: productId,
-                    shelfId: stock.shelfId,
-                  ),
-                  style: OutlinedButton.styleFrom(
-                    padding: EdgeInsets.zero,
-                    side: const BorderSide(color: WHColors.error3),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
-                  child: const Icon(
-                    Icons.delete_outline,
-                    size: 18,
-                    color: WHColors.error2,
-                  ),
-                ),
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: OutlinedButton.icon(
-                  onPressed: () async {
-                    final result = await showStockEditDialog(
-                      context,
-                      initialQuantity: stock.quantity,
-                      shelfCode: stock.shelfCode ?? 'Unknown',
-                    );
-
-                    if (result != null && mounted) {
-                      context.read<ProductBloc>().add(
-                        UpdateStockLocationEvent(
-                          productId: productId,
-                          shelfId: stock.shelfId,
-                          quantity: result.quantity,
-                        ),
-                      );
-                    }
-                  },
-                  icon: const Icon(
-                    Icons.edit_outlined,
-                    size: 16,
-                    color: WHColors.primary3,
-                  ),
-                  label: Text(
-                    'Stock',
-                    style: WHTypography.bodyText.copyWith(
-                      color: WHColors.primary3,
-                    ),
-                  ),
-                  style: OutlinedButton.styleFrom(
-                    side: const BorderSide(color: WHColors.primary4),
-                    padding: const EdgeInsets.symmetric(vertical: 8),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
-                ),
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: OutlinedButton.icon(
-                  onPressed: () async {
-                    final result = await showMoveStockDialog(
-                      context,
-                      fromShelfId: stock.shelfId,
-                      fromShelfCode: stock.shelfCode ?? 'Unknown',
-                      currentQuantity: stock.quantity,
-                      productId: productId,
-                    );
-
-                    if (result != null && mounted) {
-                      // Move handled in dialog via QR scanner + bloc
-                    }
-                  },
-                  icon: const Icon(
-                    Icons.edit_outlined,
-                    size: 16,
-                    color: WHColors.primary3,
-                  ),
-                  label: Text(
-                    'Location',
-                    style: WHTypography.bodyText.copyWith(
-                      color: WHColors.primary3,
-                    ),
-                  ),
-                  style: OutlinedButton.styleFrom(
-                    side: const BorderSide(color: WHColors.primary4),
-                    padding: const EdgeInsets.symmetric(vertical: 8),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ],
       ),
     );
   }

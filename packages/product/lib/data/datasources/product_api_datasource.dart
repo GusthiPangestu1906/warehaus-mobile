@@ -6,7 +6,7 @@ class ProductApiDatasource {
   final Dio dio;
   ProductApiDatasource(this.dio);
 
-  static const String _productPath = '/Products';
+  static const String _productPath = '/products';
   static const String _stockLocationsPath = '/product/stock-locations';
   static const String _categoriesPath = '/categories';
 

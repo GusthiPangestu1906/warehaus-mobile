@@ -67,7 +67,7 @@ class ZoneApiDatasource {
   }
 
   Future<ZoneModel?> getZoneById(int id) async {
-    final response = await dio.get('$_zonePath/shelves/$id');
+    final response = await dio.get('$_zonePath/$id');
     debugPrint('Runtime type: ${response.data.runtimeType}');
     debugPrint('Response data: ${response.data}');
     debugPrint('getZoneById response: ${response.data}');

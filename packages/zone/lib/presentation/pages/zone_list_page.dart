@@ -174,7 +174,8 @@ class _ZoneListPageState extends State<ZoneListPage> with RouteAware {
         }
       },
       child: BlocListener<ZoneBloc, ZoneState>(
-        listenWhen: (previous, current) => current is ZoneError || current is ZoneOperationSuccess,
+        listenWhen: (previous, current) =>
+            current is ZoneError || current is ZoneOperationSuccess,
         listener: (context, state) {
           // Hanya tampilkan snackbar jika halaman ini yang aktif (bukan create_zone di atas)
           if ((ModalRoute.of(context)?.isCurrent ?? false)) {

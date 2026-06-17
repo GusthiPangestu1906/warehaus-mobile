@@ -43,12 +43,16 @@ class ZoneModel extends Zone {
                 .toList()
           : null,
 
-      // AMAN: Menggunakan json['aisles'] dan pastikan dia List, bukan int 'aisle'
+      // AMAN: Menggunakan json['aisles'] atau json['aisle'] dan pastikan dia List
       aisles: (json['aisles'] is List)
           ? (json['aisles'] as List)
                 .map((aisle) => Aisle.fromJson(aisle as Map<String, dynamic>))
                 .toList()
-          : null,
+          : (json['aisle'] is List)
+              ? (json['aisle'] as List)
+                    .map((aisle) => Aisle.fromJson(aisle as Map<String, dynamic>))
+                    .toList()
+              : null,
     );
   }
 

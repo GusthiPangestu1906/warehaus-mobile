@@ -49,20 +49,42 @@ class _CreateProductPageState extends State<CreateProductPage> {
   }
 
   void _submit() {
-    if (!(_formKey.currentState?.validate() ?? false)) return;
+    final sku = _skuController.text.trim();
+    final productName = _productNameController.text.trim();
+    final barcode = _qrCodeController.text.trim();
+
+    if (sku.isEmpty) {
+      WHSnackBar.showError(context, 'SKU Number is required');
+      return;
+    }
+
+    if (productName.isEmpty) {
+      WHSnackBar.showError(context, 'Product Name is required');
+      return;
+    }
+
+    if (barcode.isEmpty) {
+      WHSnackBar.showError(context, 'Barcode is required');
+      return;
+    }
 
     if (_selectedCategoryId == null) {
       WHSnackBar.showError(context, 'Please select a category');
       return;
     }
 
+    if (_selectedUnit == null || _selectedUnit!.isEmpty) {
+      WHSnackBar.showError(context, 'Please select a unit of measure');
+      return;
+    }
+
     context.read<ProductBloc>().add(
       CreateProductEvent(
-        sku: _skuController.text.trim(),
-        productName: _productNameController.text.trim(),
-        barcode: _qrCodeController.text.trim(),
+        sku: sku,
+        productName: productName,
+        barcode: barcode,
         categoryId: _selectedCategoryId,
-        unitOfMeasure: (_selectedUnit ?? _unitOfMeasureController.text).trim(),
+        unitOfMeasure: _selectedUnit!.trim(),
       ),
     );
   }
@@ -210,9 +232,7 @@ class _CreateProductPageState extends State<CreateProductPage> {
         if (state is ProductActionSuccess) {
           Navigator.of(context).pop(true);
         } else if (state is ProductError) {
-          ScaffoldMessenger.of(
-            context,
-          ).showSnackBar(SnackBar(content: Text('Error: ${state.message}')));
+          WHSnackBar.showError(context, state.message);
         }
       },
       child: Scaffold(

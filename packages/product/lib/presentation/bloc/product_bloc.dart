@@ -1,3 +1,4 @@
+import 'package:core_services/interceptors/app_error_handler.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:product/domain/entities/product.dart';
@@ -39,7 +40,7 @@ class ProductBloc extends Bloc<ProductEvent, ProductState> {
         final products = await getProductsUsecase();
         emit(ProductLoaded(products));
       } catch (e) {
-        emit(ProductError(e.toString()));
+        emit(ProductError(AppErrorHandler.extractMessage(e)));
       }
     });
     on<GetProductDetailsEvent>((event, emit) async {
@@ -53,7 +54,7 @@ class ProductBloc extends Bloc<ProductEvent, ProductState> {
         emit(ProductDetailLoaded(product));
       } catch (e) {
         debugPrint('[ProductBloc] GetProductDetailsEvent error: $e');
-        emit(ProductError(e.toString()));
+        emit(ProductError(AppErrorHandler.extractMessage(e)));
       }
     });
     on<CreateProductEvent>((event, emit) async {
@@ -66,7 +67,7 @@ class ProductBloc extends Bloc<ProductEvent, ProductState> {
         add(GetProductsEvent());
       } catch (e) {
         debugPrint('[ProductBloc] CreateProductEvent error: $e');
-        emit(ProductError(e.toString()));
+        emit(ProductError(AppErrorHandler.extractMessage(e)));
       }
     });
     on<UpdateProductEvent>((event, emit) async {
@@ -79,7 +80,7 @@ class ProductBloc extends Bloc<ProductEvent, ProductState> {
         add(GetProductDetailsEvent(event.id));
       } catch (e) {
         debugPrint('[ProductBloc] UpdateProductEvent error: $e');
-        emit(ProductError(e.toString()));
+        emit(ProductError(AppErrorHandler.extractMessage(e)));
       }
     });
     on<DeleteProductEvent>((event, emit) async {
@@ -92,7 +93,7 @@ class ProductBloc extends Bloc<ProductEvent, ProductState> {
         emit(ProductActionSuccess('deleted'));
       } catch (e) {
         debugPrint('[ProductBloc] DeleteProductEvent error: $e');
-        emit(ProductError(e.toString()));
+        emit(ProductError(AppErrorHandler.extractMessage(e)));
       }
     });
     // Stock location events - not yet implemented in backend
@@ -105,7 +106,7 @@ class ProductBloc extends Bloc<ProductEvent, ProductState> {
         final categories = await getCategoriesUsecase();
         emit(CategoriesLoaded(categories));
       } catch (e) {
-        emit(CategoriesError(e.toString()));
+        emit(CategoriesError(AppErrorHandler.extractMessage(e)));
       }
     });
   }
