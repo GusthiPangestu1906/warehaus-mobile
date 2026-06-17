@@ -1,6 +1,7 @@
 import 'package:core_ui/core_ui.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:product/domain/entities/category.dart';
 import 'package:product/presentation/bloc/product_bloc.dart';
 import 'package:product/presentation/bloc/product_event.dart';
@@ -184,6 +185,14 @@ class _CreateProductPageState extends State<CreateProductPage> {
       WHScannerPage.route(
         title: 'Scan Barcode',
         subtitle: 'Arahkan kamera ke barcode produk',
+        formats: const [
+          BarcodeFormat.code128,
+          BarcodeFormat.code39,
+          BarcodeFormat.ean13,
+          BarcodeFormat.ean8,
+          BarcodeFormat.upcA,
+          BarcodeFormat.upcE,
+        ],
       ),
     );
 
