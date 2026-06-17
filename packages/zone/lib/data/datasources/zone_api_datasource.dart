@@ -81,12 +81,12 @@ class ZoneApiDatasource {
   Future<void> updateZone({
     required int id,
     String? zoneName,
-    String? category,
+    int? categoryId,
     String? description,
   }) async {
     final payload = <String, dynamic>{};
     if (zoneName != null) payload['zoneName'] = zoneName;
-    if (category != null) payload['category'] = category;
+    if (categoryId != null) payload['categoryId'] = categoryId;
     if (description != null) payload['description'] = description;
 
     await dio.put('$_zonePath/$id', data: payload);

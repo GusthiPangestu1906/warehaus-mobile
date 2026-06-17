@@ -26,13 +26,13 @@ class CreateZoneEvent extends ZoneEvent {
 class UpdateZoneEvent extends ZoneEvent {
   final int id;
   final String? zoneName;
-  final String? category;
+  final int? categoryId;
   final String? description;
 
   UpdateZoneEvent({
     required this.id,
     this.zoneName,
-    this.category,
+    this.categoryId,
     this.description,
   });
 }

@@ -12,7 +12,7 @@ abstract class ZoneRepository {
   Future<void> updateZone({
     required int id,
     String? zoneName,
-    String? category,
+    int? categoryId,
     String? description,
   });
   Future<void> deleteZone(int id);

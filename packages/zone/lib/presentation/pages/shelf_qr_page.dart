@@ -12,7 +12,11 @@ class ShelfQrPage extends StatelessWidget {
   Widget build(BuildContext context) {
     // Construct a reasonable default URL based on ApiClient baseUrl.
     final base = ApiClient().dio.options.baseUrl ?? '';
-    final url = base.endsWith('/') ? '${base}qr/$code' : '$base/qr/$code';
+    // Absolute URL for Image.network
+    final apiBase = base.endsWith('/') ? '${base}api' : '$base/api';
+    final imageUrl = '$apiBase/Zones/qr/$code';
+    // Relative URL for DownloadQRButton so the interceptor prepends /api/
+    final downloadUrl = '/Zones/qr/$code';
 
     return Scaffold(
       appBar: WHAppbar(title: 'QR $code'),
@@ -35,7 +39,7 @@ class ShelfQrPage extends StatelessWidget {
                       child: ClipRRect(
                         borderRadius: BorderRadius.circular(8),
                         child: Image.network(
-                          url,
+                          imageUrl,
                           fit: BoxFit.contain,
                           errorBuilder: (ctx, e, st) => Center(
                             child: Icon(
@@ -60,7 +64,7 @@ class ShelfQrPage extends StatelessWidget {
             ),
             const SizedBox(height: 16),
             // Use existing DownloadQRButton to handle download flow
-            DownloadQRButton(url: url, code: code),
+            DownloadQRButton(url: downloadUrl, code: code),
           ],
         ),
       ),

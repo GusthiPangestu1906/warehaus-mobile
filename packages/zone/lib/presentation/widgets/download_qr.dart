@@ -31,29 +31,37 @@ class QRDownloader {
     } catch (_) {}
   }
 
-  /// Sends a JSON payload {"option": "pdf"|"png"} to [url], expects raw bytes
-  /// response and saves the file to external Download/WareHaus folder on Android.
-  /// [code] is used as the filename (e.g. 'LZ-1-1' -> 'LZ-1-1.pdf' or 'LZ-1-1.png').
+  /// Sends a GET request to [url], expects raw bytes response and saves the file 
+  /// to external Download/WareHaus folder on Android.
+  /// The backend ignores the [option] and always returns a zip file containing the QR codes.
+  /// [code] is used as the filename (e.g. 'LZ-1-1' -> 'LZ-1-1.zip').
   Future<String> downloadWithOption(
     String url,
     String option,
     String code,
   ) async {
-    // Request bytes from backend
-    final response = await _dio.post<List<int>>(
-      url,
-      data: {'option': option},
+    // Append -pdf if the user selected pdf
+    var finalUrl = url;
+    if (option.toLowerCase() == 'pdf') {
+      if (finalUrl.endsWith('download')) {
+        finalUrl = '$finalUrl-pdf';
+      } else {
+        finalUrl = '$finalUrl/download-pdf';
+      }
+    }
+    // Request bytes from backend (use GET because no option needed for QR zip/pdf)
+    final response = await _dio.get<List<int>>(
+      finalUrl,
       options: Options(
         responseType: ResponseType.bytes,
-        headers: {Headers.contentTypeHeader: 'application/json'},
       ),
     );
 
     final bytes = response.data;
     if (bytes == null) throw Exception('Empty response from server');
 
-    // Determine extension
-    final ext = option.toLowerCase() == 'pdf' ? 'pdf' : 'png';
+    // The backend generates either a zip (for PNGs) or a pdf
+    final ext = option.toLowerCase() == 'pdf' ? 'pdf' : 'zip';
     final fileName = '$code.$ext';
 
     // Target directory on Android
@@ -86,14 +94,6 @@ class _DownloadQRButtonState extends State<DownloadQRButton> {
 
   Future<void> _handleDownload() async {
     if (_loading) return;
-
-    // Debug hint: show a short snackbar so we can verify this code runs
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Opening custom format dialog...'),
-        duration: Duration(milliseconds: 700),
-      ),
-    );
 
     // Ask user which format they want (custom bottom sheet)
     final option = await FormatDialogQr.show(context);

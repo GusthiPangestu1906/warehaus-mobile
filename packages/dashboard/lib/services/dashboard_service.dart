@@ -14,14 +14,29 @@ class DashboardService {
     return 0;
   }
 
-  Future<List<ActivityLog>> getRecentLogs({int limit = 10}) async {
+  Future<DashboardResponse?> getDashboardData({int limit = 10}) async {
     try {
       final response = await dio.get(
-        '/api/dashboard/recent-logs',
+        '/dashboard',
         queryParameters: {'limit': limit},
       );
-      debugPrint('[DashboardService] Response: $response');
-      debugPrint('[DashboardService] Response data: ${response.data}');
+
+      debugPrint('[DashboardService] Raw Data Type: ${response}');
+
+      final responseData = response.data as Map<String, dynamic>;
+      return DashboardResponse.fromJson(responseData);
+    } catch (e) {
+      debugPrint('[DashboardService] Error di getDashboardData: $e');
+      if (e is DioException && e.response?.statusCode == 404) {
+        return null;
+      }
+      rethrow;
+    }
+  }
+
+  Future<List<ActivityLog>> getRecentLogs({int limit = 10}) async {
+    try {
+      final response = await dio.get('/dashboard');
 
       final logs = response.data as List;
       return logs

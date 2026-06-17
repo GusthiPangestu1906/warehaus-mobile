@@ -10,6 +10,7 @@ class ZoneModel extends Zone {
     required super.zoneCode,
     required super.zoneName,
     required super.category,
+    required super.categoryId,
     required super.description,
     required super.totalAisle,
     required super.shelfPerAisle,
@@ -27,6 +28,7 @@ class ZoneModel extends Zone {
       zoneCode: json['zoneCode'] as String? ?? '',
       zoneName: json['zoneName'] as String? ?? '',
       category: json['category'] as String? ?? '',
+      categoryId: (json['categoryId'] ?? json['category_id']) as int? ?? 0,
       description: json['description'] as String? ?? '',
       totalAisle: (json['totalAisle'] ?? json['totalAisles']) as int? ?? 0,
       shelfPerAisle:
