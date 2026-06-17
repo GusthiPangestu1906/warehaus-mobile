@@ -15,7 +15,7 @@ class DashboardPage extends StatefulWidget {
 
 class _DashboardPageState extends State<DashboardPage> {
   late final DashboardService _service;
-  List<ActivityLog> _logs = [];
+  DashboardStats? _stats;
   bool _isLoading = true;
   String? _error;
 
@@ -23,15 +23,15 @@ class _DashboardPageState extends State<DashboardPage> {
   void initState() {
     super.initState();
     _service = DashboardService(GetIt.instance<Dio>());
-    _fetchLogs();
+    _fetchDashboardData();
   }
 
-  Future<void> _fetchLogs() async {
+  Future<void> _fetchDashboardData() async {
     try {
       setState(() => _isLoading = true);
-      final logs = await _service.getRecentLogs();
+      final stats = await _service.getDashboardStats();
       setState(() {
-        _logs = logs;
+        _stats = stats;
         _isLoading = false;
       });
     } catch (e) {
@@ -50,7 +50,7 @@ class _DashboardPageState extends State<DashboardPage> {
       body: WHRefresh(
         onRefresh: () async {
           // Placeholder for refresh logic
-          await Future.delayed(const Duration(seconds: 1));
+          await _fetchDashboardData();
         },
         child: SingleChildScrollView(
           physics: const AlwaysScrollableScrollPhysics(),
@@ -59,27 +59,56 @@ class _DashboardPageState extends State<DashboardPage> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               // Stats Cards
-              Row(
-                children: [
-                  Expanded(
-                    child: _buildStatCard(
-                      title: 'PENDING TASKS',
-                      value: '15',
-                      subtitle: 'Tasks Waiting',
-                    ),
+              if (_isLoading)
+                const Center(child: CircularProgressIndicator())
+              else if (_error != null)
+                Center(child: Text(
+                  'Error loading dashboard: $_error',
+                  style: WHTypography.bodyText,
+                  textAlign: TextAlign.center,
+                ),
+                )
+              else if (_stats != null)
+                  Row(
+                    children: [
+                      Expanded(
+                        child: SizedBox(
+                          height: 130,
+                          child: _buildStatCard(
+                            title: 'PENDING TASKS',
+                            value: _stats!.pendingTask.totalPendingTask.toString(),
+                            detail: Row(
+                              mainAxisAlignment: MainAxisAlignment.start,
+                              children: [
+                                _buildMiniStat(
+                                  icon: Icons.login_rounded,
+                                  value: _stats!.pendingTask.inboundPendingTask.toString(),
+                                ),
+                                const SizedBox(width: 10),
+                                _buildMiniStat(
+                                  icon: Icons.logout_rounded,
+                                  value: _stats!.pendingTask.outboundPendingTask.toString(),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: SizedBox(
+                          height: 130,
+                          child: _buildStatCard(
+                            title: 'THROUGHPUT',
+                            value: _stats!.totalThroughput.toString(),
+                            subtitle: 'Unit Today',
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: _buildStatCard(
-                      title: 'TOTAL PRODUCTS',
-                      value: '1,240',
-                      subtitle: 'Items Registered',
-                    ),
-                  ),
-                ],
-              ),
               const SizedBox(height: 24),
-              
+
               Text(
                 'OPERATIONS',
                 style: WHTypography.caption.copyWith(
@@ -117,7 +146,7 @@ class _DashboardPageState extends State<DashboardPage> {
                       onTap: () {
                         Navigator.of(context).push(
                           MaterialPageRoute(
-                              builder: (context) => const CreateZonePage(),
+                            builder: (context) => const CreateZonePage(),
                           ),
                         );
                       },
@@ -147,7 +176,7 @@ class _DashboardPageState extends State<DashboardPage> {
                   Expanded(
                     child: _buildOperationCard(
                       title: 'Create SO',
-                      icon: Icons.assignment_outlined,
+                      icon: Icons.description_outlined,
                       color: WHColors.surface,
                       bgColor: WHColors.secondary4,
                       onTap: () {
@@ -176,14 +205,11 @@ class _DashboardPageState extends State<DashboardPage> {
               const Divider(height: 1, color: WHColors.grey5),
               const SizedBox(height: 12),
 
-              if (_isLoading)
-                const Center(child: CircularProgressIndicator())
-              else if (_error != null)
-                Center(child: Text('Error: $_error'))
-              else if (_logs.isEmpty)
+
+              if (_stats != null && _stats!.logs.isEmpty)
                 const Center(child: Text('No recent logs found.'))
-              else
-                ..._logs.map((log) => _buildLogItem(log)),
+              else if (_stats != null)
+                ..._stats!.logs.map((log) => _buildLogItem(log)),
             ],
           ),
         ),
@@ -195,10 +221,12 @@ class _DashboardPageState extends State<DashboardPage> {
   Widget _buildStatCard({
     required String title,
     required String value,
-    required String subtitle,
+    String? subtitle,
+    Widget? detail,
   }) {
     return Container(
-      padding: const EdgeInsets.all(16),
+      width: double.infinity,
+      padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: WHColors.surface,
         borderRadius: BorderRadius.circular(10),
@@ -206,32 +234,71 @@ class _DashboardPageState extends State<DashboardPage> {
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(
-            title,
-            style: WHTypography.caption.copyWith(
-              color: WHColors.grey2,
-              fontWeight: FontWeight.w600,
-              fontSize: 10,
-            ),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                title,
+                style: WHTypography.caption.copyWith(
+                  color: WHColors.grey2,
+                  fontWeight: FontWeight.w600,
+                  fontSize: 10,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                value,
+                style: WHTypography.heading1.copyWith(
+                  color: WHColors.secondary3,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              if (subtitle != null && subtitle.isNotEmpty) ...[
+                Text(
+                  subtitle,
+                  style: WHTypography.caption.copyWith(
+                    color: WHColors.grey2,
+                    fontSize: 11,
+                  ),
+                ),
+              ],
+            ],
           ),
-          const SizedBox(height: 4),
-          Text(
-            value,
-            style: WHTypography.heading1.copyWith(
-              color: WHColors.secondary3,
-              fontWeight: FontWeight.w700,
-            ),
-          ),
-          Text(
-            subtitle,
-            style: WHTypography.caption.copyWith(
-              color: WHColors.grey2,
-              fontSize: 11,
-            ),
-          ),
+          if (detail != null) ...[
+            const SizedBox(height: 10),
+            const Divider(height: 1, color: WHColors.grey5),
+            const SizedBox(height: 8),
+            detail,
+          ] else
+            const SizedBox(height: 24),
         ],
       ),
+    );
+  }
+
+  Widget _buildMiniStat({
+    required IconData icon,
+    required String value,
+  }) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(
+          icon,
+          size: 14,
+          color: WHColors.grey2,
+        ),
+        const SizedBox(width: 4),
+        Text(
+          value,
+          style: WHTypography.caption.copyWith(
+            color: WHColors.grey1,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+      ],
     );
   }
 

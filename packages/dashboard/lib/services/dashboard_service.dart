@@ -5,52 +5,82 @@ class DashboardService {
   final Dio dio;
   DashboardService(this.dio);
 
-  Future<int> getProductCount() async {
-    final response = await dio.get('/api/products');
-    if (response.statusCode == 200) {
-      final products = response.data as List;
-      return products.length;
-    }
-    return 0;
-  }
-
-  Future<DashboardResponse?> getDashboardData({int limit = 10}) async {
+  Future<DashboardStats> getDashboardStats() async {
     try {
-      final response = await dio.get(
-        '/dashboard',
-        queryParameters: {'limit': limit},
-      );
-
-      debugPrint('[DashboardService] Raw Data Type: ${response}');
-
-      final responseData = response.data as Map<String, dynamic>;
-      return DashboardResponse.fromJson(responseData);
+      final response = await dio.get('/api/dashboard');
+      debugPrint('[DashboardService] Stats Response: ${response.data}');
+      return DashboardStats.fromJson(response.data as Map<String, dynamic>);
     } catch (e) {
-      debugPrint('[DashboardService] Error di getDashboardData: $e');
-      if (e is DioException && e.response?.statusCode == 404) {
-        return null;
-      }
+      debugPrint('[DashboardService] Error fetching stats: $e');
       rethrow;
     }
   }
 
   Future<List<ActivityLog>> getRecentLogs({int limit = 10}) async {
     try {
-      final response = await dio.get('/dashboard');
+      final response = await dio.get(
+        '/api/dashboard/recent-logs',
+        queryParameters: {'limit': limit},
+      );
+      debugPrint('[DashboardService] Response data: ${response.data}');
 
       final logs = response.data as List;
       return logs
           .map((log) => ActivityLog.fromJson(log as Map<String, dynamic>))
           .toList();
     } catch (e) {
-      debugPrint('[DashboardService] Error: $e');
-      if (e is DioException && e.response?.statusCode == 404) {
-        return const [];
-      }
+      debugPrint('[DashboardService] Error fetching logs: $e');
       rethrow;
     }
   }
 }
+
+class DashboardStats {
+  final PendingTask pendingTask;
+  final int totalThroughput;
+  final List<ActivityLog> logs;
+
+  DashboardStats({
+    required this.pendingTask,
+    required this.totalThroughput,
+    required this.logs,
+  });
+
+  factory DashboardStats.fromJson(Map<String, dynamic> json) {
+    return DashboardStats(
+      pendingTask: PendingTask.fromJson(
+        json['pendingTask'] as Map<String, dynamic>? ?? {},
+      ),
+      totalThroughput: json['totalThroughput'] as int? ?? 0,
+      logs: json['logs'] != null
+          ? (json['logs'] as List)
+          .map((log) => ActivityLog.fromJson(log as Map<String, dynamic>))
+          .toList()
+          : [],
+    );
+  }
+}
+
+class PendingTask {
+  final int totalPendingTask;
+  final int inboundPendingTask;
+  final int outboundPendingTask;
+
+  PendingTask({
+    required this.totalPendingTask,
+    required this.inboundPendingTask,
+    required this.outboundPendingTask,
+  });
+
+  factory PendingTask.fromJson(Map<String, dynamic> json) {
+    return PendingTask(
+      totalPendingTask: json['totalPendingTask'] as int? ?? 0,
+      inboundPendingTask: json['inboundPendingTask'] as int? ?? 0,
+      outboundPendingTask: json['outboundPendingTask'] as int? ?? 0,
+    );
+  }
+}
+
 
 class ActivityLog {
   final int id;
