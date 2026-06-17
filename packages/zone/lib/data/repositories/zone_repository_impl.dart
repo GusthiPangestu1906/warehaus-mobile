@@ -64,4 +64,28 @@ class ZoneRepositoryImpl implements ZoneRepository {
     final data = await apiDatasource.getShelfDetails(shelfId);
     return ShelfDetail.fromJson(data);
   }
+
+  @override
+  Future<List<int>> downloadAisleQr({
+    required int zoneId,
+    required int aisleNumber,
+    required String format,
+  }) async {
+    return await apiDatasource.downloadAisleQr(
+      zoneId: zoneId,
+      aisleNumber: aisleNumber,
+      format: format,
+    );
+  }
+
+  @override
+  Future<List<int>> downloadShelfQr({
+    required int shelfId,
+    required String format,
+  }) async {
+    return await apiDatasource.downloadShelfQr(
+      shelfId: shelfId,
+      format: format,
+    );
+  }
 }

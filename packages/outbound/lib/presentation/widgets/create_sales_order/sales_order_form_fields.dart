@@ -79,6 +79,7 @@ class SalesOrderTextInput extends StatelessWidget {
       hintText: hint,
       controller: controller,
       keyboardType: keyboardType ?? TextInputType.text,
+      flat: true,
     );
   }
 }
@@ -102,6 +103,7 @@ class SalesOrderNoteInput extends StatelessWidget {
       maxLength: 150,
       isOptional: true,
       maxLines: 4,
+      flat: true,
     );
   }
 }
@@ -131,10 +133,18 @@ class SalesOrderSelectField<T> extends StatelessWidget {
     // Convert DropdownMenuItem to WHDropdownItem
     final whItems = items
         .map(
-          (item) => WHDropdownItem<T>(
-            value: item.value as T,
-            label: item.child.toString(),
-          ),
+          (item) {
+            String labelText = '';
+            if (item.child is Text) {
+              labelText = (item.child as Text).data ?? '';
+            } else {
+              labelText = item.child.toString();
+            }
+            return WHDropdownItem<T>(
+              value: item.value as T,
+              label: labelText,
+            );
+          },
         )
         .toList();
 
@@ -159,6 +169,7 @@ class SalesOrderSelectField<T> extends StatelessWidget {
       selectedValue: selectedValue,
       items: whItems,
       onChanged: isLoading || !hasItems ? null : onChanged,
+      flat: true,
     );
   }
 }

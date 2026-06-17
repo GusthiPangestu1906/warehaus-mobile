@@ -15,6 +15,7 @@ class WHDescriptionField extends StatefulWidget {
     this.maxLines = 4,
     this.maxLength = 150,
     this.focusNode,
+    this.flat = false,
   });
 
   final String label;
@@ -28,6 +29,7 @@ class WHDescriptionField extends StatefulWidget {
   final int maxLines;
   final int maxLength;
   final FocusNode? focusNode;
+  final bool flat;
 
   @override
   State<WHDescriptionField> createState() => _WHDescriptionFieldState();
@@ -100,6 +102,101 @@ class _WHDescriptionFieldState extends State<WHDescriptionField> {
 
   @override
   Widget build(BuildContext context) {
+    final inputContainer = AnimatedContainer(
+      duration: const Duration(milliseconds: 180),
+      curve: Curves.easeOut,
+      decoration: BoxDecoration(
+        color: widget.isDisabled ? _colorDisabledBg : _colorBackground,
+        borderRadius: BorderRadius.circular(_borderRadius),
+        border: Border.all(
+          color: _borderColor,
+          width: _isFocused || _hasError ? 1.5 : 1.0,
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.end,
+        children: [
+          TextField(
+            controller: widget.controller,
+            focusNode: _focusNode,
+            enabled: !widget.isDisabled,
+            keyboardType: TextInputType.multiline,
+            maxLines: widget.maxLines,
+            maxLength: widget.maxLength,
+            onChanged: (value) {
+              setState(() => _charCount = value.length);
+              widget.onChanged?.call(value);
+            },
+            style: TextStyle(
+              fontSize: _inputFontSize,
+              fontWeight: FontWeight.w400,
+              color: widget.isDisabled ? _colorDisabledText : _colorText,
+              height: 1.4,
+            ),
+            decoration: InputDecoration(
+              hintText: widget.hintText,
+              hintStyle: const TextStyle(
+                fontSize: _inputFontSize,
+                color: _colorHint,
+                fontWeight: FontWeight.w400,
+              ),
+              contentPadding: const EdgeInsets.all(14),
+              border: InputBorder.none,
+              counterText: '', // Sembunyikan counter default
+            ),
+          ),
+
+          // Character Counter
+          Padding(
+            padding: const EdgeInsets.only(right: 12, bottom: 8),
+            child: Text(
+              '$_charCount/${widget.maxLength}',
+              style: const TextStyle(
+                fontSize: 10,
+                color: _colorCounter,
+                fontWeight: FontWeight.w400,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+
+    if (widget.flat) {
+      if (!_hasError && widget.helperText == null) {
+        return inputContainer;
+      }
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          inputContainer,
+          const SizedBox(height: 5),
+          Row(
+            children: [
+              if (_hasError)
+                const Icon(
+                  Icons.error_outline_rounded,
+                  size: 13,
+                  color: _colorErrorText,
+                ),
+              if (_hasError) const SizedBox(width: 4),
+              Expanded(
+                child: Text(
+                  _hasError ? widget.errorText! : widget.helperText!,
+                  style: TextStyle(
+                    fontSize: _helperFontSize,
+                    color: _hasError ? _colorErrorText : _colorHelperText,
+                    fontWeight: FontWeight.w400,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ],
+      );
+    }
+
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
       decoration: BoxDecoration(
@@ -141,65 +238,7 @@ class _WHDescriptionFieldState extends State<WHDescriptionField> {
           const SizedBox(height: 8),
 
           // Input Container
-          AnimatedContainer(
-            duration: const Duration(milliseconds: 180),
-            curve: Curves.easeOut,
-            decoration: BoxDecoration(
-              color: widget.isDisabled ? _colorDisabledBg : _colorBackground,
-              borderRadius: BorderRadius.circular(_borderRadius),
-              border: Border.all(
-                color: _borderColor,
-                width: _isFocused || _hasError ? 1.5 : 1.0,
-              ),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.end,
-              children: [
-                TextField(
-                  controller: widget.controller,
-                  focusNode: _focusNode,
-                  enabled: !widget.isDisabled,
-                  keyboardType: TextInputType.multiline,
-                  maxLines: widget.maxLines,
-                  maxLength: widget.maxLength,
-                  onChanged: (value) {
-                    setState(() => _charCount = value.length);
-                    widget.onChanged?.call(value);
-                  },
-                  style: TextStyle(
-                    fontSize: _inputFontSize,
-                    fontWeight: FontWeight.w400,
-                    color: widget.isDisabled ? _colorDisabledText : _colorText,
-                    height: 1.4,
-                  ),
-                  decoration: InputDecoration(
-                    hintText: widget.hintText,
-                    hintStyle: const TextStyle(
-                      fontSize: _inputFontSize,
-                      color: _colorHint,
-                      fontWeight: FontWeight.w400,
-                    ),
-                    contentPadding: const EdgeInsets.all(14),
-                    border: InputBorder.none,
-                    counterText: '', // Sembunyikan counter default
-                  ),
-                ),
-
-                // Character Counter
-                Padding(
-                  padding: const EdgeInsets.only(right: 12, bottom: 8),
-                  child: Text(
-                    '$_charCount/${widget.maxLength}',
-                    style: const TextStyle(
-                      fontSize: 10,
-                      color: _colorCounter,
-                      fontWeight: FontWeight.w400,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
+          inputContainer,
 
           // Helper / Error text
           if (_hasError || widget.helperText != null) ...[

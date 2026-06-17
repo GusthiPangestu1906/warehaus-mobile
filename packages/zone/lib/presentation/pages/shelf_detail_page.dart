@@ -42,23 +42,17 @@ class _ShelfDetailPageState extends State<ShelfDetailPage> {
   Future<void> _downloadQr(ShelfDetail shelfDetail) async {
     final qrUrl = _resolveQrUrl(shelfDetail.qrCodePath);
     if (qrUrl.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('QR code path tidak tersedia')),
-      );
+      WHSnackBar.showError(context, 'QR code path tidak tersedia');
       return;
     }
 
     try {
       await QRDownloader().downloadAndSave(qrUrl);
       if (!mounted) return;
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('Berhasil diunduh')));
+      WHSnackBar.showSuccess(context, 'Berhasil diunduh');
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('Gagal mengunduh: $e')));
+      WHSnackBar.showError(context, 'Gagal mengunduh: $e');
     }
   }
 
@@ -132,21 +126,16 @@ class _ShelfDetailPageState extends State<ShelfDetailPage> {
 
                   setState(() => _loading = true);
                   try {
-                    final url = '/Zones/shelves/${widget.shelfId}/qrcode';
-                    final savedPath = await QRDownloader().downloadWithOption(
-                      url,
-                      option,
-                      shelfDetail.shelfCode,
+                    final savedPath = await QRDownloader().downloadShelf(
+                      shelfId: widget.shelfId,
+                      format: option,
+                      code: shelfDetail.shelfCode,
                     );
                     if (!mounted) return;
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text('Berhasil diunduh: $savedPath')),
-                    );
+                    WHSnackBar.showSuccess(context, 'Berhasil diunduh: $savedPath');
                   } catch (e) {
                     if (!mounted) return;
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text('Gagal mengunduh: $e')),
-                    );
+                    WHSnackBar.showError(context, 'Gagal mengunduh: $e');
                   } finally {
                     if (mounted) setState(() => _loading = false);
                   }

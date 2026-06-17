@@ -27,12 +27,7 @@ class ZoneAisleDetailPage extends StatefulWidget {
 
 class _ZoneAisleDetailPageState extends State<ZoneAisleDetailPage>
     with RouteAware {
-  String get _downloadUrl {
-    final zoneId = widget.zoneId;
-    if (zoneId == 0) return '';
 
-    return '/Zones/$zoneId/aisles/${widget.aisleNumber}/qrcodes/download';
-  }
 
   @override
   void initState() {
@@ -96,13 +91,17 @@ class _ZoneAisleDetailPageState extends State<ZoneAisleDetailPage>
                   style: WHTypography.caption,
                 ),
                 const SizedBox(height: 16),
-                if (_downloadUrl.isNotEmpty)
+                if (widget.zoneId != 0)
                   SizedBox(
                     width: double.infinity,
                     child: DownloadQRButton(
-                      url: _downloadUrl,
-                      code:
-                          'zone-${widget.zoneCode}-aisle-${widget.aisleNumber}',
+                      downloadFn: (format) => QRDownloader().downloadAisle(
+                        zoneId: widget.zoneId,
+                        aisleNumber: widget.aisleNumber,
+                        format: format,
+                        code: 'zone-${widget.zoneCode}-aisle-${widget.aisleNumber}',
+                      ),
+                      code: 'zone-${widget.zoneCode}-aisle-${widget.aisleNumber}',
                     ),
                   )
                 else

@@ -63,8 +63,14 @@ class ShelfQrPage extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 16),
-            // Use existing DownloadQRButton to handle download flow
-            DownloadQRButton(url: downloadUrl, code: code),
+            DownloadQRButton(
+              downloadFn: (format) => QRDownloader().downloadLegacy(
+                url: downloadUrl,
+                option: format,
+                code: code,
+              ),
+              code: code,
+            ),
           ],
         ),
       ),

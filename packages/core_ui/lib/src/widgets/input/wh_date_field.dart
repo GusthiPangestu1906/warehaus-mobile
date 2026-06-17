@@ -14,6 +14,7 @@ class WHDateField extends StatefulWidget {
     this.firstDate,
     this.lastDate,
     this.dateFormat,
+    this.flat = false,
   });
 
   final String label;
@@ -29,6 +30,7 @@ class WHDateField extends StatefulWidget {
   /// Custom formatter. Default: dd/MM/yyyy
   /// Contoh: (date) => '${date.day} ${_monthName(date.month)} ${date.year}'
   final String Function(DateTime)? dateFormat;
+  final bool flat;
 
   @override
   State<WHDateField> createState() => _WHDateFieldState();
@@ -146,6 +148,114 @@ class _WHDateFieldState extends State<WHDateField> {
 
   @override
   Widget build(BuildContext context) {
+    final dateFieldButton = AnimatedContainer(
+      duration: const Duration(milliseconds: 180),
+      curve: Curves.easeOut,
+      decoration: BoxDecoration(
+        color: widget.isDisabled ? _colorDisabledBg : _colorBackground,
+        borderRadius: BorderRadius.circular(_borderRadius),
+        border: Border.all(
+          color: _borderColor,
+          width: _isFocused || _hasError ? 1.5 : 1.0,
+        ),
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: widget.isDisabled ? null : _pickDate,
+          borderRadius: BorderRadius.circular(_borderRadius),
+          splashColor: WHColors.primary6.withOpacity(0.3),
+          highlightColor: WHColors.primary6.withOpacity(0.15),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(
+              horizontal: 14,
+              vertical: 13,
+            ),
+            child: Row(
+              children: [
+                // Calendar icon
+                Icon(
+                  Icons.calendar_today_outlined,
+                  size: 18,
+                  color: _iconColor,
+                ),
+                const SizedBox(width: 10),
+
+                // Date text / placeholder
+                Expanded(
+                  child: Text(
+                    _hasValue
+                        ? _formatDate(widget.selectedDate!)
+                        : widget.hintText,
+                    style: TextStyle(
+                      fontSize: _inputFontSize,
+                      fontWeight: FontWeight.w400,
+                      color: widget.isDisabled
+                          ? _colorDisabledText
+                          : _hasValue
+                          ? _colorText
+                          : _colorHint,
+                      height: 1.4,
+                    ),
+                  ),
+                ),
+
+                // Clear button (tampil hanya jika ada value & tidak disabled)
+                if (_hasValue && !widget.isDisabled)
+                  GestureDetector(
+                    onTap: () {
+                      // Kirim callback dengan tanggal null tidak bisa
+                      // karena ValueChanged<DateTime> — gunakan onClear jika perlu.
+                      // Untuk clear, implementasi di parent dengan set selectedDate = null.
+                    },
+                    child: const Icon(
+                      Icons.chevron_right_rounded,
+                      size: 18,
+                      color: _colorHint,
+                    ),
+                  ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+
+    if (widget.flat) {
+      if (!_hasError && widget.helperText == null) {
+        return dateFieldButton;
+      }
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          dateFieldButton,
+          const SizedBox(height: 5),
+          Row(
+            children: [
+              if (_hasError)
+                const Icon(
+                  Icons.error_outline_rounded,
+                  size: 13,
+                  color: _colorErrorText,
+                ),
+              if (_hasError) const SizedBox(width: 4),
+              Expanded(
+                child: Text(
+                  _hasError ? widget.errorText! : widget.helperText!,
+                  style: TextStyle(
+                    fontSize: _helperFontSize,
+                    color: _hasError ? _colorErrorText : _colorHelperText,
+                    fontWeight: FontWeight.w400,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ],
+      );
+    }
+
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
       decoration: BoxDecoration(
@@ -173,78 +283,7 @@ class _WHDateFieldState extends State<WHDateField> {
           const SizedBox(height: 6),
 
           // ── Date field button ─────────────────────────────────────
-          AnimatedContainer(
-            duration: const Duration(milliseconds: 180),
-            curve: Curves.easeOut,
-            decoration: BoxDecoration(
-              color: widget.isDisabled ? _colorDisabledBg : _colorBackground,
-              borderRadius: BorderRadius.circular(_borderRadius),
-              border: Border.all(
-                color: _borderColor,
-                width: _isFocused || _hasError ? 1.5 : 1.0,
-              ),
-            ),
-            child: Material(
-              color: Colors.transparent,
-              child: InkWell(
-                onTap: widget.isDisabled ? null : _pickDate,
-                borderRadius: BorderRadius.circular(_borderRadius),
-                splashColor: WHColors.primary6.withOpacity(0.3),
-                highlightColor: WHColors.primary6.withOpacity(0.15),
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 14,
-                    vertical: 13,
-                  ),
-                  child: Row(
-                    children: [
-                      // Calendar icon
-                      Icon(
-                        Icons.calendar_today_outlined,
-                        size: 18,
-                        color: _iconColor,
-                      ),
-                      const SizedBox(width: 10),
-
-                      // Date text / placeholder
-                      Expanded(
-                        child: Text(
-                          _hasValue
-                              ? _formatDate(widget.selectedDate!)
-                              : widget.hintText,
-                          style: TextStyle(
-                            fontSize: _inputFontSize,
-                            fontWeight: FontWeight.w400,
-                            color: widget.isDisabled
-                                ? _colorDisabledText
-                                : _hasValue
-                                ? _colorText
-                                : _colorHint,
-                            height: 1.4,
-                          ),
-                        ),
-                      ),
-
-                      // Clear button (tampil hanya jika ada value & tidak disabled)
-                      if (_hasValue && !widget.isDisabled)
-                        GestureDetector(
-                          onTap: () {
-                            // Kirim callback dengan tanggal null tidak bisa
-                            // karena ValueChanged<DateTime> — gunakan onClear jika perlu.
-                            // Untuk clear, implementasi di parent dengan set selectedDate = null.
-                          },
-                          child: const Icon(
-                            Icons.chevron_right_rounded,
-                            size: 18,
-                            color: _colorHint,
-                          ),
-                        ),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-          ),
+          dateFieldButton,
 
           // ── Helper / Error text ───────────────────────────────────
           if (_hasError || widget.helperText != null) ...[

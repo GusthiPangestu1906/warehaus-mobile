@@ -29,6 +29,7 @@ class WHDropdownField<T> extends StatefulWidget {
     this.isDisabled = false,
     this.isSearchable = false,
     this.searchHint = 'Search…',
+    this.flat = false,
   });
 
   final String label;
@@ -43,6 +44,7 @@ class WHDropdownField<T> extends StatefulWidget {
   /// Tampilkan search bar di dalam bottom sheet
   final bool isSearchable;
   final String searchHint;
+  final bool flat;
 
   @override
   State<WHDropdownField<T>> createState() => _WHDropdownFieldState<T>();
@@ -265,6 +267,117 @@ class _WHDropdownFieldState<T> extends State<WHDropdownField<T>> {
 
   @override
   Widget build(BuildContext context) {
+    final trigger = CompositedTransformTarget(
+      link: _layerLink,
+      child: AnimatedContainer(
+        key: _fieldKey,
+        duration: const Duration(milliseconds: 180),
+        curve: Curves.easeOut,
+        decoration: BoxDecoration(
+          color: widget.isDisabled ? _colorDisabledBg : _colorBackground,
+          borderRadius: BorderRadius.circular(_borderRadius),
+          border: Border.all(
+            color: _borderColor,
+            width: _isOpen || _hasError ? 1.5 : 1.0,
+          ),
+        ),
+        child: Material(
+          color: Colors.transparent,
+          child: InkWell(
+            onTap: widget.isDisabled ? null : _toggleDropdown,
+            borderRadius: BorderRadius.circular(_borderRadius),
+            splashColor: WHColors.primary6.withOpacity(0.3),
+            highlightColor: WHColors.primary6.withOpacity(0.15),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(
+                horizontal: 14,
+                vertical: 13,
+              ),
+              child: Row(
+                children: [
+                  // Icon item terpilih (jika ada)
+                  if (_selectedItem?.icon != null) ...[
+                    Icon(
+                      _selectedItem!.icon,
+                      size: 18,
+                      color: _iconColor,
+                    ),
+                    const SizedBox(width: 8),
+                  ],
+
+                  // Label terpilih / placeholder
+                  Expanded(
+                    child: Text(
+                      _selectedItem?.label ?? widget.hintText,
+                      style: TextStyle(
+                        fontSize: _inputFontSize,
+                        fontWeight: FontWeight.w400,
+                        color: widget.isDisabled
+                            ? _colorDisabledText
+                            : _hasValue
+                            ? _colorText
+                            : _colorHint,
+                        height: 1.4,
+                      ),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+
+                  const SizedBox(width: 8),
+
+                  // Chevron icon — rotasi saat terbuka
+                  AnimatedRotation(
+                    turns: _isOpen ? 0.5 : 0,
+                    duration: const Duration(milliseconds: 200),
+                    child: Icon(
+                      Icons.keyboard_arrow_down_rounded,
+                      size: 20,
+                      color: _iconColor,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+
+    if (widget.flat) {
+      if (!_hasError && widget.helperText == null) {
+        return trigger;
+      }
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          trigger,
+          const SizedBox(height: 5),
+          Row(
+            children: [
+              if (_hasError)
+                const Icon(
+                  Icons.error_outline_rounded,
+                  size: 13,
+                  color: _colorErrorText,
+                ),
+              if (_hasError) const SizedBox(width: 4),
+              Expanded(
+                child: Text(
+                  _hasError ? widget.errorText! : widget.helperText!,
+                  style: TextStyle(
+                    fontSize: _helperFontSize,
+                    color: _hasError ? _colorErrorText : _colorHelperText,
+                    fontWeight: FontWeight.w400,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ],
+      );
+    }
+
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
       decoration: BoxDecoration(
@@ -292,81 +405,7 @@ class _WHDropdownFieldState<T> extends State<WHDropdownField<T>> {
           const SizedBox(height: 6),
 
           // ── Dropdown trigger ──────────────────────────────────────
-          CompositedTransformTarget(
-            link: _layerLink,
-            child: AnimatedContainer(
-              key: _fieldKey,
-              duration: const Duration(milliseconds: 180),
-              curve: Curves.easeOut,
-              decoration: BoxDecoration(
-                color: widget.isDisabled ? _colorDisabledBg : _colorBackground,
-                borderRadius: BorderRadius.circular(_borderRadius),
-                border: Border.all(
-                  color: _borderColor,
-                  width: _isOpen || _hasError ? 1.5 : 1.0,
-                ),
-              ),
-              child: Material(
-                color: Colors.transparent,
-                child: InkWell(
-                  onTap: widget.isDisabled ? null : _toggleDropdown,
-                  borderRadius: BorderRadius.circular(_borderRadius),
-                  splashColor: WHColors.primary6.withOpacity(0.3),
-                  highlightColor: WHColors.primary6.withOpacity(0.15),
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 14,
-                      vertical: 13,
-                    ),
-                    child: Row(
-                      children: [
-                        // Icon item terpilih (jika ada)
-                        if (_selectedItem?.icon != null) ...[
-                          Icon(
-                            _selectedItem!.icon,
-                            size: 18,
-                            color: _iconColor,
-                          ),
-                          const SizedBox(width: 8),
-                        ],
-
-                        // Label terpilih / placeholder
-                        Expanded(
-                          child: Text(
-                            _selectedItem?.label ?? widget.hintText,
-                            style: TextStyle(
-                              fontSize: _inputFontSize,
-                              fontWeight: FontWeight.w400,
-                              color: widget.isDisabled
-                                  ? _colorDisabledText
-                                  : _hasValue
-                                  ? _colorText
-                                  : _colorHint,
-                              height: 1.4,
-                            ),
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ),
-
-                        const SizedBox(width: 8),
-
-                        // Chevron icon — rotasi saat terbuka
-                        AnimatedRotation(
-                          turns: _isOpen ? 0.5 : 0,
-                          duration: const Duration(milliseconds: 200),
-                          child: Icon(
-                            Icons.keyboard_arrow_down_rounded,
-                            size: 20,
-                            color: _iconColor,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-            ),
-          ),
+          trigger,
 
           // ── Helper / Error text ───────────────────────────────────
           if (_hasError || widget.helperText != null) ...[

@@ -43,8 +43,6 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
     context.read<ProductBloc>().add(DeleteProductEvent(productId));
   }
 
-
-
   Future<void> _openEditProductPage(ProductDetailLoaded state) async {
     final product = state.product;
     await Navigator.of(context).push(
@@ -59,10 +57,9 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
         ),
       ),
     );
-    // No manual refresh needed here: ProductBloc already re-dispatches
-    // GetProductDetailsEvent internally right after a successful update,
-    // so this BlocBuilder will pick up the latest ProductDetailLoaded state
-    // automatically once we're back on this page.
+    if (mounted) {
+      context.read<ProductBloc>().add(GetProductDetailsEvent(widget.productId));
+    }
   }
 
   Widget _buildShelfStockCard(
@@ -103,6 +100,7 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
     return BlocListener<ProductBloc, ProductState>(
       listener: (context, state) {
         if (state is ProductActionSuccess && state.action == 'deleted') {
+          WHSnackBar.showSuccess(context, 'Produk berhasil dihapus!');
           Navigator.of(context).pop();
         }
       },
@@ -110,6 +108,12 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
         backgroundColor: WHColors.background,
         appBar: WHAppbar(title: 'Detail Product'),
         body: BlocBuilder<ProductBloc, ProductState>(
+          buildWhen: (prev, curr) =>
+              curr is ProductLoading ||
+              curr is ProductDetailLoaded ||
+              curr is ProductError ||
+              curr is ProductInitial ||
+              curr is ProductLoaded,
           builder: (context, state) {
             if (state is ProductLoading) {
               return const Center(child: CircularProgressIndicator());
@@ -197,6 +201,16 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                                         product.sku,
                                         style: WHTypography.bodyText,
                                       ),
+                                    ),
+                                    const SizedBox(height: 12),
+                                    const Text(
+                                      'Category',
+                                      style: WHTypography.caption,
+                                    ),
+                                    const SizedBox(height: 4),
+                                    Text(
+                                      product.categoryName,
+                                      style: WHTypography.bodyText,
                                     ),
                                   ],
                                 ),

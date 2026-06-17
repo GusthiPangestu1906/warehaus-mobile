@@ -20,6 +20,7 @@ class WHTextField extends StatefulWidget {
     this.maxLines = 1,
     this.maxLength,
     this.focusNode,
+    this.flat = false,
   });
 
   final String label;
@@ -38,6 +39,7 @@ class WHTextField extends StatefulWidget {
   final int maxLines;
   final int? maxLength;
   final FocusNode? focusNode;
+  final bool flat;
 
   @override
   State<WHTextField> createState() => _WHTextFieldState();
@@ -125,6 +127,108 @@ class _WHTextFieldState extends State<WHTextField> {
 
   @override
   Widget build(BuildContext context) {
+    final inputField = AnimatedContainer(
+      duration: const Duration(milliseconds: 180),
+      curve: Curves.easeOut,
+      decoration: BoxDecoration(
+        color: widget.isDisabled ? _colorDisabledBg : _colorBackground,
+        borderRadius: BorderRadius.circular(_borderRadius),
+        border: Border.all(
+          color: _borderColor,
+          width: _isFocused || _hasError ? 1.5 : 1.0,
+        ),
+      ),
+      child: TextField(
+        controller: widget.controller,
+        focusNode: _focusNode,
+        enabled: !widget.isDisabled,
+        obscureText: widget.isPassword && _obscureText,
+        keyboardType: widget.keyboardType,
+        maxLines: widget.isPassword ? 1 : widget.maxLines,
+        maxLength: widget.maxLength,
+        onChanged: widget.onChanged,
+        onSubmitted: widget.onSubmitted,
+        style: TextStyle(
+          fontSize: _inputFontSize,
+          fontWeight: FontWeight.w400,
+          color: widget.isDisabled ? _colorDisabledText : _colorText,
+          height: 1.4,
+        ),
+        decoration: InputDecoration(
+          hintText: widget.hintText,
+          hintStyle: const TextStyle(
+            fontSize: _inputFontSize,
+            color: _colorHint,
+            fontWeight: FontWeight.w400,
+          ),
+          contentPadding: EdgeInsets.symmetric(
+            horizontal: widget.prefixIcon != null ? 4 : 14,
+            vertical: 13,
+          ),
+          border: InputBorder.none,
+          counterText: '',
+
+          // Prefix icon
+          prefixIcon: widget.prefixIcon != null
+              ? Padding(
+                  padding: const EdgeInsets.only(left: 12, right: 6),
+                  child: Icon(
+                    widget.prefixIcon,
+                    size: 18,
+                    color: _iconColor,
+                  ),
+                )
+              : null,
+          prefixIconConstraints: const BoxConstraints(
+            minWidth: 0,
+            minHeight: 0,
+          ),
+
+          // Suffix icon (password toggle atau custom)
+          suffixIcon: _buildSuffixIcon(),
+          suffixIconConstraints: const BoxConstraints(
+            minWidth: 0,
+            minHeight: 0,
+          ),
+        ),
+      ),
+    );
+
+    if (widget.flat) {
+      if (!_hasError && widget.helperText == null) {
+        return inputField;
+      }
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          inputField,
+          const SizedBox(height: 5),
+          Row(
+            children: [
+              if (_hasError)
+                const Icon(
+                  Icons.error_outline_rounded,
+                  size: 13,
+                  color: _colorErrorText,
+                ),
+              if (_hasError) const SizedBox(width: 4),
+              Expanded(
+                child: Text(
+                  _hasError ? widget.errorText! : widget.helperText!,
+                  style: TextStyle(
+                    fontSize: _helperFontSize,
+                    color: _hasError ? _colorErrorText : _colorHelperText,
+                    fontWeight: FontWeight.w400,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ],
+      );
+    }
+
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
       decoration: BoxDecoration(
@@ -152,72 +256,7 @@ class _WHTextFieldState extends State<WHTextField> {
           const SizedBox(height: 6),
 
           // ── Input container ───────────────────────────────────────
-          AnimatedContainer(
-            duration: const Duration(milliseconds: 180),
-            curve: Curves.easeOut,
-            decoration: BoxDecoration(
-              color: widget.isDisabled ? _colorDisabledBg : _colorBackground,
-              borderRadius: BorderRadius.circular(_borderRadius),
-              border: Border.all(
-                color: _borderColor,
-                width: _isFocused || _hasError ? 1.5 : 1.0,
-              ),
-            ),
-            child: TextField(
-              controller: widget.controller,
-              focusNode: _focusNode,
-              enabled: !widget.isDisabled,
-              obscureText: widget.isPassword && _obscureText,
-              keyboardType: widget.keyboardType,
-              maxLines: widget.isPassword ? 1 : widget.maxLines,
-              maxLength: widget.maxLength,
-              onChanged: widget.onChanged,
-              onSubmitted: widget.onSubmitted,
-              style: TextStyle(
-                fontSize: _inputFontSize,
-                fontWeight: FontWeight.w400,
-                color: widget.isDisabled ? _colorDisabledText : _colorText,
-                height: 1.4,
-              ),
-              decoration: InputDecoration(
-                hintText: widget.hintText,
-                hintStyle: const TextStyle(
-                  fontSize: _inputFontSize,
-                  color: _colorHint,
-                  fontWeight: FontWeight.w400,
-                ),
-                contentPadding: EdgeInsets.symmetric(
-                  horizontal: widget.prefixIcon != null ? 4 : 14,
-                  vertical: 13,
-                ),
-                border: InputBorder.none,
-                counterText: '',
-
-                // Prefix icon
-                prefixIcon: widget.prefixIcon != null
-                    ? Padding(
-                        padding: const EdgeInsets.only(left: 12, right: 6),
-                        child: Icon(
-                          widget.prefixIcon,
-                          size: 18,
-                          color: _iconColor,
-                        ),
-                      )
-                    : null,
-                prefixIconConstraints: const BoxConstraints(
-                  minWidth: 0,
-                  minHeight: 0,
-                ),
-
-                // Suffix icon (password toggle atau custom)
-                suffixIcon: _buildSuffixIcon(),
-                suffixIconConstraints: const BoxConstraints(
-                  minWidth: 0,
-                  minHeight: 0,
-                ),
-              ),
-            ),
-          ),
+          inputField,
 
           // ── Helper / Error text ───────────────────────────────────
           if (_hasError || widget.helperText != null) ...[

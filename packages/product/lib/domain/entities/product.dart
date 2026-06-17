@@ -6,6 +6,7 @@ class Product {
   final String productName;
   final String barcode;
   final int? categoryId;
+  final String categoryName;
   final String unitOfMeasure;
   final int currentStock;
   final List<Stock>? stocks;
@@ -16,6 +17,7 @@ class Product {
     required this.productName,
     required this.barcode,
     this.categoryId,
+    this.categoryName = '',
     required this.unitOfMeasure,
     this.currentStock = 0,
     this.stocks,
@@ -28,6 +30,7 @@ class Product {
       productName: json['productName']?.toString() ?? '',
       barcode: json['barcode']?.toString() ?? '',
       categoryId: json['categoryId'],
+      categoryName: (json['categoryName'] ?? json['category_name'] ?? json['category']?['name'])?.toString() ?? '',
       unitOfMeasure: json['unitOfMeasure']?.toString() ?? '',
       currentStock: json['currentStock'] as int? ?? 0,
       stocks: (json['stock'] ?? json['stocks']) != null

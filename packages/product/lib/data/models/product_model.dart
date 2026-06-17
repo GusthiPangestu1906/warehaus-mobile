@@ -9,6 +9,7 @@ class ProductModel extends Product {
     required super.productName,
     required super.barcode,
     required super.categoryId,
+    super.categoryName,
     required super.unitOfMeasure,
     super.currentStock,
     List<Stock>? stocks,
@@ -21,6 +22,12 @@ class ProductModel extends Product {
       productName: json['productName']?.toString() ?? '',
       barcode: json['barcode']?.toString() ?? '',
       categoryId: json['categoryId'],
+      categoryName:
+          (json['categoryName'] ??
+                  json['category_name'] ??
+                  json['category']?['name'])
+              ?.toString() ??
+          '',
       unitOfMeasure: json['unitOfMeasure']?.toString() ?? '',
       currentStock: json['currentStock'] as int? ?? 0,
       stocks: (json['stock'] ?? json['stocks']) != null

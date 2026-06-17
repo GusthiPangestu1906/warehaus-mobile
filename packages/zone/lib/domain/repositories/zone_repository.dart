@@ -16,4 +16,15 @@ abstract class ZoneRepository {
     String? description,
   });
   Future<void> deleteZone(int id);
+
+  Future<List<int>> downloadAisleQr({
+    required int zoneId,
+    required int aisleNumber,
+    required String format,
+  });
+
+  Future<List<int>> downloadShelfQr({
+    required int shelfId,
+    required String format,
+  });
 }

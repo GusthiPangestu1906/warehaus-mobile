@@ -5,42 +5,69 @@ import 'package:core_ui/core_ui.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:gal/gal.dart';
+import 'package:get_it/get_it.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:zone/domain/usecases/download_aisle_qr.dart';
+import 'package:zone/domain/usecases/download_shelf_qr.dart';
 import 'package:zone/presentation/widgets/format_dialog_qr.dart';
 
-/// Small service that downloads an image from [url] to a temporary file
-/// and saves it to the gallery using `Gal`.
+/// Small service that orchestrates downloading of QR codes.
+/// It delegates network calls to UseCases and handles platform/file-saving concerns.
 class QRDownloader {
-  final Dio _dio;
+  final DownloadAisleQr _downloadAisleQr;
+  final DownloadShelfQr _downloadShelfQr;
 
-  QRDownloader([Dio? dio]) : _dio = dio ?? ApiClient().dio;
+  QRDownloader()
+      : _downloadAisleQr = GetIt.I<DownloadAisleQr>(),
+        _downloadShelfQr = GetIt.I<DownloadShelfQr>();
 
   /// Downloads the image at [url] and saves it to the gallery.
-  /// Throws on any failure.
   Future<void> downloadAndSave(String url) async {
-    // Backward-compatible simple download (keeps previous behaviour)
     final tempDir = await getTemporaryDirectory();
     final filePath =
         '${tempDir.path}/qr_${DateTime.now().millisecondsSinceEpoch}.png';
-    await _dio.download(url, filePath);
+    await ApiClient().dio.download(url, filePath);
     await Gal.putImage(filePath);
-    // Optionally remove the temp file
     try {
       final f = File(filePath);
       if (await f.exists()) await f.delete();
     } catch (_) {}
   }
 
-  /// Sends a GET request to [url], expects raw bytes response and saves the file 
-  /// to external Download/WareHaus folder on Android.
-  /// The backend ignores the [option] and always returns a zip file containing the QR codes.
-  /// [code] is used as the filename (e.g. 'LZ-1-1' -> 'LZ-1-1.zip').
-  Future<String> downloadWithOption(
-    String url,
-    String option,
-    String code,
-  ) async {
-    // Append -pdf if the user selected pdf
+  /// Downloads aisle QRs (PNG/PDF) using Clean Architecture.
+  Future<String> downloadAisle({
+    required int zoneId,
+    required int aisleNumber,
+    required String format,
+    required String code,
+  }) async {
+    final bytes = await _downloadAisleQr(
+      zoneId: zoneId,
+      aisleNumber: aisleNumber,
+      format: format,
+    );
+    return await _saveBytes(bytes, format, code);
+  }
+
+  /// Downloads shelf QR (PNG/PDF) using Clean Architecture.
+  Future<String> downloadShelf({
+    required int shelfId,
+    required String format,
+    required String code,
+  }) async {
+    final bytes = await _downloadShelfQr(
+      shelfId: shelfId,
+      format: format,
+    );
+    return await _saveBytes(bytes, format, code);
+  }
+
+  /// Backward-compatible legacy download helper for raw URLs.
+  Future<String> downloadLegacy({
+    required String url,
+    required String option,
+    required String code,
+  }) async {
     var finalUrl = url;
     if (option.toLowerCase() == 'pdf') {
       if (finalUrl.endsWith('download')) {
@@ -49,18 +76,14 @@ class QRDownloader {
         finalUrl = '$finalUrl/download-pdf';
       }
     }
-    // Request bytes from backend (use GET because no option needed for QR zip/pdf)
-    final response = await _dio.get<List<int>>(
+    final response = await ApiClient().dio.get<List<int>>(
       finalUrl,
-      options: Options(
-        responseType: ResponseType.bytes,
-      ),
+      options: Options(responseType: ResponseType.bytes),
     );
+    return await _saveBytes(response.data ?? [], option, code);
+  }
 
-    final bytes = response.data;
-    if (bytes == null) throw Exception('Empty response from server');
-
-    // The backend generates either a zip (for PNGs) or a pdf
+  Future<String> _saveBytes(List<int> bytes, String option, String code) async {
     final ext = option.toLowerCase() == 'pdf' ? 'pdf' : 'zip';
     final fileName = '$code.$ext';
 
@@ -79,9 +102,13 @@ class QRDownloader {
 
 /// Button widget that handles download flow and shows snackbars.
 class DownloadQRButton extends StatefulWidget {
-  const DownloadQRButton({super.key, required this.url, required this.code});
+  const DownloadQRButton({
+    super.key,
+    required this.downloadFn,
+    required this.code,
+  });
 
-  final String url;
+  final Future<String> Function(String format) downloadFn;
   final String code;
 
   @override
@@ -90,7 +117,6 @@ class DownloadQRButton extends StatefulWidget {
 
 class _DownloadQRButtonState extends State<DownloadQRButton> {
   bool _loading = false;
-  final QRDownloader _downloader = QRDownloader();
 
   Future<void> _handleDownload() async {
     if (_loading) return;
@@ -102,20 +128,12 @@ class _DownloadQRButtonState extends State<DownloadQRButton> {
 
     setState(() => _loading = true);
     try {
-      final savedPath = await _downloader.downloadWithOption(
-        widget.url,
-        option,
-        widget.code,
-      );
+      final savedPath = await widget.downloadFn(option);
       if (!mounted) return;
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('Berhasil diunduh: $savedPath')));
+      WHSnackBar.showSuccess(context, 'Berhasil diunduh: $savedPath');
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('Gagal mengunduh: $e')));
+      WHSnackBar.showError(context, 'Gagal mengunduh: $e');
     } finally {
       if (mounted) setState(() => _loading = false);
     }
@@ -146,5 +164,3 @@ class _DownloadQRButtonState extends State<DownloadQRButton> {
     );
   }
 }
-
-// NOTE: Make sure to request storage/photo permissions on Android/iOS as needed.

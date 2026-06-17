@@ -45,6 +45,8 @@ import 'package:zone/data/datasources/zone_api_datasource.dart';
 import 'package:zone/data/repositories/zone_repository_impl.dart';
 import 'package:zone/domain/usecases/create_zone.dart';
 import 'package:zone/domain/usecases/delete_zone.dart';
+import 'package:zone/domain/usecases/download_aisle_qr.dart';
+import 'package:zone/domain/usecases/download_shelf_qr.dart';
 import 'package:zone/domain/usecases/get_shelf_details.dart';
 import 'package:zone/domain/usecases/get_zone_by_aisle.dart';
 import 'package:zone/domain/usecases/get_zone_details.dart';
@@ -91,6 +93,12 @@ Future<void> setupInjector() async {
   getIt.registerLazySingleton(() => DeleteZone(getIt<ZoneRepositoryImpl>()));
   getIt.registerLazySingleton(
     () => GetShelfDetails(getIt<ZoneRepositoryImpl>()),
+  );
+  getIt.registerLazySingleton(
+    () => DownloadAisleQr(getIt<ZoneRepositoryImpl>()),
+  );
+  getIt.registerLazySingleton(
+    () => DownloadShelfQr(getIt<ZoneRepositoryImpl>()),
   );
 
   // BLoC (Menggunakan registerFactory karena state BLoC harus di-recreate setiap pindah page)

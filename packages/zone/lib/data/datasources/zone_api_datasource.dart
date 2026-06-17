@@ -121,4 +121,39 @@ class ZoneApiDatasource {
 
     return [];
   }
+
+  Future<List<int>> downloadAisleQr({
+    required int zoneId,
+    required int aisleNumber,
+    required String format,
+  }) async {
+    final path = format.toLowerCase() == 'pdf'
+        ? '$_zonePath/$zoneId/aisles/$aisleNumber/qrcodes/download-pdf'
+        : '$_zonePath/$zoneId/aisles/$aisleNumber/qrcodes/download';
+
+    final response = await dio.get<List<int>>(
+      path,
+      options: Options(
+        responseType: ResponseType.bytes,
+      ),
+    );
+    return response.data ?? [];
+  }
+
+  Future<List<int>> downloadShelfQr({
+    required int shelfId,
+    required String format,
+  }) async {
+    final path = format.toLowerCase() == 'pdf'
+        ? '$_zonePath/shelves/$shelfId/qrcode/download-pdf'
+        : '$_zonePath/shelves/$shelfId/qrcode/download';
+
+    final response = await dio.get<List<int>>(
+      path,
+      options: Options(
+        responseType: ResponseType.bytes,
+      ),
+    );
+    return response.data ?? [];
+  }
 }
