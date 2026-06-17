@@ -26,7 +26,7 @@ class _AddStockPageState extends State<AddStockPage> {
 
   List<Zone> _zones = const [];
   Zone? _selectedZoneDetail;
-  String? _selectedZoneId;
+  int? _selectedZoneId;
   int? _selectedAisle;
   int? _selectedShelfId;
   bool _isSubmitting = false;
@@ -125,7 +125,7 @@ class _AddStockPageState extends State<AddStockPage> {
     );
   }
 
-  void _onZoneSelected(String? zoneId) {
+  void _onZoneSelected(int? zoneId) {
     setState(() {
       _selectedZoneId = zoneId;
       _selectedZoneDetail = null;
@@ -406,12 +406,12 @@ class _AddStockPageState extends State<AddStockPage> {
         ),
 
         // ── Zone dropdown ──────────────────────────────────────────────────
-        DropdownButtonFormField<String>(
+        DropdownButtonFormField<int>(
           initialValue: _selectedZoneId,
           decoration: _inputDecoration('Select zone'),
           items: zones
               .map(
-                (zone) => DropdownMenuItem<String>(
+                (zone) => DropdownMenuItem<int>(
                   value: zone.id,
                   child: Text('${zone.zoneCode} - ${zone.zoneName}'),
                 ),

@@ -3,6 +3,7 @@ import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:get_it/get_it.dart';
+import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:outbound/data/datasources/sales_order_api_datasource.dart';
 import 'package:outbound/presentation/bloc/sales_order_bloc.dart';
 import 'package:outbound/presentation/bloc/sales_order_event.dart';
@@ -47,6 +48,14 @@ class _PackingPageState extends State<PackingPage> {
       WHScannerPage.route(
         title: 'Verify Barcode Item',
         subtitle: 'Scan barcode ${widget.items[index].productName}',
+        formats: const [
+          BarcodeFormat.code128,
+          BarcodeFormat.code39,
+          BarcodeFormat.ean13,
+          BarcodeFormat.ean8,
+          BarcodeFormat.upcA,
+          BarcodeFormat.upcE,
+        ],
       ),
     );
 

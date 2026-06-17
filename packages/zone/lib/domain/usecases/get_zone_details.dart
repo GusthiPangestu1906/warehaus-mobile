@@ -6,7 +6,7 @@ class GetZoneDetails {
   final ZoneRepository repository;
   GetZoneDetails(this.repository);
 
-  Future<Zone> call(String id) {
+  Future<Zone> call(int id) {
     return repository.getZoneDetails(id);
   }
 }

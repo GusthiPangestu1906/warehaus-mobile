@@ -1,4 +1,5 @@
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart';
 import 'package:zone/data/models/zone_model.dart';
 import 'package:zone/domain/params/create_zone_param.dart';
 
@@ -6,19 +7,51 @@ class ZoneApiDatasource {
   final Dio dio;
   ZoneApiDatasource(this.dio);
 
-  static const String _zonePath = '/Zones';
+  static const String _zonePath = '/zones';
 
   Future<List<ZoneModel>> getZones() async {
     final response = await dio.get(_zonePath);
-    return (response.data as List).map((e) => ZoneModel.fromJson(e)).toList();
+    final data = response.data;
+
+    debugPrint('Runtime type: ${data.runtimeType}');
+    debugPrint('Response data: $data');
+
+    // 1. Jika backend mengembalikan List (Array)
+    if (data is List) {
+      return data
+          .map((e) => ZoneModel.fromJson(e as Map<String, dynamic>))
+          .toList();
+    }
+
+    // 2. Jika backend ternyata hanya mengembalikan satu Object (Map)
+    if (data is Map<String, dynamic>) {
+      return [ZoneModel.fromJson(data)];
+    }
+
+    // 3. Jika backend membungkus list-nya di dalam key tertentu (misal: data['results'] atau data['data'])
+    if (data is Map && data.containsKey('data') && data['data'] is List) {
+      return (data['data'] as List)
+          .map((e) => ZoneModel.fromJson(e as Map<String, dynamic>))
+          .toList();
+    }
+
+    // 4. Cek various common wrapper keys yang mungkin digunakan backend
+    final List<ZoneModel> zonesFromWrapper = _extractZonesFromWrapper(data);
+    if (zonesFromWrapper.isNotEmpty) {
+      return zonesFromWrapper;
+    }
+
+    throw Exception(
+      'Unexpected response type for getZones: ${data.runtimeType}',
+    );
   }
 
-  Future<List<ZoneModel>> getZonesByAisle(
-    String zoneId,
-    int aisleNumber,
-  ) async {
+  Future<List<ZoneModel>> getZonesByAisle(int zoneId, int aisleNumber) async {
     final response = await dio.get('$_zonePath/$zoneId/$aisleNumber');
     final data = response.data;
+
+    debugPrint('Runtime type: ${response.data.runtimeType}');
+    debugPrint('Response data: ${response.data}');
 
     if (data is List) {
       return data
@@ -33,8 +66,11 @@ class ZoneApiDatasource {
     throw Exception('Unexpected aisle response type: ${data.runtimeType}');
   }
 
-  Future<ZoneModel?> getZoneById(String id) async {
-    final response = await dio.get('$_zonePath/$id');
+  Future<ZoneModel?> getZoneById(int id) async {
+    final response = await dio.get('$_zonePath/shelves/$id');
+    debugPrint('Runtime type: ${response.data.runtimeType}');
+    debugPrint('Response data: ${response.data}');
+    debugPrint('getZoneById response: ${response.data}');
     return ZoneModel.fromJson(response.data);
   }
 
@@ -43,7 +79,7 @@ class ZoneApiDatasource {
   }
 
   Future<void> updateZone({
-    required String id,
+    required int id,
     String? zoneName,
     String? category,
     String? description,
@@ -56,12 +92,33 @@ class ZoneApiDatasource {
     await dio.put('$_zonePath/$id', data: payload);
   }
 
-  Future<void> deleteZone(String id) async {
+  Future<void> deleteZone(int id) async {
     await dio.delete('$_zonePath/$id');
   }
 
   Future<Map<String, dynamic>> getShelfDetails(int shelfId) async {
     final response = await dio.get('$_zonePath/shelves/$shelfId');
     return response.data as Map<String, dynamic>;
+  }
+
+  /// Helper method untuk mengekstrak zones dari berbagai format response wrapper
+  List<ZoneModel> _extractZonesFromWrapper(dynamic data) {
+    if (data is! Map) return [];
+
+    // List of common wrapper keys yang mungkin digunakan backend
+    final wrapperKeys = ['results', 'zones', 'items', 'output', 'response'];
+
+    for (final key in wrapperKeys) {
+      if (data.containsKey(key) && data[key] is List) {
+        final list = data[key] as List;
+        if (list.isNotEmpty) {
+          return list
+              .map((e) => ZoneModel.fromJson(e as Map<String, dynamic>))
+              .toList();
+        }
+      }
+    }
+
+    return [];
   }
 }

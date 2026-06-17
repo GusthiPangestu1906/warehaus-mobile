@@ -10,9 +10,7 @@ import 'package:zone/presentation/bloc/zone_event.dart';
 import 'package:zone/presentation/bloc/zone_state.dart';
 
 class MoveStockResult {
-  const MoveStockResult({
-    required this.toShelfId,
-  });
+  const MoveStockResult({required this.toShelfId});
 
   final int toShelfId;
 }
@@ -136,7 +134,7 @@ class _MoveStockDialogState extends State<_MoveStockDialog> {
   }
 
   String? _pendingZoneCode;
-  String? _pendingZoneId;
+  int? _pendingZoneId;
   int? _pendingAisle;
   int? _pendingShelfNumber;
 
@@ -149,11 +147,13 @@ class _MoveStockDialogState extends State<_MoveStockDialog> {
 
       if (_pendingAisle != null && _pendingShelfNumber != null) {
         // Full pattern: zone-aisle-shelfNumber
-        matches = shelf.aisle == _pendingAisle &&
+        matches =
+            shelf.aisle == _pendingAisle &&
             shelf.shelfCode.endsWith('-$_pendingShelfNumber');
       } else if (_pendingShelfNumber != null) {
         // Just shelf number: e.g., "A-1"
-        matches = shelf.shelfCode.endsWith('-$_pendingShelfNumber') ||
+        matches =
+            shelf.shelfCode.endsWith('-$_pendingShelfNumber') ||
             shelf.shelfCode == '$_pendingShelfNumber';
       }
 
@@ -187,9 +187,7 @@ class _MoveStockDialogState extends State<_MoveStockDialog> {
       ),
     );
 
-    Navigator.of(context).pop(MoveStockResult(
-      toShelfId: _pendingToShelfId!,
-    ));
+    Navigator.of(context).pop(MoveStockResult(toShelfId: _pendingToShelfId!));
   }
 
   @override
@@ -220,11 +218,7 @@ class _MoveStockDialogState extends State<_MoveStockDialog> {
               // ── Header ──
               Row(
                 children: [
-                  const Icon(
-                    Icons.swap_horiz,
-                    color: _primaryOrange,
-                    size: 18,
-                  ),
+                  const Icon(Icons.swap_horiz, color: _primaryOrange, size: 18),
                   const SizedBox(width: 8),
                   const Text(
                     'Move Stock',
@@ -308,12 +302,18 @@ class _MoveStockDialogState extends State<_MoveStockDialog> {
                   ),
                   child: Row(
                     children: [
-                      const Icon(Icons.info_outline, size: 16, color: WHColors.grey2),
+                      const Icon(
+                        Icons.info_outline,
+                        size: 16,
+                        color: WHColors.grey2,
+                      ),
                       const SizedBox(width: 8),
                       Expanded(
                         child: Text(
                           'Scan target shelf QR code to move all stock.',
-                          style: WHTypography.caption.copyWith(color: WHColors.grey2),
+                          style: WHTypography.caption.copyWith(
+                            color: WHColors.grey2,
+                          ),
                         ),
                       ),
                     ],

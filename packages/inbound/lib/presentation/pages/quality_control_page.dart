@@ -12,6 +12,7 @@ import 'package:inbound/presentation/widgets/quality_control_put_away/qc_form_ca
 import 'package:inbound/presentation/widgets/quality_control_put_away/qc_header.dart';
 import 'package:inbound/presentation/widgets/quality_control_put_away/qc_product_card.dart';
 import 'package:inbound/presentation/widgets/quality_control_put_away/upcoming_product_card.dart';
+import 'package:mobile_scanner/mobile_scanner.dart';
 
 class QualityControlPage extends StatefulWidget {
   const QualityControlPage({
@@ -90,6 +91,14 @@ class _QualityControlPageState extends State<QualityControlPage> {
       WHScannerPage.route(
         title: 'Verify Barcode Item',
         subtitle: 'Scan barcode ${item.productDetail.sku}',
+        formats: const [
+          BarcodeFormat.code128,
+          BarcodeFormat.code39,
+          BarcodeFormat.ean13,
+          BarcodeFormat.ean8,
+          BarcodeFormat.upcA,
+          BarcodeFormat.upcE,
+        ],
       ),
     );
 

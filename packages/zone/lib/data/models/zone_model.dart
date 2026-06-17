@@ -17,14 +17,13 @@ class ZoneModel extends Zone {
     super.emptyShelves,
     List<Shelf>? shelves,
     List<Aisle>? aisles,
-  }) : super(
-         shelves: shelves ?? [],
-          aisles: aisles ?? [],
-        );
+  }) : super(shelves: shelves ?? [], aisles: aisles ?? []);
 
   factory ZoneModel.fromJson(Map<String, dynamic> json) {
     return ZoneModel(
-      id: json['id']?.toString() ?? '',
+      id: json['id'] is int
+          ? json['id']
+          : int.tryParse(json['id']?.toString() ?? '') ?? 0,
       zoneCode: json['zoneCode'] as String? ?? '',
       zoneName: json['zoneName'] as String? ?? '',
       category: json['category'] as String? ?? '',
@@ -34,20 +33,20 @@ class ZoneModel extends Zone {
           (json['shelfPerAisle'] ?? json['totalShelves']) as int? ?? 0,
       capacityPerShelf: json['capacityPerShelf'] as int? ?? 0,
       emptyShelves: json['emptyShelves'] as int? ?? 0,
-      shelves: (json['shelves'] ?? json['bins']) != null
-          ? ((json['shelves'] ?? json['bins']) as List)
-                .map(
-                  (shelf) => ShelfModel.fromJson(shelf as Map<String, dynamic>),
-                )
+
+      // AMAN: Hanya diproses jika tipenya BENAR-BENAR List/Array dari server
+      shelves: (json['shelves'] is List)
+          ? (json['shelves'] as List)
+                .map((shelf) => Shelf.fromJson(shelf as Map<String, dynamic>))
                 .toList()
-          : [],
-      aisles: (json['aisle'] ?? json['aisles']) != null
-          ? ((json['aisle'] ?? json['aisles']) as List)
-                .map(
-                  (aisle) => AisleModel.fromJson(aisle as Map<String, dynamic>),
-                )
+          : null,
+
+      // AMAN: Menggunakan json['aisles'] dan pastikan dia List, bukan int 'aisle'
+      aisles: (json['aisles'] is List)
+          ? (json['aisles'] as List)
+                .map((aisle) => Aisle.fromJson(aisle as Map<String, dynamic>))
                 .toList()
-          : [],
+          : null,
     );
   }
 
@@ -64,7 +63,7 @@ class ZoneModel extends Zone {
     };
 
     // Only include id if not empty
-    if (id.isNotEmpty) {
+    if (id != 0) {
       map['id'] = id;
     }
 

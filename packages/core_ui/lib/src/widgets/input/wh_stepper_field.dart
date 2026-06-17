@@ -98,12 +98,14 @@ class _WHStepperFieldState extends State<WHStepperField> {
 
   void _decrease() {
     if (!_canDecrease) return;
+    _unfocusTextField();
     final next = widget.value - widget.step;
     widget.onChanged(next < widget.minValue ? widget.minValue : next);
   }
 
   void _increase() {
     if (!_canIncrease) return;
+    _unfocusTextField();
     final next = widget.value + widget.step;
     if (widget.maxValue != null && next > widget.maxValue!) {
       widget.onChanged(widget.maxValue!);
@@ -112,7 +114,14 @@ class _WHStepperFieldState extends State<WHStepperField> {
     }
   }
 
+  void _unfocusTextField() {
+    // Remove focus from TextField when buttons are tapped
+    FocusScope.of(context).unfocus();
+    setState(() => _isEditing = false);
+  }
+
   void _onManualSubmit(String raw) {
+    FocusScope.of(context).unfocus();
     setState(() => _isEditing = false);
     final parsed = int.tryParse(raw);
     if (parsed == null) {
@@ -169,6 +178,20 @@ class _WHStepperFieldState extends State<WHStepperField> {
                 onIncrease: _increase,
                 onEditingStart: () => setState(() => _isEditing = true),
                 onEditingDone: _onManualSubmit,
+                onTextChanged: (text) {
+                  // Update value in real-time as user types
+                  final parsed = int.tryParse(text);
+                  if (parsed != null) {
+                    int clamped = parsed;
+                    if (clamped < widget.minValue) clamped = widget.minValue;
+                    if (widget.maxValue != null && clamped > widget.maxValue!) {
+                      clamped = widget.maxValue!;
+                    }
+                    widget.onChanged(clamped);
+                  } else if (text.isEmpty) {
+                    // Allow empty while typing, don't call onChanged yet
+                  }
+                },
               ),
             ],
           ),
@@ -216,6 +239,7 @@ class _StepperControl extends StatelessWidget {
     required this.onIncrease,
     required this.onEditingStart,
     required this.onEditingDone,
+    this.onTextChanged,
   });
 
   final int value;
@@ -229,6 +253,7 @@ class _StepperControl extends StatelessWidget {
   final VoidCallback onIncrease;
   final VoidCallback onEditingStart;
   final ValueChanged<String> onEditingDone;
+  final ValueChanged<String>? onTextChanged;
 
   static const _stepperBg = WHColors.grey5;
   static const _dividerColor = WHColors.textPrimary;
@@ -269,6 +294,7 @@ class _StepperControl extends StatelessWidget {
                   ? TextField(
                       controller: controller,
                       onTap: onEditingStart,
+                      onChanged: onTextChanged,
                       onSubmitted: onEditingDone,
                       onEditingComplete: () => onEditingDone(controller.text),
                       keyboardType: TextInputType.number,
@@ -326,24 +352,23 @@ class _StepButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: enabled ? onTap : null,
-        borderRadius: BorderRadius.horizontal(
-          left: isLeft ? const Radius.circular(12) : Radius.zero,
-          right: isLeft ? Radius.zero : const Radius.circular(12),
-        ),
-        splashColor: WHColors.textPrimary.withValues(alpha: 0.08),
-        highlightColor: WHColors.textPrimary.withValues(alpha: 0.04),
-        child: SizedBox(
-          width: 44,
-          height: 44,
-          child: Icon(
-            icon,
-            size: 18,
-            color: enabled ? WHColors.textPrimary : WHColors.grey4,
+    return GestureDetector(
+      onTap: enabled ? onTap : null,
+      behavior: HitTestBehavior.opaque,
+      child: Container(
+        width: 44,
+        height: 44,
+        alignment: Alignment.center,
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.horizontal(
+            left: isLeft ? const Radius.circular(10) : Radius.zero,
+            right: isLeft ? Radius.zero : const Radius.circular(10),
           ),
+        ),
+        child: Icon(
+          icon,
+          size: 22,
+          color: enabled ? WHColors.textPrimary : WHColors.grey4,
         ),
       ),
     );

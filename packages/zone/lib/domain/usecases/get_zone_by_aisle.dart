@@ -6,7 +6,7 @@ class GetZoneByAisle {
   final ZoneRepository repository;
   GetZoneByAisle(this.repository);
 
-  Future<List<Zone>> call(String zoneId, int aisleNumber) {
+  Future<List<Zone>> call(int zoneId, int aisleNumber) {
     return repository.getZonesByAisle(zoneId, aisleNumber);
   }
 }

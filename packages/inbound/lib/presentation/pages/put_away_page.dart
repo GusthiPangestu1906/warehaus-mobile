@@ -10,6 +10,7 @@ import 'package:inbound/presentation/widgets/quality_control_put_away/pa_scan_ca
 import 'package:inbound/presentation/widgets/quality_control_put_away/qc_header.dart';
 import 'package:inbound/presentation/widgets/quality_control_put_away/qc_product_card.dart';
 import 'package:inbound/presentation/widgets/quality_control_put_away/upcoming_product_card.dart';
+import 'package:mobile_scanner/mobile_scanner.dart';
 
 class PutAwayPage extends StatefulWidget {
   const PutAwayPage({
@@ -106,6 +107,7 @@ class _PutAwayPageState extends State<PutAwayPage> {
       WHScannerPage.route(
         title: 'Scan ${item.shelfCode}',
         subtitle: 'Scan the QR code on the shelf to confirm put away location',
+        formats: const [BarcodeFormat.qrCode],
       ),
     );
 

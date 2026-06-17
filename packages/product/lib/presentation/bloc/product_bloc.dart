@@ -89,6 +89,7 @@ class ProductBloc extends Bloc<ProductEvent, ProductState> {
         await deleteProductUsecase(event.id);
         debugPrint('[ProductBloc] DeleteProductEvent success');
         add(GetProductsEvent());
+        emit(ProductActionSuccess('deleted'));
       } catch (e) {
         debugPrint('[ProductBloc] DeleteProductEvent error: $e');
         emit(ProductError(e.toString()));

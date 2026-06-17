@@ -4,7 +4,7 @@ class DeleteZone {
   final ZoneRepository repository;
   DeleteZone(this.repository);
 
-  Future<void> call(String id) {
+  Future<void> call(int id) {
     return repository.deleteZone(id);
   }
 }

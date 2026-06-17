@@ -1,10 +1,11 @@
 import 'package:core_ui/core_ui.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:mobile_scanner/mobile_scanner.dart';
+import 'package:product/domain/entities/category.dart';
 import 'package:product/presentation/bloc/product_bloc.dart';
 import 'package:product/presentation/bloc/product_event.dart';
 import 'package:product/presentation/bloc/product_state.dart';
-import 'package:product/domain/entities/category.dart';
 
 class CreateProductPage extends StatefulWidget {
   const CreateProductPage({super.key});
@@ -46,6 +47,7 @@ class _CreateProductPageState extends State<CreateProductPage> {
     super.initState();
     context.read<ProductBloc>().add(LoadCategoriesEvent());
   }
+
   void _submit() {
     if (!(_formKey.currentState?.validate() ?? false)) return;
 
@@ -68,25 +70,24 @@ class _CreateProductPageState extends State<CreateProductPage> {
   // barcode scanner removed for this iteration
 
   InputDecoration _inputDecoration(String hint) => InputDecoration(
-        hintText: hint,
-        hintStyle: TextStyle(color: _hintColor, fontSize: 13),
-        contentPadding:
-            const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
-        filled: true,
-        fillColor: WHStyles.inputFill,
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(WHStyles.inputRadius),
-          borderSide: BorderSide(color: _borderColor, width: 1.2),
-        ),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(WHStyles.inputRadius),
-          borderSide: BorderSide(color: _borderColor, width: 1.2),
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(WHStyles.inputRadius),
-          borderSide: BorderSide(color: _hintColor, width: 1.2),
-        ),
-      );
+    hintText: hint,
+    hintStyle: TextStyle(color: _hintColor, fontSize: 13),
+    contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+    filled: true,
+    fillColor: WHStyles.inputFill,
+    border: OutlineInputBorder(
+      borderRadius: BorderRadius.circular(WHStyles.inputRadius),
+      borderSide: BorderSide(color: _borderColor, width: 1.2),
+    ),
+    enabledBorder: OutlineInputBorder(
+      borderRadius: BorderRadius.circular(WHStyles.inputRadius),
+      borderSide: BorderSide(color: _borderColor, width: 1.2),
+    ),
+    focusedBorder: OutlineInputBorder(
+      borderRadius: BorderRadius.circular(WHStyles.inputRadius),
+      borderSide: BorderSide(color: _hintColor, width: 1.2),
+    ),
+  );
 
   Widget _label(String text) => Padding(
     padding: const EdgeInsets.only(bottom: 6),
@@ -160,24 +161,38 @@ class _CreateProductPageState extends State<CreateProductPage> {
             child: DropdownButtonFormField<String>(
               isExpanded: true,
               value: value,
-              items: items.map((e) => DropdownMenuItem(
-                  value: e,
-                  child: Text(e))).toList(),
+              items: items
+                  .map((e) => DropdownMenuItem(value: e, child: Text(e)))
+                  .toList(),
               onChanged: onChanged,
               icon: Icon(Icons.keyboard_arrow_down, color: _hintColor),
-              hint: hint != null ? Text(hint, style: TextStyle(color: _hintColor)) : null,
-              decoration: const InputDecoration(border: InputBorder.none, contentPadding: EdgeInsets.symmetric(vertical: 12)),
+              hint: hint != null
+                  ? Text(hint, style: TextStyle(color: _hintColor))
+                  : null,
+              decoration: const InputDecoration(
+                border: InputBorder.none,
+                contentPadding: EdgeInsets.symmetric(vertical: 12),
+              ),
             ),
           ),
         ),
       ],
     );
   }
+
   Future<void> _onScanQrPressed() async {
     final result = await Navigator.of(context).push(
       WHScannerPage.route(
         title: 'Scan Barcode',
         subtitle: 'Arahkan kamera ke barcode produk',
+        formats: const [
+          BarcodeFormat.code128,
+          BarcodeFormat.code39,
+          BarcodeFormat.ean13,
+          BarcodeFormat.ean8,
+          BarcodeFormat.upcA,
+          BarcodeFormat.upcE,
+        ],
       ),
     );
 
@@ -187,7 +202,6 @@ class _CreateProductPageState extends State<CreateProductPage> {
       });
     }
   }
-
 
   @override
   Widget build(BuildContext context) {
@@ -227,28 +241,39 @@ class _CreateProductPageState extends State<CreateProductPage> {
                       ),
                       const SizedBox(height: 16),
                       WHTextField(
-                          label: 'QR Code',
-                          controller: _qrCodeController,
-                          hintText: 'Scan or enter barcode',
-                          suffixIcon: Icons.qr_code_scanner_rounded,
-                          onSuffixTap: _onScanQrPressed,
+                        label: 'Barcode',
+                        controller: _qrCodeController,
+                        hintText: 'Scan or enter barcode',
+                        suffixIcon: Icons.qr_code_scanner_rounded,
+                        onSuffixTap: _onScanQrPressed,
                       ),
                       const SizedBox(height: 16),
                       BlocBuilder<ProductBloc, ProductState>(
-                        buildWhen: (prev, curr) => curr is CategoriesLoaded || curr is CategoriesLoading,
+                        buildWhen: (prev, curr) =>
+                            curr is CategoriesLoaded ||
+                            curr is CategoriesLoading,
                         builder: (context, state) {
                           // FIX: Added explicit List<Category> type so cat.id is recognized
-                          final List<Category> categories = state is CategoriesLoaded ? state.categories : <Category>[];
+                          final List<Category> categories =
+                              state is CategoriesLoaded
+                              ? state.categories
+                              : <Category>[];
 
                           return WHDropdownField<int>(
                             label: 'Category',
-                            hintText: state is CategoriesLoading ? 'Loading categories...' : 'Select Category',
+                            hintText: state is CategoriesLoading
+                                ? 'Loading categories...'
+                                : 'Select Category',
                             selectedValue: _selectedCategoryId,
                             // Now cat.id and cat.name will be recognized perfectly
-                            items: categories.map((cat) => WHDropdownItem<int>(
-                              value: cat.id,
-                              label: cat.name,
-                            )).toList(),
+                            items: categories
+                                .map(
+                                  (cat) => WHDropdownItem<int>(
+                                    value: cat.id,
+                                    label: cat.name,
+                                  ),
+                                )
+                                .toList(),
                             onChanged: (val) {
                               setState(() => _selectedCategoryId = val);
                             },
@@ -263,12 +288,9 @@ class _CreateProductPageState extends State<CreateProductPage> {
                         hintText: 'Select Unit',
                         selectedValue: _selectedUnit,
                         items: _unitOptions.map((u) {
-                          return WHDropdownItem(
-                            value: u,
-                            label: u,
-                          );
+                          return WHDropdownItem(value: u, label: u);
                         }).toList(),
-                        onChanged: (val) => setState(() => _selectedUnit = val)
+                        onChanged: (val) => setState(() => _selectedUnit = val),
                       ),
                     ],
                   ),

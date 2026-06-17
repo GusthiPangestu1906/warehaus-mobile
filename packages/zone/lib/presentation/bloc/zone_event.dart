@@ -5,14 +5,14 @@ abstract class ZoneEvent {}
 class GetZonesEvent extends ZoneEvent {}
 
 class GetZoneByAisleEvent extends ZoneEvent {
-  final String zoneId;
+  final int zoneId;
   final int aisleNumber;
 
   GetZoneByAisleEvent({required this.zoneId, required this.aisleNumber});
 }
 
 class GetZoneDetailsEvent extends ZoneEvent {
-  final String zoneId;
+  final int zoneId;
 
   GetZoneDetailsEvent({required this.zoneId});
 }
@@ -24,7 +24,7 @@ class CreateZoneEvent extends ZoneEvent {
 }
 
 class UpdateZoneEvent extends ZoneEvent {
-  final String id;
+  final int id;
   final String? zoneName;
   final String? category;
   final String? description;
@@ -38,7 +38,7 @@ class UpdateZoneEvent extends ZoneEvent {
 }
 
 class DeleteZoneEvent extends ZoneEvent {
-  final String id;
+  final int id;
 
   DeleteZoneEvent(this.id);
 }
