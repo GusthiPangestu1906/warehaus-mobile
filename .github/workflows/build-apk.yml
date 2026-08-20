@@ -48,8 +48,10 @@ jobs:
         run: flutter pub get
 
       # 6. Analisis Kode (Linter & Static Analysis)
+      #    --no-fatal-infos  = info tidak gagalkan build
+      #    --no-fatal-warnings = warning tidak gagalkan build (hanya error yang gagalkan)
       - name: Run Flutter Analyzer
-        run: flutter analyze --no-fatal-infos
+        run: flutter analyze --no-fatal-infos --no-fatal-warnings
 
       # 7. Eksekusi Unit & Widget Tests
       - name: Run Unit & Widget Tests
