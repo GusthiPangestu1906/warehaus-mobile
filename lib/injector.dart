@@ -1,4 +1,5 @@
 import 'package:core_services/api/api_client.dart';
+import 'package:core_services/storage/auth_token_storage.dart';
 import 'package:dashboard/services/dashboard_service.dart';
 import 'package:dio/dio.dart';
 import 'package:get_it/get_it.dart';
@@ -63,7 +64,13 @@ Future<void> setupInjector() async {
   // ===========================================================================
   // CORE & DRIVER SERVICES
   // ===========================================================================
-  getIt.registerLazySingleton<ApiClient>(() => ApiClient());
+  getIt.registerLazySingleton<AuthTokenStorage>(() => AuthTokenStorage());
+  getIt.registerLazySingleton<ApiClient>(
+    () => ApiClient(
+      tokenStorage: getIt<AuthTokenStorage>(),
+      onSessionExpired: () {},
+    ),
+  );
   getIt.registerLazySingleton<Dio>(() => getIt<ApiClient>().dio);
   getIt.registerLazySingleton<DashboardService>(
     () => DashboardService(getIt<Dio>()),
@@ -101,7 +108,7 @@ Future<void> setupInjector() async {
     () => DownloadShelfQr(getIt<ZoneRepositoryImpl>()),
   );
 
-  // BLoC (Menggunakan registerFactory karena state BLoC harus di-recreate setiap pindah page)
+  // BLoC
   getIt.registerFactory(
     () => ZoneBloc(
       getZonesUsecase: getIt<GetZones>(),

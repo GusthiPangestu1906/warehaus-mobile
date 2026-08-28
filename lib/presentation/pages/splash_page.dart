@@ -11,7 +11,7 @@ class SplashPage extends StatefulWidget {
 }
 
 class _SplashPageState extends State<SplashPage> {
-  static const _versionLabel = 'Version 1.0.0+4';
+  static const _versionLabel = 'Version 2.0.1';
 
   bool _isVisible = false;
 

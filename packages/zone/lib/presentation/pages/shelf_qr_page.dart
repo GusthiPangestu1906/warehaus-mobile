@@ -1,25 +1,49 @@
 import 'package:core_services/api/api_client.dart';
 import 'package:core_ui/core_ui.dart';
 import 'package:flutter/material.dart';
+import 'package:get_it/get_it.dart';
 import 'package:zone/presentation/widgets/download_qr.dart';
 
-class ShelfQrPage extends StatelessWidget {
+class ShelfQrPage extends StatefulWidget {
   const ShelfQrPage({super.key, required this.code});
 
   final String code;
 
   @override
+  State<ShelfQrPage> createState() => _ShelfQrPageState();
+}
+
+class _ShelfQrPageState extends State<ShelfQrPage> {
+  late final ApiClient _apiClient;
+  late final QRDownloader _qrDownloader;
+  String? _authToken;
+
+  @override
+  void initState() {
+    super.initState();
+    _apiClient = GetIt.I<ApiClient>();
+    _qrDownloader = GetIt.I<QRDownloader>();
+    _loadAuthHeaders();
+  }
+
+  Future<void> _loadAuthHeaders() async {
+    final token = await _apiClient.tokenStorage.getAccessToken();
+    if (mounted) {
+      setState(() {
+        _authToken = token;
+      });
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
-    // Construct a reasonable default URL based on ApiClient baseUrl.
-    final base = ApiClient().dio.options.baseUrl ?? '';
-    // Absolute URL for Image.network
+    final base = _apiClient.dio.options.baseUrl;
     final apiBase = base.endsWith('/') ? '${base}api' : '$base/api';
-    final imageUrl = '$apiBase/Zones/qr/$code';
-    // Relative URL for DownloadQRButton so the interceptor prepends /api/
-    final downloadUrl = '/Zones/qr/$code';
+    final imageUrl = '$apiBase/Zones/qr/${widget.code}';
+    final downloadUrl = '/Zones/qr/${widget.code}';
 
     return Scaffold(
-      appBar: WHAppbar(title: 'QR $code'),
+      appBar: WHAppbar(title: 'QR ${widget.code}'),
       body: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
@@ -33,27 +57,33 @@ class ShelfQrPage extends StatelessWidget {
                 padding: const EdgeInsets.all(20),
                 child: Column(
                   children: [
-                    // Preview - try loading from network; if fails, show icon
                     SizedBox(
                       height: 220,
                       child: ClipRRect(
                         borderRadius: BorderRadius.circular(8),
-                        child: Image.network(
-                          imageUrl,
-                          fit: BoxFit.contain,
-                          errorBuilder: (ctx, e, st) => Center(
-                            child: Icon(
-                              Icons.qr_code_2_rounded,
-                              size: 96,
-                              color: WHColors.grey,
-                            ),
-                          ),
-                        ),
+                        child: _authToken == null
+                            ? const Center(child: CircularProgressIndicator())
+                            : Image.network(
+                                imageUrl,
+                                // Menyuntikkan Bearer Token agar Image.network diizinkan oleh backend API
+                                headers: {
+                                  'Authorization': 'Bearer $_authToken',
+                                  'ngrok-skip-browser-warning': 'true',
+                                },
+                                fit: BoxFit.contain,
+                                errorBuilder: (ctx, e, st) => Center(
+                                  child: Icon(
+                                    Icons.qr_code_2_rounded,
+                                    size: 96,
+                                    color: WHColors.grey,
+                                  ),
+                                ),
+                              ),
                       ),
                     ),
                     const SizedBox(height: 16),
                     Text(
-                      code,
+                      widget.code,
                       style: WHTypography.caption.copyWith(
                         fontWeight: FontWeight.w700,
                       ),
@@ -64,12 +94,12 @@ class ShelfQrPage extends StatelessWidget {
             ),
             const SizedBox(height: 16),
             DownloadQRButton(
-              downloadFn: (format) => QRDownloader().downloadLegacy(
+              downloadFn: (format) => _qrDownloader.downloadLegacy(
                 url: downloadUrl,
                 option: format,
-                code: code,
+                code: widget.code,
               ),
-              code: code,
+              code: widget.code,
             ),
           ],
         ),

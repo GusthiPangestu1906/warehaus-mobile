@@ -1,4 +1,4 @@
-import 'package:core_services/interceptors/app_error_handler.dart';
+import 'package:core_services/interceptors/error/app_error_handler.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:outbound/domain/entities/sales_order.dart';
