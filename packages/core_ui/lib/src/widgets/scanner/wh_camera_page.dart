@@ -97,9 +97,6 @@ class _WhCameraPageState extends State<WhCameraPage>
   final List<File> _capturedFiles = [];
   final _notesCtrl = TextEditingController();
 
-  // Aspect ratio untuk viewfinder (4:3)
-  static const double _aspectRatio = 4 / 3;
-
   @override
   void initState() {
     super.initState();
