@@ -8,7 +8,7 @@ class SubmitQc {
 
   final PurchaseOrderRepository repository;
 
-  Future<Either<Failure, void>> call(SubmitQcParams params) {
+  Future<Either<Failure, Unit>> call(SubmitQcParams params) {
     return repository.submitQc(params);
   }
 }

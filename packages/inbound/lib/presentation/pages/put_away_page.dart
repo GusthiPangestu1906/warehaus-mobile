@@ -3,9 +3,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:inbound/domain/entities/pa_next_item.dart';
 import 'package:inbound/domain/params/submit_pa_params.dart';
-import 'package:inbound/presentation/bloc/purchase_order/purchase_order_bloc.dart';
-import 'package:inbound/presentation/bloc/purchase_order/purchase_order_event.dart';
-import 'package:inbound/presentation/bloc/purchase_order/purchase_order_state.dart';
+import 'package:inbound/presentation/bloc/inbound/inbound_bloc.dart';
+import 'package:inbound/presentation/bloc/inbound/inbound_event.dart';
+import 'package:inbound/presentation/bloc/inbound/inbound_state.dart';
 import 'package:inbound/presentation/widgets/quality_control_put_away/pa_scan_card.dart';
 import 'package:inbound/presentation/widgets/quality_control_put_away/qc_header.dart';
 import 'package:inbound/presentation/widgets/quality_control_put_away/qc_product_card.dart';
@@ -38,8 +38,12 @@ class _PutAwayPageState extends State<PutAwayPage> {
   }
 
   void _fetchNextPaItem() {
-    context.read<PurchaseOrderBloc>().add(
-      GetPaNextItemEvent(widget.purchaseOrderId),
+    context.read<InboundBloc>().add(GetPaNextItemEvent(widget.purchaseOrderId));
+  }
+
+  bool _isAllShelvesScanned(PaNextItem item) {
+    return item.recommendedShelves.every(
+      (shelf) => _completedShelfIds.contains(shelf.shelfId),
     );
   }
 
@@ -52,11 +56,7 @@ class _PutAwayPageState extends State<PutAwayPage> {
       return;
     }
 
-    final unscannedShelves = item.recommendedShelves.where(
-      (shelf) => !_completedShelfIds.contains(shelf.shelfId),
-    );
-
-    if (unscannedShelves.isNotEmpty) {
+    if (!_isAllShelvesScanned(item)) {
       WHSnackBar.showError(
         context,
         'Please scan all recommended shelf QR codes before submitting.',
@@ -78,9 +78,7 @@ class _PutAwayPageState extends State<PutAwayPage> {
 
     _lastLoadedItem = item;
     setState(() => _isSubmitting = true);
-    context.read<PurchaseOrderBloc>().add(
-      SubmitPaEvent(params, item.receivingLogId),
-    );
+    context.read<InboundBloc>().add(SubmitPaEvent(params, item.receivingLogId));
   }
 
   void _handleSubmitSuccess() {
@@ -127,14 +125,14 @@ class _PutAwayPageState extends State<PutAwayPage> {
 
   @override
   Widget build(BuildContext context) {
-    return BlocListener<PurchaseOrderBloc, PurchaseOrderState>(
+    return BlocListener<InboundBloc, InboundState>(
       listener: (context, state) {
         if (state is SubmitPaSuccess) {
           setState(() => _isSubmitting = false);
           _handleSubmitSuccess();
         }
 
-        if (state is PurchaseOrderError) {
+        if (state is InboundError) {
           setState(() => _isSubmitting = false);
           WHSnackBar.showError(context, state.message);
         }
@@ -142,33 +140,39 @@ class _PutAwayPageState extends State<PutAwayPage> {
       child: Scaffold(
         backgroundColor: WHColors.background,
         appBar: const WHAppbar(title: 'Put Away'),
-        bottomNavigationBar: BlocBuilder<PurchaseOrderBloc, PurchaseOrderState>(
+        bottomNavigationBar: BlocBuilder<InboundBloc, InboundState>(
           builder: (context, state) {
-            if (state is! PaNextItemLoaded) return const SizedBox.shrink();
+            // CEK CACHE AGAR TOMBOL TIDAK HILANG SAAT LOADING SUBMIT
+            final PaNextItem? displayItem = (state is PaNextItemLoaded)
+                ? state.item
+                : (_isSubmitting ? _lastLoadedItem : null);
+
+            if (displayItem == null) return const SizedBox.shrink();
 
             return SafeArea(
               minimum: const EdgeInsets.fromLTRB(16, 10, 16, 16),
               child: WHButton(
                 backgroundColor: WHColors.secondary3,
-                icon: state.item.upcoming == null
+                icon: displayItem.upcoming == null
                     ? Icons.check_circle_outline_outlined
                     : null,
-                label: state.item.upcoming == null ? 'Done' : 'Next Item',
+                label: displayItem.upcoming == null ? 'Done' : 'Next Item',
                 isLoading: _isSubmitting,
                 onPressed: _isSubmitting
                     ? null
-                    : () => _submitPutAway(state.item),
+                    : () => _submitPutAway(displayItem),
               ),
             );
           },
         ),
-        body: BlocBuilder<PurchaseOrderBloc, PurchaseOrderState>(
+        body: BlocBuilder<InboundBloc, InboundState>(
           builder: (context, state) {
-            if (state is PurchaseOrderLoading && !_isSubmitting) {
+            // HANYA MUNCUL LOADING PENUH JIKA BUKAN PROSES SUBMIT
+            if (state is InboundLoading && !_isSubmitting) {
               return const Center(child: CircularProgressIndicator());
             }
 
-            if (state is PurchaseOrderError) {
+            if (state is InboundError) {
               return Padding(
                 padding: const EdgeInsets.all(24),
                 child: Align(
@@ -178,82 +182,95 @@ class _PutAwayPageState extends State<PutAwayPage> {
               );
             }
 
-            if (state is PaNextItemLoaded) {
-              final upcomingProduct = state.item.upcoming == null
-                  ? null
-                  : UpcomingProduct(
-                      sku: state.item.upcoming!.sku,
-                      productName: state.item.upcoming!.productName,
-                      expectedQty: state.item.upcoming!.qtyExpected,
-                      unit: state.item.upcoming!.unitOfMeasure,
-                    );
+            final PaNextItem? displayItem = (state is PaNextItemLoaded)
+                ? state.item
+                : (_isSubmitting ? _lastLoadedItem : null);
 
-              return ListView(
-                padding: const EdgeInsets.fromLTRB(24, 16, 24, 24),
-                children: [
-                  QcHeader(
-                    typeLabel: 'Purchase Order',
-                    orderNumber: widget.purchaseOrderNumber,
-                    currentItem: state.item.currentItemNumber,
-                    totalItems: state.item.totalItems,
-                  ),
-                  const SizedBox(height: 16),
-                  QcProductCard(
-                    sku: state.item.sku,
-                    productName: state.item.productName,
-                    expectedQty: state.item.qtyExpected,
-                    unitOfMeasure: state.item.unitOfMeasure,
-                  ),
-                  const SizedBox(height: 16),
-                  state.item.recommendedShelves.isEmpty
-                      ? Text(
-                          'No recommended shelves available. Please contact your supervisor.',
-                          style: WHTypography.caption.copyWith(
-                            color: WHColors.error1,
-                          ),
-                        )
-                      : Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              'Recommended Shelves',
-                              style: WHTypography.caption,
-                            ),
-                            const SizedBox(height: 8),
-                            ...state.item.recommendedShelves.map((shelf) {
-                              return PaScanCard(
-                                shelf: shelf,
-                                unitOfMeasure: state.item.unitOfMeasure,
-                                isCompleted: _completedShelfIds.contains(
-                                  shelf.shelfId,
-                                ),
-                                onScan: () => _scanQrCode(shelf),
-                              );
-                            }),
-                          ],
-                        ),
-                  if (state.item.isLastItem == false &&
-                      upcomingProduct != null) ...[
-                    const SizedBox(height: 16),
-                    Text(
-                      'Upcoming',
-                      style: WHTypography.bodyText.copyWith(fontSize: 16),
-                    ),
-                    const SizedBox(height: 8),
-                    UpcomingProductCard(product: upcomingProduct),
-                  ],
-                ],
+            if (displayItem != null) {
+              return _PutAwayContent(
+                purchaseOrderNumber: widget.purchaseOrderNumber,
+                item: displayItem,
+                completedShelfIds: _completedShelfIds,
+                onScanQrCode: _scanQrCode,
               );
-            }
-
-            if (_isSubmitting && _lastLoadedItem != null) {
-              return const Center(child: CircularProgressIndicator());
             }
 
             return const SizedBox.shrink();
           },
         ),
       ),
+    );
+  }
+}
+
+class _PutAwayContent extends StatelessWidget {
+  const _PutAwayContent({
+    required this.purchaseOrderNumber,
+    required this.item,
+    required this.completedShelfIds,
+    required this.onScanQrCode,
+  });
+
+  final String purchaseOrderNumber;
+  final PaNextItem item;
+  final Set<int> completedShelfIds;
+  final ValueChanged<RecommendedShelf> onScanQrCode;
+
+  @override
+  Widget build(BuildContext context) {
+    final upcomingProduct = item.upcoming == null
+        ? null
+        : UpcomingProduct(
+            sku: item.upcoming!.sku,
+            productName: item.upcoming!.productName,
+            expectedQty: item.upcoming!.qtyExpected,
+            unit: item.upcoming!.unitOfMeasure,
+          );
+
+    return ListView(
+      padding: const EdgeInsets.fromLTRB(24, 16, 24, 24),
+      children: [
+        QcHeader(
+          typeLabel: 'Purchase Order',
+          orderNumber: purchaseOrderNumber,
+          currentItem: item.currentItemNumber,
+          totalItems: item.totalItems,
+        ),
+        const SizedBox(height: 16),
+        QcProductCard(
+          sku: item.sku,
+          productName: item.productName,
+          expectedQty: item.qtyExpected,
+          unitOfMeasure: item.unitOfMeasure,
+        ),
+        const SizedBox(height: 16),
+        item.recommendedShelves.isEmpty
+            ? Text(
+                'No recommended shelves available. Please contact your supervisor.',
+                style: WHTypography.caption.copyWith(color: WHColors.error1),
+              )
+            : Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('Recommended Shelves', style: WHTypography.caption),
+                  const SizedBox(height: 8),
+                  ...item.recommendedShelves.map((shelf) {
+                    return PaScanCard(
+                      shelf: shelf,
+                      unitOfMeasure: item.unitOfMeasure,
+                      isCompleted: completedShelfIds.contains(shelf.shelfId),
+                      onScan: () => onScanQrCode(shelf),
+                    );
+                  }),
+                ],
+              ),
+        if (item.isLastItem == false && upcomingProduct != null) ...[
+          const SizedBox(height: 16),
+          Text('Upcoming', style: WHTypography.bodyText.copyWith(fontSize: 16)),
+          const SizedBox(height: 8),
+          UpcomingProductCard(product: upcomingProduct),
+        ],
+      ],
     );
   }
 }

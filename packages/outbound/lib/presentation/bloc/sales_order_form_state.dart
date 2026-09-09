@@ -1,4 +1,7 @@
 import 'package:equatable/equatable.dart';
+import 'package:outbound/domain/entities/form/courier.dart';
+import 'package:product/product.dart';
+import 'package:outbound/domain/entities/form/region.dart';
 
 class SalesOrderFormState extends Equatable {
   const SalesOrderFormState({
@@ -15,11 +18,11 @@ class SalesOrderFormState extends Equatable {
     this.errorMessage,
   });
 
-  final List<Map<String, dynamic>> products;
-  final List<Map<String, dynamic>> couriers;
-  final List<Map<String, dynamic>> provinces;
-  final List<Map<String, dynamic>> cities;
-  final List<Map<String, dynamic>> districts;
+  final List<Product> products;
+  final List<Courier> couriers;
+  final List<Region> provinces;
+  final List<Region> cities;
+  final List<Region> districts;
   final bool isLoadingProducts;
   final bool isLoadingCouriers;
   final bool isLoadingProvinces;
@@ -28,11 +31,11 @@ class SalesOrderFormState extends Equatable {
   final String? errorMessage;
 
   SalesOrderFormState copyWith({
-    List<Map<String, dynamic>>? products,
-    List<Map<String, dynamic>>? couriers,
-    List<Map<String, dynamic>>? provinces,
-    List<Map<String, dynamic>>? cities,
-    List<Map<String, dynamic>>? districts,
+    List<Product>? products,
+    List<Courier>? couriers,
+    List<Region>? provinces,
+    List<Region>? cities,
+    List<Region>? districts,
     bool? isLoadingProducts,
     bool? isLoadingCouriers,
     bool? isLoadingProvinces,
@@ -58,16 +61,16 @@ class SalesOrderFormState extends Equatable {
 
   @override
   List<Object?> get props => [
-        products,
-        couriers,
-        provinces,
-        cities,
-        districts,
-        isLoadingProducts,
-        isLoadingCouriers,
-        isLoadingProvinces,
-        isLoadingCities,
-        isLoadingDistricts,
-        errorMessage,
-      ];
+    products,
+    couriers,
+    provinces,
+    cities,
+    districts,
+    isLoadingProducts,
+    isLoadingCouriers,
+    isLoadingProvinces,
+    isLoadingCities,
+    isLoadingDistricts,
+    errorMessage,
+  ];
 }

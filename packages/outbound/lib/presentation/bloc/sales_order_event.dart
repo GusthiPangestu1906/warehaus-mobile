@@ -1,10 +1,17 @@
+import 'package:equatable/equatable.dart';
 import 'package:outbound/domain/params/create_sales_order_params.dart';
 
-abstract class SalesOrderEvent {}
+abstract class SalesOrderEvent extends Equatable {
+  @override
+  List<Object?> get props => [];
+}
 
 class GetSalesOrdersEvent extends SalesOrderEvent {
   final String? date;
   GetSalesOrdersEvent({this.date});
+
+  @override
+  List<Object?> get props => [date];
 }
 
 class CreateSalesOrderEvent extends SalesOrderEvent {
@@ -37,11 +44,31 @@ class CreateSalesOrderEvent extends SalesOrderEvent {
     required this.requiredDeliveryDate,
     required this.items,
   });
+
+  @override
+  List<Object?> get props => [
+    customerName,
+    companyName,
+    contactPerson,
+    phoneNumber,
+    note,
+    shippingAddress,
+    provinceCode,
+    cityCode,
+    districtCode,
+    postalCode,
+    courierId,
+    requiredDeliveryDate,
+    items,
+  ];
 }
 
 class DeleteSalesOrderEvent extends SalesOrderEvent {
   final int id;
   DeleteSalesOrderEvent(this.id);
+
+  @override
+  List<Object?> get props => [id];
 }
 
 class UpdateSalesOrderEvent extends SalesOrderEvent {
@@ -76,6 +103,24 @@ class UpdateSalesOrderEvent extends SalesOrderEvent {
     required this.requiredDeliveryDate,
     required this.items,
   });
+
+  @override
+  List<Object?> get props => [
+    id,
+    customerName,
+    companyName,
+    contactPerson,
+    phoneNumber,
+    note,
+    shippingAddress,
+    provinceCode,
+    cityCode,
+    districtCode,
+    postalCode,
+    courierId,
+    requiredDeliveryDate,
+    items,
+  ];
 }
 
 class UpdateSalesOrderLocalStatusEvent extends SalesOrderEvent {
@@ -94,6 +139,16 @@ class UpdateSalesOrderLocalStatusEvent extends SalesOrderEvent {
     this.totalVerifiedItems,
     this.isCompleted,
   });
+
+  @override
+  List<Object?> get props => [
+    id,
+    status,
+    trackingNumber,
+    totalPickedItems,
+    totalVerifiedItems,
+    isCompleted,
+  ];
 }
 
 class UpdateSalesOrderTrackingEvent extends SalesOrderEvent {
@@ -104,4 +159,7 @@ class UpdateSalesOrderTrackingEvent extends SalesOrderEvent {
     required this.id,
     required this.trackingNumber,
   });
+
+  @override
+  List<Object?> get props => [id, trackingNumber];
 }

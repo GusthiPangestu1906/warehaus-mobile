@@ -49,6 +49,50 @@ class PaNextItemModel extends PaNextItem {
             ),
     );
   }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'receivingLogId': receivingLogId,
+      'poItemId': poItemId,
+      'poNumber': poNumber,
+      'sku': sku,
+      'productName': productName,
+      'qtyExpected': qtyExpected,
+      'qtyReceived': qtyReceived,
+      'condition': condition,
+      'unitOfMeasure': unitOfMeasure,
+      'currentItemNumber': currentItemNumber,
+      'totalItems': totalItems,
+      'isLastItem': isLastItem,
+      'completedShelves': completedShelves,
+      'recommendedShelves': recommendedShelves,
+      'upcoming': upcoming,
+    };
+  }
+
+  factory PaNextItemModel.fromEntity(PaNextItem entity) {
+    return PaNextItemModel(
+      receivingLogId: entity.receivingLogId,
+      poItemId: entity.poItemId,
+      poNumber: entity.poNumber,
+      sku: entity.sku,
+      productName: entity.productName,
+      qtyExpected: entity.qtyExpected,
+      qtyReceived: entity.qtyReceived,
+      condition: entity.condition,
+      unitOfMeasure: entity.unitOfMeasure,
+      currentItemNumber: entity.currentItemNumber,
+      totalItems: entity.totalItems,
+      isLastItem: entity.isLastItem,
+      completedShelves: entity.completedShelves,
+      recommendedShelves: entity.recommendedShelves
+          .map((e) => RecommendedShelfModel.fromEntity(e))
+          .toList(),
+      upcoming: entity.upcoming != null
+          ? PaUpcomingItemModel.fromEntity(entity.upcoming!)
+          : null,
+    );
+  }
 }
 
 class RecommendedShelfModel extends RecommendedShelf {
@@ -83,6 +127,40 @@ class RecommendedShelfModel extends RecommendedShelf {
       isCompleted: json['isCompleted'] ?? false,
     );
   }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'shelfId': shelfId,
+      'shelfCode': shelfCode,
+      'zoneName': zoneName,
+      'zoneCode': zoneCode,
+      'categoryName': categoryName,
+      'aisle': aisle,
+      'shelfNumber': shelfNumber,
+      'availableCapacity': availableCapacity,
+      'locationText': locationText,
+      'displayName': displayName,
+      'qtyRequired': qtyRequired,
+      'isCompleted': isCompleted,
+    };
+  }
+
+  factory RecommendedShelfModel.fromEntity(RecommendedShelf entity) {
+    return RecommendedShelfModel(
+      shelfId: entity.shelfId,
+      shelfCode: entity.shelfCode,
+      zoneName: entity.zoneName,
+      zoneCode: entity.zoneCode,
+      categoryName: entity.categoryName,
+      aisle: entity.aisle,
+      shelfNumber: entity.shelfNumber,
+      availableCapacity: entity.availableCapacity,
+      locationText: entity.locationText,
+      displayName: entity.displayName,
+      qtyRequired: entity.qtyRequired,
+      isCompleted: entity.isCompleted,
+    );
+  }
 }
 
 class PaUpcomingItemModel extends PaUpcomingItem {
@@ -101,6 +179,26 @@ class PaUpcomingItemModel extends PaUpcomingItem {
       productName: json['productName'],
       qtyExpected: json['qtyExpected'],
       unitOfMeasure: json['unitOfMeasure'],
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'sku': sku,
+      'productName': productName,
+      'qtyExpected': qtyExpected,
+      'unitOfMeasure': unitOfMeasure,
+    };
+  }
+
+  factory PaUpcomingItemModel.fromEntity(PaUpcomingItem entity) {
+    return PaUpcomingItemModel(
+      id: entity.id,
+      sku: entity.sku,
+      productName: entity.productName,
+      qtyExpected: entity.qtyExpected,
+      unitOfMeasure: entity.unitOfMeasure,
     );
   }
 }

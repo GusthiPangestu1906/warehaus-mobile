@@ -1,26 +1,17 @@
-class SoItemModel {
-  final int? id;
-  final int productId;
-  final int qtyOrdered;
-  final String? productName;
-  final String? sku;
-  final String? barcode;
-  final String? unitOfMeasure;
-  final int qtyPicked;
-  final int qtyVerified;
-  final List<SoItemSuggestedLocationModel> suggestedLocations;
+import 'package:outbound/domain/entities/so_item.dart';
 
+class SoItemModel extends SoItem {
   const SoItemModel({
-    this.id,
-    required this.productId,
-    required this.qtyOrdered,
-    this.productName,
-    this.sku,
-    this.barcode,
-    this.unitOfMeasure,
-    this.qtyPicked = 0,
-    this.qtyVerified = 0,
-    this.suggestedLocations = const [],
+    super.id,
+    required super.productId,
+    required super.qtyOrdered,
+    super.productName,
+    super.sku,
+    super.barcode,
+    super.unitOfMeasure,
+    super.qtyPicked,
+    super.qtyVerified,
+    super.suggestedLocations,
   });
 
   factory SoItemModel.fromJson(Map<String, dynamic> json) {
@@ -47,25 +38,67 @@ class SoItemModel {
   }
 
   Map<String, dynamic> toJson() {
-    return {'productId': productId, 'qtyOrdered': qtyOrdered};
+    return {
+      "id": id,
+      "productId": productId,
+      "qtyOrdered": qtyOrdered,
+      "productName": productName,
+      "sku": sku,
+      "barcode": barcode,
+      "unitOfMeasure": unitOfMeasure,
+      "qtyPicked": qtyPicked,
+      "qtyVerified": qtyVerified,
+      "suggestedLocations": suggestedLocations,
+    };
+  }
+
+  factory SoItemModel.fromEntity(SoItem entity) {
+    return SoItemModel(
+      id: entity.id,
+      productId: entity.productId,
+      qtyOrdered: entity.qtyOrdered,
+      productName: entity.productName,
+      sku: entity.sku,
+      barcode: entity.barcode,
+      unitOfMeasure: entity.unitOfMeasure,
+      qtyPicked: entity.qtyPicked,
+      qtyVerified: entity.qtyVerified,
+      suggestedLocations: entity.suggestedLocations
+          .map((location) => SoItemSuggestedLocationModel.fromEntity(location))
+          .toList(),
+    );
   }
 }
 
-class SoItemSuggestedLocationModel {
-  final int shelfId;
-  final String shelfCode;
-  final String zoneCode;
-  final String zoneName;
-  final int aisle;
-  final int availableQuantity;
+extension SoItemModelMapper on SoItemModel {
+  SoItem toEntity() {
+    return SoItem(
+      id: id,
+      productId: productId,
+      qtyOrdered: qtyOrdered,
+      productName: productName,
+      sku: sku,
+      barcode: barcode,
+      unitOfMeasure: unitOfMeasure,
+      qtyPicked: qtyPicked,
+      qtyVerified: qtyVerified,
+      suggestedLocations: suggestedLocations
+          .map(
+            (location) => (location as SoItemSuggestedLocationModel).toEntity(),
+          )
+          .toList(),
+    );
+  }
+}
 
+class SoItemSuggestedLocationModel extends SoItemSuggestedLocation {
   const SoItemSuggestedLocationModel({
-    required this.shelfId,
-    required this.shelfCode,
-    required this.zoneCode,
-    required this.zoneName,
-    required this.aisle,
-    required this.availableQuantity,
+    required super.shelfId,
+    required super.shelfCode,
+    required super.zoneCode,
+    required super.zoneName,
+    required super.aisle,
+    required super.availableQuantity,
   });
 
   factory SoItemSuggestedLocationModel.fromJson(Map<String, dynamic> json) {
@@ -76,6 +109,30 @@ class SoItemSuggestedLocationModel {
       zoneName: json['zoneName']?.toString() ?? '',
       aisle: _asInt(json['aisle']),
       availableQuantity: _asInt(json['availableQuantity']),
+    );
+  }
+
+  factory SoItemSuggestedLocationModel.fromEntity(
+    SoItemSuggestedLocation entity,
+  ) {
+    return SoItemSuggestedLocationModel(
+      shelfId: entity.shelfId,
+      shelfCode: entity.shelfCode,
+      zoneCode: entity.zoneCode,
+      zoneName: entity.zoneName,
+      aisle: entity.aisle,
+      availableQuantity: entity.availableQuantity,
+    );
+  }
+
+  SoItemSuggestedLocation toEntity() {
+    return SoItemSuggestedLocation(
+      shelfId: shelfId,
+      shelfCode: shelfCode,
+      zoneCode: zoneCode,
+      zoneName: zoneName,
+      aisle: aisle,
+      availableQuantity: availableQuantity,
     );
   }
 }

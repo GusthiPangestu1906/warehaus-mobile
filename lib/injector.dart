@@ -1,4 +1,5 @@
 import 'package:core_services/api/api_client.dart';
+import 'package:core_services/storage/auth_token_storage.dart';
 import 'package:dashboard/services/dashboard_service.dart';
 import 'package:dio/dio.dart';
 import 'package:get_it/get_it.dart';
@@ -16,13 +17,24 @@ import 'package:inbound/domain/usecases/purchase_order/get_purchase_order_detail
 import 'package:inbound/domain/usecases/purchase_order/get_purchase_orders.dart';
 import 'package:inbound/domain/usecases/purchase_order/invoice_update.dart';
 import 'package:inbound/domain/usecases/purchase_order/update_purchase_order.dart';
+import 'package:inbound/data/services/local_file_service_impl.dart';
+import 'package:inbound/domain/services/local_file_service.dart';
+import 'package:inbound/presentation/bloc/carrier/carrier_cubit.dart';
+import 'package:inbound/presentation/bloc/inbound/inbound_bloc.dart';
 import 'package:inbound/presentation/bloc/purchase_order/purchase_order_bloc.dart';
+import 'package:outbound/data/datasources/form_api_datasource.dart';
 import 'package:outbound/data/datasources/outbound_product_api_datasource.dart';
 import 'package:outbound/data/datasources/region_api_datasource.dart';
 import 'package:outbound/data/datasources/sales_order_api_datasource.dart';
+import 'package:outbound/data/repositories/form_repository_impl.dart';
 import 'package:outbound/data/repositories/sales_order_repository_impl.dart';
 import 'package:outbound/domain/usecases/create_sales_order.dart';
 import 'package:outbound/domain/usecases/delete_sales_order.dart';
+import 'package:outbound/domain/usecases/form/get_cities.dart' as outbound_form;
+import 'package:outbound/domain/usecases/form/get_couriers.dart' as outbound_form;
+import 'package:outbound/domain/usecases/form/get_districts.dart' as outbound_form;
+import 'package:outbound/domain/usecases/form/get_products.dart' as outbound_form;
+import 'package:outbound/domain/usecases/form/get_provinces.dart' as outbound_form;
 import 'package:outbound/domain/usecases/get_sales_orders.dart';
 import 'package:outbound/domain/usecases/update_sales_order.dart';
 import 'package:outbound/domain/usecases/update_sales_order_tracking.dart';
@@ -63,7 +75,13 @@ Future<void> setupInjector() async {
   // ===========================================================================
   // CORE & DRIVER SERVICES
   // ===========================================================================
-  getIt.registerLazySingleton<ApiClient>(() => ApiClient());
+  getIt.registerLazySingleton<AuthTokenStorage>(() => AuthTokenStorage());
+  getIt.registerLazySingleton<ApiClient>(
+    () => ApiClient(
+      tokenStorage: getIt<AuthTokenStorage>(),
+      onSessionExpired: () {},
+    ),
+  );
   getIt.registerLazySingleton<Dio>(() => getIt<ApiClient>().dio);
   getIt.registerLazySingleton<DashboardService>(
     () => DashboardService(getIt<Dio>()),
@@ -101,7 +119,7 @@ Future<void> setupInjector() async {
     () => DownloadShelfQr(getIt<ZoneRepositoryImpl>()),
   );
 
-  // BLoC (Menggunakan registerFactory karena state BLoC harus di-recreate setiap pindah page)
+  // BLoC
   getIt.registerFactory(
     () => ZoneBloc(
       getZonesUsecase: getIt<GetZones>(),
@@ -202,8 +220,14 @@ Future<void> setupInjector() async {
   getIt.registerLazySingleton(
     () => DeletePurchaseOrder(getIt<PurchaseOrderRepositoryImpl>()),
   );
+  getIt.registerLazySingleton<LocalFileService>(
+    () => LocalFileServiceImpl(),
+  );
   getIt.registerLazySingleton(
-    () => DownloadPurchaseOrderPdf(getIt<PurchaseOrderRepositoryImpl>()),
+    () => DownloadPurchaseOrderPdf(
+      getIt<PurchaseOrderRepositoryImpl>(),
+      getIt<LocalFileService>(),
+    ),
   );
   getIt.registerLazySingleton(
     () => GetQcNextItem(getIt<PurchaseOrderRepositoryImpl>()),
@@ -231,12 +255,22 @@ Future<void> setupInjector() async {
       invoiceUpdateUsecase: getIt<InvoiceUpdate>(),
       deletePurchaseOrderUsecase: getIt<DeletePurchaseOrder>(),
       downloadPurchaseOrderPdfUsecase: getIt<DownloadPurchaseOrderPdf>(),
+    ),
+  );
+
+  // ── Inbound (QC / PA) BLoC ───────────────────────────────────────
+  getIt.registerFactory(
+    () => InboundBloc(
       getQcNextItemUsecase: getIt<GetQcNextItem>(),
       submitQcUsecase: getIt<SubmitQc>(),
-      getPaNextItem: getIt<GetPaNextItem>(),
+      getPaNextItemUsecase: getIt<GetPaNextItem>(),
       submitPaUsecase: getIt<SubmitPa>(),
-      getCarriers: getIt<GetCarriers>(),
     ),
+  );
+
+  // ── Carrier Cubit ────────────────────────────────────────────────
+  getIt.registerFactory(
+    () => CarrierCubit(getCarriersUsecase: getIt<GetCarriers>()),
   );
 
   // ===========================================================================
@@ -282,10 +316,20 @@ Future<void> setupInjector() async {
     ),
   );
 
+  getIt.registerLazySingleton<FormApiDatasource>(
+    () => FormApiDatasource(getIt<Dio>()),
+  );
+  getIt.registerLazySingleton<FormRepositoryImpl>(
+    () => FormRepositoryImpl(getIt<FormApiDatasource>()),
+  );
+
   getIt.registerFactory(
     () => SalesOrderFormCubit(
-      productApi: getIt<OutboundProductApiDatasource>(),
-      regionApi: getIt<RegionApiDatasource>(),
+      getProductsUseCase: outbound_form.GetProducts(getIt<FormRepositoryImpl>()),
+      getCouriersUseCase: outbound_form.GetCouriers(getIt<FormRepositoryImpl>()),
+      getProvincesUseCase: outbound_form.GetProvinces(getIt<FormRepositoryImpl>()),
+      getCitiesUseCase: outbound_form.GetCities(getIt<FormRepositoryImpl>()),
+      getDistrictsUseCase: outbound_form.GetDistricts(getIt<FormRepositoryImpl>()),
     ),
   );
 }

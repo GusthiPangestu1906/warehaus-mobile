@@ -8,6 +8,11 @@ class GetPurchaseOrders {
   GetPurchaseOrders(this.repository);
 
   Future<Either<Failure, List<PurchaseOrder>>> call({DateTime? date}) async {
-    return await repository.getPurchaseOrders(date?.toUtc());
+    final utcDate = date == null
+        ? null
+        : date.isUtc
+        ? date
+        : date.toUtc();
+    return await repository.getPurchaseOrders(utcDate);
   }
 }

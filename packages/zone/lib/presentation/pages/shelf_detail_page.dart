@@ -3,6 +3,7 @@ import 'package:core_ui/core_ui.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:get_it/get_it.dart';
 import 'package:product/product.dart';
 import 'package:zone/domain/entities/shelf_detail.dart';
 import 'package:zone/presentation/bloc/zone_bloc.dart';
@@ -14,9 +15,9 @@ import 'package:zone/presentation/widgets/format_dialog_qr.dart';
 import 'package:zone/presentation/widgets/location_identity_card.dart';
 
 class ShelfDetailPage extends StatefulWidget {
-  const ShelfDetailPage({super.key, required this.shelfId});
-
   final int shelfId;
+
+  const ShelfDetailPage({super.key, required this.shelfId});
 
   @override
   State<ShelfDetailPage> createState() => _ShelfDetailPageState();
@@ -24,19 +25,23 @@ class ShelfDetailPage extends StatefulWidget {
 
 class _ShelfDetailPageState extends State<ShelfDetailPage> {
   bool _loading = false;
-
-  void _loadShelfData() {
-    context.read<ZoneBloc>().add(
-      GetShelfDetailsEvent(shelfId: widget.shelfId),
-    );
-  }
+  late final ApiClient _apiClient;
+  late final QRDownloader _qrDownloader;
 
   @override
   void initState() {
     super.initState();
+    // Ambil singleton instance dari GetIt
+    _apiClient = GetIt.I<ApiClient>();
+    _qrDownloader = GetIt.I<QRDownloader>();
+
     Future.microtask(() {
       _loadShelfData();
     });
+  }
+
+  void _loadShelfData() {
+    context.read<ZoneBloc>().add(GetShelfDetailsEvent(shelfId: widget.shelfId));
   }
 
   Future<void> _downloadQr(ShelfDetail shelfDetail) async {
@@ -47,7 +52,7 @@ class _ShelfDetailPageState extends State<ShelfDetailPage> {
     }
 
     try {
-      await QRDownloader().downloadAndSave(qrUrl);
+      await _qrDownloader.downloadAndSave(qrUrl);
       if (!mounted) return;
       WHSnackBar.showSuccess(context, 'Berhasil diunduh');
     } catch (e) {
@@ -60,7 +65,7 @@ class _ShelfDetailPageState extends State<ShelfDetailPage> {
     if (qrCodePath.isEmpty) return '';
     if (qrCodePath.startsWith('http')) return qrCodePath;
 
-    final baseUrl = ApiClient().dio.options.baseUrl;
+    final baseUrl = _apiClient.dio.options.baseUrl;
     if (baseUrl.isEmpty) return qrCodePath;
 
     final normalizedBase = baseUrl.endsWith('/')
@@ -126,13 +131,16 @@ class _ShelfDetailPageState extends State<ShelfDetailPage> {
 
                   setState(() => _loading = true);
                   try {
-                    final savedPath = await QRDownloader().downloadShelf(
+                    final savedPath = await _qrDownloader.downloadShelf(
                       shelfId: widget.shelfId,
                       format: option,
                       code: shelfDetail.shelfCode,
                     );
                     if (!mounted) return;
-                    WHSnackBar.showSuccess(context, 'Berhasil diunduh: $savedPath');
+                    WHSnackBar.showSuccess(
+                      context,
+                      'Berhasil diunduh: $savedPath',
+                    );
                   } catch (e) {
                     if (!mounted) return;
                     WHSnackBar.showError(context, 'Gagal mengunduh: $e');

@@ -16,17 +16,19 @@ import 'package:zone/presentation/widgets/format_dialog_qr.dart';
 class QRDownloader {
   final DownloadAisleQr _downloadAisleQr;
   final DownloadShelfQr _downloadShelfQr;
+  final ApiClient _apiClient;
 
   QRDownloader()
-      : _downloadAisleQr = GetIt.I<DownloadAisleQr>(),
-        _downloadShelfQr = GetIt.I<DownloadShelfQr>();
+    : _downloadAisleQr = GetIt.I<DownloadAisleQr>(),
+      _downloadShelfQr = GetIt.I<DownloadShelfQr>(),
+      _apiClient = GetIt.I<ApiClient>();
 
   /// Downloads the image at [url] and saves it to the gallery.
   Future<void> downloadAndSave(String url) async {
     final tempDir = await getTemporaryDirectory();
     final filePath =
         '${tempDir.path}/qr_${DateTime.now().millisecondsSinceEpoch}.png';
-    await ApiClient().dio.download(url, filePath);
+    await _apiClient.dio.download(url, filePath);
     await Gal.putImage(filePath);
     try {
       final f = File(filePath);
@@ -55,10 +57,7 @@ class QRDownloader {
     required String format,
     required String code,
   }) async {
-    final bytes = await _downloadShelfQr(
-      shelfId: shelfId,
-      format: format,
-    );
+    final bytes = await _downloadShelfQr(shelfId: shelfId, format: format);
     return await _saveBytes(bytes, format, code);
   }
 
@@ -76,7 +75,7 @@ class QRDownloader {
         finalUrl = '$finalUrl/download-pdf';
       }
     }
-    final response = await ApiClient().dio.get<List<int>>(
+    final response = await _apiClient.dio.get<List<int>>(
       finalUrl,
       options: Options(responseType: ResponseType.bytes),
     );

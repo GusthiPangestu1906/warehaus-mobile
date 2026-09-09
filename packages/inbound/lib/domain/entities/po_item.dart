@@ -1,4 +1,6 @@
-class PoItem {
+import 'package:equatable/equatable.dart';
+
+class PoItem extends Equatable {
   final int id;
   final int productId;
   final int qtyExpected;
@@ -23,34 +25,22 @@ class PoItem {
     this.productDetail,
   });
 
-  PoItem copyWith({
-    int? id,
-    int? productId,
-    int? qtyExpected,
-    int? qtyReceived,
-    bool? isQcCompleted,
-    String? productCode,
-    String? productName,
-    String? sku,
-    String? qcStatus,
-    PoProductDetail? productDetail,
-  }) {
-    return PoItem(
-      id: id ?? this.id,
-      productId: productId ?? this.productId,
-      qtyExpected: qtyExpected ?? this.qtyExpected,
-      qtyReceived: qtyReceived ?? this.qtyReceived,
-      isQcCompleted: isQcCompleted ?? this.isQcCompleted,
-      productCode: productCode ?? this.productCode,
-      productName: productName ?? this.productName,
-      sku: sku ?? this.sku,
-      qcStatus: qcStatus ?? this.qcStatus,
-      productDetail: productDetail ?? this.productDetail,
-    );
-  }
+  @override
+  List<Object?> get props => [
+    id,
+    productId,
+    qtyExpected,
+    qtyReceived,
+    isQcCompleted,
+    productCode,
+    productName,
+    sku,
+    qcStatus,
+    productDetail,
+  ];
 }
 
-class PoProductDetail {
+class PoProductDetail extends Equatable {
   const PoProductDetail({
     required this.id,
     required this.sku,
@@ -66,4 +56,14 @@ class PoProductDetail {
   final String barcode;
   final String unitOfMeasure;
   final int categoryId;
+
+  @override
+  List<Object?> get props => [
+    id,
+    sku,
+    productName,
+    barcode,
+    unitOfMeasure,
+    categoryId,
+  ];
 }

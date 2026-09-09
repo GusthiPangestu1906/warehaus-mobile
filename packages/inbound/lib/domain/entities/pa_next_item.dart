@@ -1,4 +1,6 @@
-class PaNextItem {
+import 'package:equatable/equatable.dart';
+
+class PaNextItem extends Equatable {
   final int receivingLogId;
   final int poItemId;
   final String poNumber;
@@ -32,9 +34,28 @@ class PaNextItem {
     required this.recommendedShelves,
     this.upcoming,
   });
+
+  @override
+  List<Object?> get props => [
+    receivingLogId,
+    poItemId,
+    poNumber,
+    sku,
+    productName,
+    qtyExpected,
+    qtyReceived,
+    condition,
+    unitOfMeasure,
+    currentItemNumber,
+    totalItems,
+    isLastItem,
+    completedShelves,
+    recommendedShelves,
+    upcoming,
+  ];
 }
 
-class RecommendedShelf {
+class RecommendedShelf extends Equatable {
   final int shelfId;
   final String shelfCode;
   final String zoneName;
@@ -62,9 +83,31 @@ class RecommendedShelf {
     required this.qtyRequired,
     this.isCompleted = false,
   });
+
+  @override
+  List<Object?> get props => [
+    shelfId,
+    shelfCode,
+    zoneName,
+    zoneCode,
+    categoryName,
+    aisle,
+    shelfNumber,
+    availableCapacity,
+    locationText,
+    displayName,
+    qtyRequired,
+    isCompleted,
+  ];
 }
 
-class PaUpcomingItem {
+class PaUpcomingItem extends Equatable {
+  final int id;
+  final String sku;
+  final String productName;
+  final int qtyExpected;
+  final String unitOfMeasure;
+
   const PaUpcomingItem({
     required this.id,
     required this.sku,
@@ -73,9 +116,6 @@ class PaUpcomingItem {
     required this.unitOfMeasure,
   });
 
-  final int id;
-  final String sku;
-  final String productName;
-  final int qtyExpected;
-  final String unitOfMeasure;
+  @override
+  List<Object?> get props => [id, sku, productName, qtyExpected, unitOfMeasure];
 }

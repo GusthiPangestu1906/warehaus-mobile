@@ -1,19 +1,26 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:outbound/data/datasources/outbound_product_api_datasource.dart';
-import 'package:outbound/data/datasources/region_api_datasource.dart';
 import 'package:outbound/presentation/bloc/sales_order_form_state.dart';
+import 'package:outbound/domain/usecases/form/get_products.dart';
+import 'package:outbound/domain/usecases/form/get_couriers.dart';
+import 'package:outbound/domain/usecases/form/get_provinces.dart';
+import 'package:outbound/domain/usecases/form/get_cities.dart';
+import 'package:outbound/domain/usecases/form/get_districts.dart';
 
 class SalesOrderFormCubit extends Cubit<SalesOrderFormState> {
-  SalesOrderFormCubit({
-    required OutboundProductApiDatasource productApi,
-    required RegionApiDatasource regionApi,
-  })  : _productApi = productApi,
-        _regionApi = regionApi,
-        super(const SalesOrderFormState());
+  final GetProducts getProductsUseCase;
+  final GetCouriers getCouriersUseCase;
+  final GetProvinces getProvincesUseCase;
+  final GetCities getCitiesUseCase;
+  final GetDistricts getDistrictsUseCase;
 
-  final OutboundProductApiDatasource _productApi;
-  final RegionApiDatasource _regionApi;
+  SalesOrderFormCubit({
+    required this.getProductsUseCase,
+    required this.getCouriersUseCase,
+    required this.getProvincesUseCase,
+    required this.getCitiesUseCase,
+    required this.getDistrictsUseCase,
+  }) : super(const SalesOrderFormState());
 
   Future<void> loadInitialData({
     String? initialProvinceCode,
@@ -33,50 +40,68 @@ class SalesOrderFormCubit extends Cubit<SalesOrderFormState> {
 
   Future<void> fetchProducts() async {
     emit(state.copyWith(isLoadingProducts: true, clearError: true));
-    try {
-      final products = await _productApi.getProducts();
-      emit(state.copyWith(products: products, isLoadingProducts: false));
-    } catch (e) {
-      debugPrint('[SalesOrderFormCubit] failed to load products: $e');
-      emit(
-        state.copyWith(
-          isLoadingProducts: false,
-          errorMessage: _loadErrorMessage('products', e),
-        ),
-      );
-    }
+
+    final result = await getProductsUseCase();
+
+    result.fold(
+      (failure) {
+        debugPrint(
+          '[SalesOrderFormCubit] failed to load products: ${failure.message}',
+        );
+        emit(
+          state.copyWith(
+            isLoadingProducts: false,
+            errorMessage: failure.message,
+          ),
+        );
+      },
+      (products) =>
+          emit(state.copyWith(products: products, isLoadingProducts: false)),
+    );
   }
 
   Future<void> fetchCouriers() async {
     emit(state.copyWith(isLoadingCouriers: true, clearError: true));
-    try {
-      final couriers = await _regionApi.getCouriers();
-      emit(state.copyWith(couriers: couriers, isLoadingCouriers: false));
-    } catch (e) {
-      debugPrint('[SalesOrderFormCubit] failed to load couriers: $e');
-      emit(
-        state.copyWith(
-          isLoadingCouriers: false,
-          errorMessage: _loadErrorMessage('couriers', e),
-        ),
-      );
-    }
+
+    final result = await getCouriersUseCase();
+
+    result.fold(
+      (failure) {
+        debugPrint(
+          '[SalesOrderFormCubit] failed to load couriers: ${failure.message}',
+        );
+        emit(
+          state.copyWith(
+            isLoadingCouriers: false,
+            errorMessage: failure.message,
+          ),
+        );
+      },
+      (couriers) =>
+          emit(state.copyWith(couriers: couriers, isLoadingCouriers: false)),
+    );
   }
 
   Future<void> fetchProvinces() async {
     emit(state.copyWith(isLoadingProvinces: true, clearError: true));
-    try {
-      final provinces = await _regionApi.getProvinces();
-      emit(state.copyWith(provinces: provinces, isLoadingProvinces: false));
-    } catch (e) {
-      debugPrint('[SalesOrderFormCubit] failed to load provinces: $e');
-      emit(
-        state.copyWith(
-          isLoadingProvinces: false,
-          errorMessage: _loadErrorMessage('provinces', e),
-        ),
-      );
-    }
+
+    final result = await getProvincesUseCase();
+
+    result.fold(
+      (failure) {
+        debugPrint(
+          '[SalesOrderFormCubit] failed to load provinces: ${failure.message}',
+        );
+        emit(
+          state.copyWith(
+            isLoadingProvinces: false,
+            errorMessage: failure.message,
+          ),
+        );
+      },
+      (provinces) =>
+          emit(state.copyWith(provinces: provinces, isLoadingProvinces: false)),
+    );
   }
 
   Future<void> fetchCities(
@@ -93,22 +118,24 @@ class SalesOrderFormCubit extends Cubit<SalesOrderFormState> {
       ),
     );
 
-    try {
-      final cities = await _regionApi.getCities(provinceCode);
-      emit(state.copyWith(cities: cities, isLoadingCities: false));
+    final result = await getCitiesUseCase(provinceCode);
 
-      if (selectedCityCode != null) {
-        await fetchDistricts(selectedCityCode);
-      }
-    } catch (e) {
-      debugPrint('[SalesOrderFormCubit] failed to load cities: $e');
-      emit(
-        state.copyWith(
-          isLoadingCities: false,
-          errorMessage: _loadErrorMessage('cities', e),
-        ),
-      );
-    }
+    await result.fold(
+      (failure) async {
+        debugPrint(
+          '[SalesOrderFormCubit] failed to load cities: ${failure.message}',
+        );
+        emit(
+          state.copyWith(isLoadingCities: false, errorMessage: failure.message),
+        );
+      },
+      (cities) async {
+        emit(state.copyWith(cities: cities, isLoadingCities: false));
+        if (selectedCityCode != null) {
+          await fetchDistricts(selectedCityCode);
+        }
+      },
+    );
   }
 
   void clearCitiesAndDistricts() {
@@ -132,18 +159,23 @@ class SalesOrderFormCubit extends Cubit<SalesOrderFormState> {
       ),
     );
 
-    try {
-      final districts = await _regionApi.getDistricts(cityCode);
-      emit(state.copyWith(districts: districts, isLoadingDistricts: false));
-    } catch (e) {
-      debugPrint('[SalesOrderFormCubit] failed to load districts: $e');
-      emit(
-        state.copyWith(
-          isLoadingDistricts: false,
-          errorMessage: _loadErrorMessage('districts', e),
-        ),
-      );
-    }
+    final result = await getDistrictsUseCase(cityCode);
+
+    result.fold(
+      (failure) {
+        debugPrint(
+          '[SalesOrderFormCubit] failed to load districts: ${failure.message}',
+        );
+        emit(
+          state.copyWith(
+            isLoadingDistricts: false,
+            errorMessage: failure.message,
+          ),
+        );
+      },
+      (districts) =>
+          emit(state.copyWith(districts: districts, isLoadingDistricts: false)),
+    );
   }
 
   void clearDistricts() {
@@ -154,13 +186,5 @@ class SalesOrderFormCubit extends Cubit<SalesOrderFormState> {
         clearError: true,
       ),
     );
-  }
-
-  String _loadErrorMessage(String label, Object error) {
-    final message = error.toString();
-    if (message.contains('ApiException')) {
-      return 'Failed to load $label: $message';
-    }
-    return 'Failed to load $label';
   }
 }

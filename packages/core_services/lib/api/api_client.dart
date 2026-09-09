@@ -1,24 +1,32 @@
-import 'package:core_services/interceptors/error_interceptor.dart';
+import 'package:core_services/interceptors/auth/auth_interceptor.dart';
+import 'package:core_services/interceptors/error/error_interceptor.dart';
+import 'package:core_services/storage/auth_token_storage.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 class ApiClient {
-  late Dio dio;
+  late final Dio dio;
+  late final Dio refreshDio;
+  final AuthTokenStorage tokenStorage;
 
-  ApiClient() {
+  ApiClient({required this.tokenStorage, void Function()? onSessionExpired}) {
     final configuredBaseUrl = dotenv.get('API_URL').trim();
     final baseUrl = _resolveBaseUrl(configuredBaseUrl);
     debugPrint('[ApiClient] baseUrl=$baseUrl');
 
-    dio = Dio(
-      BaseOptions(
-        baseUrl: baseUrl,
-        connectTimeout: const Duration(seconds: 90),
-        receiveTimeout: const Duration(seconds: 90),
-        headers: const {'ngrok-skip-browser-warning': 'true'},
-      ),
+    final baseOptions = BaseOptions(
+      baseUrl: baseUrl,
+      connectTimeout: const Duration(seconds: 90),
+      receiveTimeout: const Duration(seconds: 90),
+      headers: const {
+        'ngrok-skip-browser-warning': 'true',
+        'Accept': 'application/json',
+      },
     );
+
+    dio = Dio(baseOptions);
+    refreshDio = Dio(baseOptions);
 
     dio.interceptors.add(
       InterceptorsWrapper(
@@ -33,6 +41,14 @@ class ApiClient {
           }
           return handler.next(options);
         },
+      ),
+    );
+
+    dio.interceptors.add(
+      AuthInterceptor(
+        storage: tokenStorage,
+        refreshDio: refreshDio,
+        onSessionExpired: onSessionExpired,
       ),
     );
 

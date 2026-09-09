@@ -2,10 +2,17 @@ import 'package:core_ui/core_ui.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:get_it/get_it.dart';
-import 'package:outbound/data/datasources/outbound_product_api_datasource.dart';
-import 'package:outbound/data/datasources/region_api_datasource.dart';
+import 'package:outbound/data/datasources/form_api_datasource.dart';
+import 'package:outbound/data/repositories/form_repository_impl.dart';
+import 'package:outbound/domain/entities/form/courier.dart';
+import 'package:outbound/domain/entities/form/region.dart';
 import 'package:outbound/domain/entities/sales_order.dart';
 import 'package:outbound/domain/params/create_sales_order_params.dart';
+import 'package:outbound/domain/usecases/form/get_cities.dart';
+import 'package:outbound/domain/usecases/form/get_couriers.dart';
+import 'package:outbound/domain/usecases/form/get_districts.dart';
+import 'package:outbound/domain/usecases/form/get_products.dart';
+import 'package:outbound/domain/usecases/form/get_provinces.dart';
 import 'package:outbound/presentation/bloc/sales_order_bloc.dart';
 import 'package:outbound/presentation/bloc/sales_order_event.dart';
 import 'package:outbound/presentation/bloc/sales_order_form_cubit.dart';
@@ -15,6 +22,7 @@ import 'package:outbound/presentation/models/sales_order_product_line.dart';
 import 'package:outbound/presentation/widgets/create_sales_order/sales_order_bottom_bar.dart';
 import 'package:outbound/presentation/widgets/create_sales_order/sales_order_product_step.dart';
 import 'package:outbound/presentation/widgets/create_sales_order/sales_order_shipping_step.dart';
+import 'package:product/product.dart';
 
 class CreateSalesOrderPage extends StatelessWidget {
   const CreateSalesOrderPage({super.key, this.initialOrder});
@@ -23,10 +31,14 @@ class CreateSalesOrderPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final formRepo = FormRepositoryImpl(GetIt.instance<FormApiDatasource>());
     return BlocProvider(
       create: (_) => SalesOrderFormCubit(
-        productApi: GetIt.instance<OutboundProductApiDatasource>(),
-        regionApi: GetIt.instance<RegionApiDatasource>(),
+        getProductsUseCase: GetProducts(formRepo),
+        getCouriersUseCase: GetCouriers(formRepo),
+        getProvincesUseCase: GetProvinces(formRepo),
+        getCitiesUseCase: GetCities(formRepo),
+        getDistrictsUseCase: GetDistricts(formRepo),
       ),
       child: _CreateSalesOrderView(initialOrder: initialOrder),
     );
@@ -267,40 +279,54 @@ class _CreateSalesOrderViewState extends State<_CreateSalesOrderView> {
     );
   }
 
-  List<SalesOrderItemParams> _selectedItems(
-    List<Map<String, dynamic>> products,
-  ) {
+  List<SalesOrderItemParams> _selectedItems(List<Product> products) {
     return _productLines.map((line) {
-      final product = _findProduct(products, line.productId!);
+      final product = products.cast<Product?>().firstWhere(
+        (p) => p?.id == line.productId?.toString(),
+        orElse: () => null,
+      );
       return SalesOrderItemParams(
         productId: line.productId!,
         qtyOrdered: line.qty,
-        productName: product?['productName'] as String?,
+        productName: product?.productName,
       );
     }).toList();
   }
 
-  Map<String, dynamic>? _findProduct(
-    List<Map<String, dynamic>> products,
-    int productId,
-  ) {
-    for (final product in products) {
-      if (_intValue(product, 'id') == productId) return product;
-    }
-    return null;
+  int? _firstCourierId(List<Courier> couriers) {
+    if (couriers.isEmpty) return null;
+    return couriers.first.code.hashCode;
   }
 
-  int? _firstId(List<Map<String, dynamic>> rows) {
-    if (rows.isEmpty) return null;
-    return _intValue(rows.first, 'id') ?? _intValue(rows.first, 'courierId');
+  // --- Type-conversion helpers for widget compatibility ---
+
+  List<Map<String, dynamic>> _productsToMaps(List<Product> products) {
+    return products
+        .map(
+          (p) => {
+            'id': int.tryParse(p.id) ?? p.id.hashCode,
+            'productName': p.productName,
+            'sku': p.sku,
+          },
+        )
+        .toList();
   }
 
-  int? _intValue(Map<String, dynamic> data, String key) {
-    final value = data[key];
-    if (value is int) return value;
-    if (value is num) return value.toInt();
-    if (value is String) return int.tryParse(value);
-    return null;
+  List<Map<String, dynamic>> _couriersToMaps(List<Courier> couriers) {
+    return couriers
+        .map(
+          (c) => {
+            'id': c.code.hashCode,
+            'name': c.name,
+          },
+        )
+        .toList();
+  }
+
+  List<Map<String, dynamic>> _regionsToMaps(List<Region> regions) {
+    return regions
+        .map((r) => {'code': r.code, 'name': r.name})
+        .toList();
   }
 
   String _toUtcDateString(DateTime date) {
@@ -317,7 +343,7 @@ class _CreateSalesOrderViewState extends State<_CreateSalesOrderView> {
               previous.errorMessage != current.errorMessage,
           listener: (context, state) {
             if (_selectedCourierId == null && state.couriers.isNotEmpty) {
-              setState(() => _selectedCourierId = _firstId(state.couriers));
+              setState(() => _selectedCourierId = _firstCourierId(state.couriers));
             }
 
             final errorMessage = state.errorMessage;
@@ -375,7 +401,7 @@ class _CreateSalesOrderViewState extends State<_CreateSalesOrderView> {
     return SalesOrderProductStep(
       requiredDeliveryDate: _requiredDeliveryDate,
       lines: _productLines,
-      products: formState.products,
+      products: _productsToMaps(formState.products),
       isLoadingProducts: formState.isLoadingProducts,
       onPickDate: _pickDate,
       onAddProduct: _addProductLine,
@@ -395,10 +421,10 @@ class _CreateSalesOrderViewState extends State<_CreateSalesOrderView> {
       postalCodeController: _postalCodeCtrl,
       noteController: _noteCtrl,
       noteLength: _noteCtrl.text.length,
-      couriers: formState.couriers,
-      provinces: formState.provinces,
-      cities: formState.cities,
-      districts: formState.districts,
+      couriers: _couriersToMaps(formState.couriers),
+      provinces: _regionsToMaps(formState.provinces),
+      cities: _regionsToMaps(formState.cities),
+      districts: _regionsToMaps(formState.districts),
       selectedCourierId: _selectedCourierId,
       selectedProvinceCode: _selectedProvinceCode,
       selectedCityCode: _selectedCityCode,

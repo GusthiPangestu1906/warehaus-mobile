@@ -5,9 +5,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:inbound/domain/entities/qc_next_item.dart';
 import 'package:inbound/domain/params/submit_qc_params.dart';
-import 'package:inbound/presentation/bloc/purchase_order/purchase_order_bloc.dart';
-import 'package:inbound/presentation/bloc/purchase_order/purchase_order_event.dart';
-import 'package:inbound/presentation/bloc/purchase_order/purchase_order_state.dart';
+import 'package:inbound/presentation/bloc/inbound/inbound_bloc.dart';
+import 'package:inbound/presentation/bloc/inbound/inbound_event.dart';
+import 'package:inbound/presentation/bloc/inbound/inbound_state.dart';
 import 'package:inbound/presentation/widgets/quality_control_put_away/qc_form_card.dart';
 import 'package:inbound/presentation/widgets/quality_control_put_away/qc_header.dart';
 import 'package:inbound/presentation/widgets/quality_control_put_away/qc_product_card.dart';
@@ -43,9 +43,7 @@ class _QualityControlPageState extends State<QualityControlPage> {
   }
 
   void _fetchNextQcItem() {
-    context.read<PurchaseOrderBloc>().add(
-      GetQcNextItemEvent(widget.purchaseOrderId),
-    );
+    context.read<InboundBloc>().add(GetQcNextItemEvent(widget.purchaseOrderId));
   }
 
   QcFormData _formDataFor(QcNextItem item) {
@@ -140,7 +138,7 @@ class _QualityControlPageState extends State<QualityControlPage> {
 
     _lastLoadedItem = item;
     setState(() => _isSubmitting = true);
-    context.read<PurchaseOrderBloc>().add(SubmitQcEvent(params));
+    context.read<InboundBloc>().add(SubmitQcEvent(params));
   }
 
   void _handleSubmitSuccess() {
@@ -198,7 +196,7 @@ class _QualityControlPageState extends State<QualityControlPage> {
 
   @override
   Widget build(BuildContext context) {
-    return BlocListener<PurchaseOrderBloc, PurchaseOrderState>(
+    return BlocListener<InboundBloc, InboundState>(
       listener: (context, state) {
         if (state is SubmitQcSuccess) {
           setState(() => _isSubmitting = false);
@@ -206,7 +204,7 @@ class _QualityControlPageState extends State<QualityControlPage> {
           return;
         }
 
-        if (state is PurchaseOrderError) {
+        if (state is InboundError) {
           setState(() => _isSubmitting = false);
           WHSnackBar.showError(context, state.message);
         }
@@ -214,35 +212,41 @@ class _QualityControlPageState extends State<QualityControlPage> {
       child: Scaffold(
         backgroundColor: WHColors.background,
         appBar: const WHAppbar(title: 'UNLOADING & QC'),
-        bottomNavigationBar: BlocBuilder<PurchaseOrderBloc, PurchaseOrderState>(
+
+        bottomNavigationBar: BlocBuilder<InboundBloc, InboundState>(
           builder: (context, state) {
-            if (state is! QcNextItemLoaded) {
+            final QcNextItem? displayItem = (state is QcNextItemLoaded)
+                ? state.item
+                : (_isSubmitting ? _lastLoadedItem : null);
+
+            if (displayItem == null) {
               return const SizedBox.shrink();
             }
 
             return SafeArea(
               minimum: const EdgeInsets.fromLTRB(16, 10, 16, 16),
               child: WHButton(
-                label: state.item.nextItem == null ? 'Finish QC' : 'Next Item',
+                label: displayItem.nextItem == null ? 'Finish QC' : 'Next Item',
                 backgroundColor: WHColors.secondary3,
-                icon: state.item.nextItem == null
+                icon: displayItem.nextItem == null
                     ? Icons.check_circle_outline_outlined
                     : null,
                 isLoading: _isSubmitting,
                 onPressed: _isSubmitting
                     ? null
-                    : () => _submitCurrentItem(state.item),
+                    : () => _submitCurrentItem(displayItem),
               ),
             );
           },
         ),
-        body: BlocBuilder<PurchaseOrderBloc, PurchaseOrderState>(
+
+        body: BlocBuilder<InboundBloc, InboundState>(
           builder: (context, state) {
-            if (state is PurchaseOrderLoading && !_isSubmitting) {
+            if (state is InboundLoading && !_isSubmitting) {
               return const Center(child: CircularProgressIndicator());
             }
 
-            if (state is PurchaseOrderError) {
+            if (state is InboundError) {
               return Padding(
                 padding: const EdgeInsets.all(24),
                 child: Align(
@@ -252,23 +256,23 @@ class _QualityControlPageState extends State<QualityControlPage> {
               );
             }
 
-            if (state is QcNextItemLoaded) {
+            final QcNextItem? displayItem = (state is QcNextItemLoaded)
+                ? state.item
+                : (_isSubmitting ? _lastLoadedItem : null);
+
+            if (displayItem != null) {
               return _QualityControlContent(
                 purchaseOrderNumber: widget.purchaseOrderNumber,
-                item: state.item,
-                formData: _formDataFor(state.item),
+                item: displayItem,
+                formData: _formDataFor(displayItem),
                 isBarcodeVerified: _verifiedBarcodeItemIds.contains(
-                  state.item.id,
+                  displayItem.id,
                 ),
-                hasPhoto: _photoByItemId.containsKey(state.item.id),
-                onFormChanged: (data) => _updateFormData(state.item.id, data),
-                onBarcodeScan: () => _scanBarcode(state.item),
-                onCapture: () => _captureCondition(state.item),
+                hasPhoto: _photoByItemId.containsKey(displayItem.id),
+                onFormChanged: (data) => _updateFormData(displayItem.id, data),
+                onBarcodeScan: () => _scanBarcode(displayItem),
+                onCapture: () => _captureCondition(displayItem),
               );
-            }
-
-            if (_isSubmitting && _lastLoadedItem != null) {
-              return const Center(child: CircularProgressIndicator());
             }
 
             return const SizedBox.shrink();
