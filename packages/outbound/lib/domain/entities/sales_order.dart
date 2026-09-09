@@ -1,6 +1,7 @@
+import 'package:equatable/equatable.dart';
 import 'package:outbound/domain/entities/so_item.dart';
 
-class SalesOrder {
+class SalesOrder extends Equatable {
   final int id;
   final String soNumber;
   final String customerName;
@@ -62,4 +63,37 @@ class SalesOrder {
     required this.isCompleted,
     required this.items,
   });
+
+  @override
+  List<Object?> get props => [
+    id,
+    soNumber,
+    customerName,
+    companyName,
+    contactPerson,
+    phoneNumber,
+    note,
+    shippingAddress,
+    provinceCode,
+    provinceName,
+    cityCode,
+    cityName,
+    districtCode,
+    districtName,
+    postalCode,
+    courierId,
+    courierCode,
+    courierName,
+    courierServiceType,
+    trackingNumber,
+    requiredDeliveryDate,
+    orderDate,
+    status,
+    totalOrderedQuantity,
+    totalPickedItems,
+    totalVerifiedItems,
+    progressPercentage,
+    isCompleted,
+    items,
+  ];
 }

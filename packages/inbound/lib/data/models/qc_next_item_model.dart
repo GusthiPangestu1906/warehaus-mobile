@@ -34,6 +34,38 @@ class QcNextItemModel extends QcNextItem {
             ),
     );
   }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'productId': productId,
+      'sku': sku,
+      'productName': productName,
+      'qtyExpected': qtyExpected,
+      'qtyReceived': qtyReceived,
+      'currentItemNumber': currentItemNumber,
+      'totalItems': totalItems,
+      'productDetail': productDetail,
+      'nextItem': nextItem,
+    };
+  }
+
+  factory QcNextItemModel.fromEntity(QcNextItem entity) {
+    return QcNextItemModel(
+      id: entity.id,
+      productId: entity.productId,
+      sku: entity.sku,
+      productName: entity.productName,
+      qtyExpected: entity.qtyExpected,
+      qtyReceived: entity.qtyReceived,
+      currentItemNumber: entity.currentItemNumber,
+      totalItems: entity.totalItems,
+      productDetail: QcProductDetailModel.fromEntity(entity.productDetail),
+      nextItem: entity.nextItem != null
+          ? QcUpcomingItemModel.fromEntity(entity.nextItem!)
+          : null,
+    );
+  }
 }
 
 class QcProductDetailModel extends QcProductDetail {
@@ -56,6 +88,28 @@ class QcProductDetailModel extends QcProductDetail {
       categoryId: json['categoryId'],
     );
   }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'sku': sku,
+      'productName': productName,
+      'barcode': barcode,
+      'unitOfMeasure': unitOfMeasure,
+      'categoryId': categoryId,
+    };
+  }
+
+  factory QcProductDetailModel.fromEntity(QcProductDetail entity) {
+    return QcProductDetailModel(
+      id: entity.id,
+      sku: entity.sku,
+      productName: entity.productName,
+      barcode: entity.barcode,
+      unitOfMeasure: entity.unitOfMeasure,
+      categoryId: entity.categoryId,
+    );
+  }
 }
 
 class QcUpcomingItemModel extends QcUpcomingItem {
@@ -74,6 +128,26 @@ class QcUpcomingItemModel extends QcUpcomingItem {
       productName: json['productName'],
       qtyExpected: json['qtyExpected'],
       unitOfMeasure: json['unitOfMeasure'],
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'sku': sku,
+      'productName': productName,
+      'qtyExpected': qtyExpected,
+      'unitOfMeasure': unitOfMeasure,
+    };
+  }
+
+  factory QcUpcomingItemModel.fromEntity(QcUpcomingItem entity) {
+    return QcUpcomingItemModel(
+      id: entity.id,
+      sku: entity.sku,
+      productName: entity.productName,
+      qtyExpected: entity.qtyExpected,
+      unitOfMeasure: entity.unitOfMeasure,
     );
   }
 }

@@ -16,4 +16,17 @@ class CarrierModel extends Carrier {
       serviceType: json['serviceType'],
     );
   }
+
+  Map<String, dynamic> toJson() {
+    return {'id': id, 'code': code, 'name': name, 'serviceType': serviceType};
+  }
+
+  factory CarrierModel.fromEntity(Carrier entity) {
+    return CarrierModel(
+      id: entity.id,
+      code: entity.code,
+      name: entity.name,
+      serviceType: entity.serviceType,
+    );
+  }
 }

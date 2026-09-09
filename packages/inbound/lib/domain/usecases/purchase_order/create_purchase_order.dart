@@ -7,7 +7,7 @@ class CreatePurchaseOrder {
   final PurchaseOrderRepository repository;
   const CreatePurchaseOrder(this.repository);
 
-  Future<Either<Failure, void>> call(CreatePoParams params) {
+  Future<Either<Failure, Unit>> call(CreatePoParams params) {
     return repository.createPurchaseOrder(params);
   }
 }

@@ -1,66 +1,37 @@
 import 'package:outbound/data/models/so_item_model.dart';
+import 'package:outbound/domain/entities/sales_order.dart';
 
-class SalesOrderModel {
-  final int id;
-  final String soNumber;
-  final String customerName;
-  final String? companyName;
-  final String? contactPerson;
-  final String? phoneNumber;
-  final String? note;
-  final String shippingAddress;
-  final String? provinceCode;
-  final String? provinceName;
-  final String? cityCode;
-  final String? cityName;
-  final String? districtCode;
-  final String? districtName;
-  final String? postalCode;
-  final int? courierId;
-  final String? courierCode;
-  final String? courierName;
-  final String? courierServiceType;
-  final String? trackingNumber;
-  final String requiredDeliveryDate;
-  final String orderDate;
-  final String status;
-  final int totalOrderedQuantity;
-  final int totalPickedItems;
-  final int totalVerifiedItems;
-  final double progressPercentage;
-  final bool isCompleted;
-  final List<SoItemModel> items;
-
+class SalesOrderModel extends SalesOrder {
   const SalesOrderModel({
-    required this.id,
-    required this.soNumber,
-    required this.customerName,
-    this.companyName,
-    this.contactPerson,
-    this.phoneNumber,
-    this.note,
-    required this.shippingAddress,
-    this.provinceCode,
-    this.provinceName,
-    this.cityCode,
-    this.cityName,
-    this.districtCode,
-    this.districtName,
-    this.postalCode,
-    this.courierId,
-    this.courierCode,
-    this.courierName,
-    this.courierServiceType,
-    this.trackingNumber,
-    required this.requiredDeliveryDate,
-    required this.orderDate,
-    required this.status,
-    required this.totalOrderedQuantity,
-    required this.totalPickedItems,
-    required this.totalVerifiedItems,
-    required this.progressPercentage,
-    required this.isCompleted,
-    required this.items,
+    required super.id,
+    required super.soNumber,
+    required super.customerName,
+    super.companyName,
+    super.contactPerson,
+    super.phoneNumber,
+    super.note,
+    required super.shippingAddress,
+    super.provinceCode,
+    super.provinceName,
+    super.cityCode,
+    super.cityName,
+    super.districtCode,
+    super.districtName,
+    super.postalCode,
+    super.courierId,
+    super.courierCode,
+    super.courierName,
+    super.courierServiceType,
+    super.trackingNumber,
+    required super.requiredDeliveryDate,
+    required super.orderDate,
+    required super.status,
+    required super.totalOrderedQuantity,
+    required super.totalPickedItems,
+    required super.totalVerifiedItems,
+    required super.progressPercentage,
+    required super.isCompleted,
+    required super.items,
   });
 
   factory SalesOrderModel.fromJson(Map<String, dynamic> json) {
@@ -102,13 +73,13 @@ class SalesOrderModel {
       isCompleted: json['isCompleted'] as bool? ?? false,
       items:
           (json['items'] as List<dynamic>?)
-              ?.map((e) => SoItemModel.fromJson(e as Map<String, dynamic>))
+              ?.map((e) => (e as SoItemModel))
               .toList() ??
           [],
     );
   }
 
-  Map<String, dynamic> toCreateJson() {
+  Map<String, dynamic> toJson() {
     return {
       'customerName': customerName,
       'companyName': companyName ?? '',
@@ -122,8 +93,78 @@ class SalesOrderModel {
       'postalCode': postalCode ?? '',
       'courierId': courierId,
       'requiredDeliveryDate': requiredDeliveryDate,
-      'items': items.map((e) => e.toJson()).toList(),
+      'items': items.map((e) => (e as SoItemModel).toJson()).toList(),
     };
+  }
+
+  factory SalesOrderModel.fromEntity(SalesOrder entity) {
+    return SalesOrderModel(
+      id: entity.id,
+      soNumber: entity.soNumber,
+      customerName: entity.customerName,
+      companyName: entity.companyName,
+      contactPerson: entity.contactPerson,
+      phoneNumber: entity.phoneNumber,
+      note: entity.note,
+      shippingAddress: entity.shippingAddress,
+      provinceCode: entity.provinceCode,
+      provinceName: entity.provinceName,
+      cityCode: entity.cityCode,
+      cityName: entity.cityName,
+      districtCode: entity.districtCode,
+      districtName: entity.districtName,
+      postalCode: entity.postalCode,
+      courierId: entity.courierId,
+      courierCode: entity.courierCode,
+      courierName: entity.courierName,
+      courierServiceType: entity.courierServiceType,
+      trackingNumber: entity.trackingNumber,
+      requiredDeliveryDate: entity.requiredDeliveryDate,
+      orderDate: entity.orderDate,
+      status: entity.status,
+      totalOrderedQuantity: entity.totalOrderedQuantity,
+      totalPickedItems: entity.totalPickedItems,
+      totalVerifiedItems: entity.totalVerifiedItems,
+      progressPercentage: entity.progressPercentage,
+      isCompleted: entity.isCompleted,
+      items: entity.items.map((e) => SoItemModel.fromEntity(e)).toList(),
+    );
+  }
+}
+
+extension SalesOrderModelMapper on SalesOrderModel {
+  SalesOrder toEntity() {
+    return SalesOrder(
+      id: id,
+      soNumber: soNumber,
+      customerName: customerName,
+      companyName: companyName,
+      contactPerson: contactPerson,
+      phoneNumber: phoneNumber,
+      note: note,
+      shippingAddress: shippingAddress,
+      provinceCode: provinceCode,
+      provinceName: provinceName,
+      cityCode: cityCode,
+      cityName: cityName,
+      districtCode: districtCode,
+      districtName: districtName,
+      postalCode: postalCode,
+      courierId: courierId,
+      courierCode: courierCode,
+      courierName: courierName,
+      courierServiceType: courierServiceType,
+      trackingNumber: trackingNumber,
+      requiredDeliveryDate: requiredDeliveryDate,
+      orderDate: orderDate,
+      status: status,
+      totalOrderedQuantity: totalOrderedQuantity,
+      totalPickedItems: totalPickedItems,
+      totalVerifiedItems: totalVerifiedItems,
+      progressPercentage: progressPercentage,
+      isCompleted: isCompleted,
+      items: items.map((e) => (e as SoItemModel).toEntity()).toList(),
+    );
   }
 }
 

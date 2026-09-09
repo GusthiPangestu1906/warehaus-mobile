@@ -13,21 +13,18 @@ abstract class PurchaseOrderRepository {
     DateTime? date,
   );
   Future<Either<Failure, PurchaseOrder>> getPurchaseOrderDetail(int id);
-  Future<Either<Failure, void>> createPurchaseOrder(CreatePoParams params);
-  Future<Either<Failure, void>> updatePurchaseOrder(
+  Future<Either<Failure, Unit>> createPurchaseOrder(CreatePoParams params);
+  Future<Either<Failure, Unit>> updatePurchaseOrder(
     int id,
     CreatePoParams params,
   );
-  Future<Either<Failure, void>> invoiceUpdate(int id, String invoiceNumber);
-  Future<Either<Failure, void>> deletePurchaseOrder(int id);
-  Future<Either<Failure, String>> downloadPurchaseOrderPdf(
-    int id,
-    String poNumber,
-  );
+  Future<Either<Failure, Unit>> invoiceUpdate(int id, String invoiceNumber);
+  Future<Either<Failure, Unit>> deletePurchaseOrder(int id);
+  Future<Either<Failure, List<int>>> downloadPurchaseOrderPdf(int id);
   Future<Either<Failure, QcNextItem>> getQcNextItem(int poId);
-  Future<Either<Failure, void>> submitQc(SubmitQcParams params);
+  Future<Either<Failure, Unit>> submitQc(SubmitQcParams params);
   Future<Either<Failure, PaNextItem>> getPaNextItem(int poId);
-  Future<Either<Failure, void>> submitPa(
+  Future<Either<Failure, Unit>> submitPa(
     SubmitPaParams params,
     int receivingLogId,
   );

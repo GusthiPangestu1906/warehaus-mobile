@@ -8,7 +8,7 @@ class SubmitPa {
 
   final PurchaseOrderRepository repository;
 
-  Future<Either<Failure, void>> call(
+  Future<Either<Failure, Unit>> call(
     SubmitPaParams params,
     int receivingLogId,
   ) {

@@ -1,4 +1,17 @@
-class QcNextItem {
+import 'package:equatable/equatable.dart';
+
+class QcNextItem extends Equatable {
+  final int id;
+  final int productId;
+  final String sku;
+  final String productName;
+  final int qtyExpected;
+  final int qtyReceived;
+  final int currentItemNumber;
+  final int totalItems;
+  final QcProductDetail productDetail;
+  final QcUpcomingItem? nextItem;
+
   const QcNextItem({
     required this.id,
     required this.productId,
@@ -12,19 +25,29 @@ class QcNextItem {
     this.nextItem,
   });
 
-  final int id;
-  final int productId;
-  final String sku;
-  final String productName;
-  final int qtyExpected;
-  final int qtyReceived;
-  final int currentItemNumber;
-  final int totalItems;
-  final QcProductDetail productDetail;
-  final QcUpcomingItem? nextItem;
+  @override
+  List<Object?> get props => [
+    id,
+    productId,
+    sku,
+    productName,
+    qtyExpected,
+    qtyReceived,
+    currentItemNumber,
+    totalItems,
+    productDetail,
+    nextItem,
+  ];
 }
 
-class QcProductDetail {
+class QcProductDetail extends Equatable {
+  final int id;
+  final String sku;
+  final String productName;
+  final String barcode;
+  final String unitOfMeasure;
+  final int categoryId;
+
   const QcProductDetail({
     required this.id,
     required this.sku,
@@ -34,15 +57,24 @@ class QcProductDetail {
     required this.categoryId,
   });
 
+  @override
+  List<Object?> get props => [
+    id,
+    sku,
+    productName,
+    barcode,
+    unitOfMeasure,
+    categoryId,
+  ];
+}
+
+class QcUpcomingItem extends Equatable {
   final int id;
   final String sku;
   final String productName;
-  final String barcode;
+  final int qtyExpected;
   final String unitOfMeasure;
-  final int categoryId;
-}
 
-class QcUpcomingItem {
   const QcUpcomingItem({
     required this.id,
     required this.sku,
@@ -51,9 +83,6 @@ class QcUpcomingItem {
     required this.unitOfMeasure,
   });
 
-  final int id;
-  final String sku;
-  final String productName;
-  final int qtyExpected;
-  final String unitOfMeasure;
+  @override
+  List<Object?> get props => [id, sku, productName, qtyExpected, unitOfMeasure];
 }

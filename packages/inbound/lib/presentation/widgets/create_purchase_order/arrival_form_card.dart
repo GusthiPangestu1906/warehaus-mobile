@@ -2,9 +2,8 @@ import 'package:core_ui/core_ui.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:inbound/domain/entities/carrier.dart';
-import 'package:inbound/presentation/bloc/purchase_order/purchase_order_bloc.dart';
-import 'package:inbound/presentation/bloc/purchase_order/purchase_order_event.dart';
-import 'package:inbound/presentation/bloc/purchase_order/purchase_order_state.dart';
+import 'package:inbound/presentation/bloc/carrier/carrier_cubit.dart';
+import 'package:inbound/presentation/bloc/carrier/carrier_state.dart';
 
 class ArrivalFormCard extends StatefulWidget {
   const ArrivalFormCard({
@@ -28,7 +27,7 @@ class _ArrivalFormCardState extends State<ArrivalFormCard> {
   @override
   void initState() {
     super.initState();
-    context.read<PurchaseOrderBloc>().add(GetCarriersEvent());
+    context.read<CarrierCubit>().fetchCarriers();
   }
 
   @override
@@ -99,15 +98,25 @@ class _ArrivalFormCardState extends State<ArrivalFormCard> {
                           },
                         ),
                         const SizedBox(height: 16),
-                        BlocBuilder<PurchaseOrderBloc, PurchaseOrderState>(
-                          builder: (context, state) {
-                            final carriers = state is CarriersLoaded
-                                ? state.carriers
-                                : const <Carrier>[];
 
-                            if (state is PurchaseOrderError) {
+                        BlocBuilder<CarrierCubit, CarrierState>(
+                          builder: (context, state) {
+                            if (state is CarrierError) {
                               return WHError(message: state.message);
                             }
+
+                            if (state is CarrierLoading) {
+                              return const Center(
+                                child: Padding(
+                                  padding: EdgeInsets.all(8.0),
+                                  child: CircularProgressIndicator(),
+                                ),
+                              );
+                            }
+
+                            final carriers = state is CarrierLoaded
+                                ? state.carriers
+                                : const <Carrier>[];
 
                             return WHDropdownField<String>(
                               label: 'Carrier',

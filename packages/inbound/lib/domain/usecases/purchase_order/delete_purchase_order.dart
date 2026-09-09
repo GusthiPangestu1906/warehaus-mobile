@@ -7,7 +7,7 @@ class DeletePurchaseOrder {
 
   DeletePurchaseOrder(this.repository);
 
-  Future<Either<Failure, void>> call(int id) async {
+  Future<Either<Failure, Unit>> call(int id) async {
     return await repository.deletePurchaseOrder(id);
   }
 }

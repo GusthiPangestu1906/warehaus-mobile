@@ -1,6 +1,5 @@
-import 'dart:io';
-
 import 'package:dio/dio.dart';
+import 'package:dartz/dartz.dart';
 import 'package:inbound/data/models/carrier_model.dart';
 import 'package:inbound/data/models/pa_next_item_model.dart';
 import 'package:inbound/data/models/purchase_order_model.dart';
@@ -14,16 +13,9 @@ class PurchaseOrderApiDatasource {
   static const String _inboundPath = '/inbound';
 
   Future<List<PurchaseOrderModel>> getPurchaseOrders(DateTime? date) async {
-    final utcDate = date == null
-        ? null
-        : date.isUtc
-        ? date
-        : date.toUtc();
     final response = await dio.get(
       _purchaseOrderPath,
-      queryParameters: utcDate == null
-          ? null
-          : {'date': utcDate.toIso8601String()},
+      queryParameters: date == null ? null : {'date': date.toIso8601String()},
     );
     return (response.data as List)
         .map((e) => PurchaseOrderModel.fromJson(e as Map<String, dynamic>))
@@ -35,26 +27,30 @@ class PurchaseOrderApiDatasource {
     return PurchaseOrderModel.fromJson(response.data);
   }
 
-  Future<void> createPurchaseOrder(Map<String, dynamic> data) async {
+  Future<Unit> createPurchaseOrder(Map<String, dynamic> data) async {
     await dio.post(_purchaseOrderPath, data: data);
+    return unit;
   }
 
-  Future<void> updatePurchaseOrder(int id, Map<String, dynamic> data) async {
+  Future<Unit> updatePurchaseOrder(int id, Map<String, dynamic> data) async {
     await dio.put('$_purchaseOrderPath/$id', data: data);
+    return unit;
   }
 
-  Future<void> invoiceUpdate(int id, String invoiceNumber) async {
+  Future<Unit> invoiceUpdate(int id, String invoiceNumber) async {
     await dio.put(
       '$_purchaseOrderPath/$id/invoice',
       data: {'invoiceNumber': invoiceNumber},
     );
+    return unit;
   }
 
-  Future<void> deletePurchaseOrder(int id) async {
+  Future<Unit> deletePurchaseOrder(int id) async {
     await dio.delete('$_purchaseOrderPath/$id');
+    return unit;
   }
 
-  Future<String> downloadPurchaseOrderPdf(int id, String poNumber) async {
+  Future<List<int>> downloadPurchaseOrderPdf(int id) async {
     final response = await dio.get<List<int>>(
       '$_purchaseOrderPath/$id/pdf',
       options: Options(responseType: ResponseType.bytes),
@@ -65,12 +61,7 @@ class PurchaseOrderApiDatasource {
       throw Exception('Empty PDF response from server.');
     }
 
-    final fileName = '${_sanitizeFileName(poNumber)}.pdf';
-    final targetDir = await _resolveDownloadDirectory();
-    final file = File('${targetDir.path}/$fileName');
-    await file.writeAsBytes(bytes, flush: true);
-
-    return file.path;
+    return bytes;
   }
 
   Future<QcNextItemModel> getQcNextItem(int poId) async {
@@ -78,7 +69,7 @@ class PurchaseOrderApiDatasource {
     return QcNextItemModel.fromJson(response.data as Map<String, dynamic>);
   }
 
-  Future<void> submitQc(Map<String, dynamic> data) async {
+  Future<Unit> submitQc(Map<String, dynamic> data) async {
     final formData = FormData.fromMap(data);
 
     await dio.post(
@@ -86,6 +77,7 @@ class PurchaseOrderApiDatasource {
       data: formData,
       options: Options(headers: {'Content-Type': 'multipart/form-data'}),
     );
+    return unit;
   }
 
   Future<PaNextItemModel> getPaNextItem(int poId) async {
@@ -93,29 +85,9 @@ class PurchaseOrderApiDatasource {
     return PaNextItemModel.fromJson(response.data as Map<String, dynamic>);
   }
 
-  Future<void> submitPa(Map<String, dynamic> data, int receivingLogId) async {
+  Future<Unit> submitPa(Map<String, dynamic> data, int receivingLogId) async {
     await dio.post('$_inboundPath/$receivingLogId/put-away', data: data);
-  }
-
-  Future<Directory> _resolveDownloadDirectory() async {
-    final downloadDir = Directory('/storage/emulated/0/Download/WareHaus');
-
-    try {
-      if (!await downloadDir.exists()) {
-        await downloadDir.create(recursive: true);
-      }
-      return downloadDir;
-    } catch (_) {
-      final fallbackDir = Directory('${Directory.systemTemp.path}/WareHaus');
-      if (!await fallbackDir.exists()) {
-        await fallbackDir.create(recursive: true);
-      }
-      return fallbackDir;
-    }
-  }
-
-  String _sanitizeFileName(String value) {
-    return value.replaceAll(RegExp(r'[\\/:*?"<>|]'), '_');
+    return unit;
   }
 
   Future<List<CarrierModel>> getCarriers() async {

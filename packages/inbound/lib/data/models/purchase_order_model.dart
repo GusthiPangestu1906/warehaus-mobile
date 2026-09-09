@@ -1,12 +1,5 @@
-import 'dart:convert';
-
 import 'package:inbound/domain/entities/po_item.dart';
 import 'package:inbound/domain/entities/purchase_order.dart';
-
-List<PurchaseOrderModel> purchaseOrderModelFromJson(String str) =>
-    List<PurchaseOrderModel>.from(
-      json.decode(str).map((x) => PurchaseOrderModel.fromJson(x)),
-    );
 
 class PurchaseOrderModel extends PurchaseOrder {
   PurchaseOrderModel({
@@ -47,6 +40,46 @@ class PurchaseOrderModel extends PurchaseOrder {
           json["items"].map((x) => ItemModel.fromJson(x)),
         ),
       );
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'poNumber': poNumber,
+      'supplierName': supplierName,
+      'status': status,
+      'invoiceNumber': invoiceNumber,
+      'isQcCompleted': isQcCompleted,
+      'eta': eta,
+      'carrier': carrier,
+      'totalQtyExpected': totalQtyExpected,
+      'totalQtyReceived': totalQtyReceived,
+      'totalItemCount': totalItemCount,
+      'qcCompletedCount': qcCompletedCount,
+      'putAwayCompletedCount': putAwayCompletedCount,
+      'createdAt': createdAt,
+      'items': items,
+    };
+  }
+
+  factory PurchaseOrderModel.fromEntity(PurchaseOrder entity) {
+    return PurchaseOrderModel(
+      id: entity.id,
+      poNumber: entity.poNumber,
+      supplierName: entity.supplierName,
+      status: entity.status,
+      invoiceNumber: entity.invoiceNumber,
+      isQcCompleted: entity.isQcCompleted,
+      eta: entity.eta,
+      carrier: entity.carrier,
+      totalQtyExpected: entity.totalQtyExpected,
+      totalQtyReceived: entity.totalQtyReceived,
+      totalItemCount: entity.totalItemCount,
+      qcCompletedCount: entity.qcCompletedCount,
+      putAwayCompletedCount: entity.putAwayCompletedCount,
+      createdAt: entity.createdAt,
+      items: entity.items.map((e) => ItemModel.fromEntity(e)).toList(),
+    );
+  }
 }
 
 class ItemModel extends PoItem {
@@ -83,6 +116,36 @@ class ItemModel extends PoItem {
       productDetail: productDetail,
     );
   }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'productId': productId,
+      'qtyExpected': qtyExpected,
+      'qtyReceived': qtyReceived,
+      'isQcCompleted': isQcCompleted,
+      'productCode': productCode,
+      'productName': productName,
+      'sku': sku,
+      'qcStatus': qcStatus,
+      'productDetail': productDetail,
+    };
+  }
+
+  factory ItemModel.fromEntity(PoItem entity) {
+    return ItemModel(
+      id: entity.id,
+      productId: entity.productId,
+      qtyExpected: entity.qtyExpected,
+      qtyReceived: entity.qtyReceived,
+      isQcCompleted: entity.isQcCompleted,
+      productCode: entity.productCode,
+      productName: entity.productName,
+      sku: entity.sku,
+      qcStatus: entity.qcStatus,
+      productDetail: entity.productDetail,
+    );
+  }
 }
 
 class PoProductDetailModel extends PoProductDetail {
@@ -103,6 +166,28 @@ class PoProductDetailModel extends PoProductDetail {
       barcode: json["barcode"],
       unitOfMeasure: json["unitOfMeasure"],
       categoryId: json["categoryId"],
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'sku': sku,
+      'productName': productName,
+      'barcode': barcode,
+      'unitOfMeasure': unitOfMeasure,
+      'categoryId': categoryId,
+    };
+  }
+
+  factory PoProductDetailModel.fromEntity(PoProductDetail entity) {
+    return PoProductDetailModel(
+      id: entity.id,
+      sku: entity.sku,
+      productName: entity.productName,
+      barcode: entity.barcode,
+      unitOfMeasure: entity.unitOfMeasure,
+      categoryId: entity.categoryId,
     );
   }
 }

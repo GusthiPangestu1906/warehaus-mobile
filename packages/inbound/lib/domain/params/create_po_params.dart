@@ -1,10 +1,3 @@
-import 'dart:convert';
-
-CreatePoParams createPoParamsFromJson(String str) =>
-    CreatePoParams.fromJson(json.decode(str));
-
-String createPoParamsToJson(CreatePoParams data) => json.encode(data.toJson());
-
 class CreatePoParams {
   final String supplierName;
   final DateTime eta;

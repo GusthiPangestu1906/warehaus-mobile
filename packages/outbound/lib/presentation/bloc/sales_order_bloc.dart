@@ -1,4 +1,3 @@
-import 'package:core_services/interceptors/error/app_error_handler.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:outbound/domain/entities/sales_order.dart';
@@ -27,148 +26,199 @@ class SalesOrderBloc extends Bloc<SalesOrderEvent, SalesOrderState> {
     required this.updateSalesOrderUsecase,
     required this.updateSalesOrderTrackingUsecase,
   }) : super(SalesOrderInitial()) {
-    on<GetSalesOrdersEvent>((event, emit) async {
-      debugPrint('[SalesOrderBloc] GetSalesOrdersEvent date=${event.date}');
-      emit(SalesOrderLoading());
-      try {
-        final orders = await getSalesOrdersUsecase(date: event.date);
+    on<GetSalesOrdersEvent>(_onGetSalesOrders);
+    on<CreateSalesOrderEvent>(_onCreateSalesOrder);
+    on<DeleteSalesOrderEvent>(_onDeleteSalesOrder);
+    on<UpdateSalesOrderEvent>(_onUpdateSalesOrder);
+    on<UpdateSalesOrderLocalStatusEvent>(_onUpdateSalesOrderLocalStatus);
+    on<UpdateSalesOrderTrackingEvent>(_onUpdateSalesOrderTracking);
+  }
+
+  Future<void> _onGetSalesOrders(
+    GetSalesOrdersEvent event,
+    Emitter<SalesOrderState> emit,
+  ) async {
+    debugPrint('[SalesOrderBloc] GetSalesOrdersEvent date=${event.date}');
+    emit(SalesOrderLoading());
+
+    final result = await getSalesOrdersUsecase(date: event.date);
+
+    result.fold(
+      (failure) {
+        debugPrint('[SalesOrderBloc] error: ${failure.message}');
+        emit(SalesOrderError(failure.message));
+      },
+      (orders) {
         debugPrint('[SalesOrderBloc] loaded ${orders.length} orders');
         emit(SalesOrderLoaded(orders));
-      } catch (e) {
-        debugPrint('[SalesOrderBloc] error: $e');
-        emit(SalesOrderError(AppErrorHandler.extractMessage(e)));
-      }
-    });
+      },
+    );
+  }
 
-    on<CreateSalesOrderEvent>((event, emit) async {
-      debugPrint('[SalesOrderBloc] CreateSalesOrderEvent');
-      emit(SalesOrderLoading());
-      try {
-        await createSalesOrderUsecase(
-          CreateSalesOrderParams(
-            customerName: event.customerName,
-            companyName: event.companyName,
-            contactPerson: event.contactPerson,
-            phoneNumber: event.phoneNumber,
-            note: event.note,
-            shippingAddress: event.shippingAddress,
-            provinceCode: event.provinceCode,
-            cityCode: event.cityCode,
-            districtCode: event.districtCode,
-            postalCode: event.postalCode,
-            courierId: event.courierId,
-            requiredDeliveryDate: event.requiredDeliveryDate,
-            items: event.items,
-          ),
-        );
+  Future<void> _onCreateSalesOrder(
+    CreateSalesOrderEvent event,
+    Emitter<SalesOrderState> emit,
+  ) async {
+    debugPrint('[SalesOrderBloc] CreateSalesOrderEvent');
+    emit(SalesOrderLoading());
+
+    final result = await createSalesOrderUsecase(
+      CreateSalesOrderParams(
+        customerName: event.customerName,
+        companyName: event.companyName,
+        contactPerson: event.contactPerson,
+        phoneNumber: event.phoneNumber,
+        note: event.note,
+        shippingAddress: event.shippingAddress,
+        provinceCode: event.provinceCode,
+        cityCode: event.cityCode,
+        districtCode: event.districtCode,
+        postalCode: event.postalCode,
+        courierId: event.courierId,
+        requiredDeliveryDate: event.requiredDeliveryDate,
+        items: event.items,
+      ),
+    );
+
+    result.fold(
+      (failure) {
+        debugPrint('[SalesOrderBloc] create error: ${failure.message}');
+        emit(SalesOrderError(failure.message));
+      },
+      (_) {
         debugPrint('[SalesOrderBloc] create success');
         emit(SalesOrderActionSuccess('Sales Order Saved'));
         add(GetSalesOrdersEvent());
-      } catch (e) {
-        debugPrint('[SalesOrderBloc] create error: $e');
-        emit(SalesOrderError(AppErrorHandler.extractMessage(e)));
-      }
-    });
+      },
+    );
+  }
 
-    on<DeleteSalesOrderEvent>((event, emit) async {
-      debugPrint('[SalesOrderBloc] DeleteSalesOrderEvent id=${event.id}');
-      emit(SalesOrderLoading());
-      try {
-        await deleteSalesOrderUsecase(event.id);
+  Future<void> _onDeleteSalesOrder(
+    DeleteSalesOrderEvent event,
+    Emitter<SalesOrderState> emit,
+  ) async {
+    debugPrint('[SalesOrderBloc] DeleteSalesOrderEvent id=${event.id}');
+    emit(SalesOrderLoading());
+
+    final result = await deleteSalesOrderUsecase(event.id);
+
+    result.fold(
+      (failure) {
+        debugPrint('[SalesOrderBloc] delete error: ${failure.message}');
+        emit(SalesOrderError(failure.message));
+      },
+      (_) {
         debugPrint('[SalesOrderBloc] delete success');
         emit(SalesOrderActionSuccess('Sales Order Deleted'));
         add(GetSalesOrdersEvent());
-      } catch (e) {
-        debugPrint('[SalesOrderBloc] delete error: $e');
-        emit(SalesOrderError(AppErrorHandler.extractMessage(e)));
-      }
-    });
+      },
+    );
+  }
 
-    on<UpdateSalesOrderEvent>((event, emit) async {
-      debugPrint('[SalesOrderBloc] UpdateSalesOrderEvent id=${event.id}');
-      emit(SalesOrderLoading());
-      try {
-        await updateSalesOrderUsecase(
-          UpdateSalesOrderParams(
-            id: event.id,
-            customerName: event.customerName,
-            companyName: event.companyName,
-            contactPerson: event.contactPerson,
-            phoneNumber: event.phoneNumber,
-            note: event.note,
-            shippingAddress: event.shippingAddress,
-            provinceCode: event.provinceCode,
-            cityCode: event.cityCode,
-            districtCode: event.districtCode,
-            postalCode: event.postalCode,
-            courierId: event.courierId,
-            requiredDeliveryDate: event.requiredDeliveryDate,
-            items: event.items,
-          ),
-        );
+  Future<void> _onUpdateSalesOrder(
+    UpdateSalesOrderEvent event,
+    Emitter<SalesOrderState> emit,
+  ) async {
+    debugPrint('[SalesOrderBloc] UpdateSalesOrderEvent id=${event.id}');
+    emit(SalesOrderLoading());
+
+    final result = await updateSalesOrderUsecase(
+      UpdateSalesOrderParams(
+        id: event.id,
+        customerName: event.customerName,
+        companyName: event.companyName,
+        contactPerson: event.contactPerson,
+        phoneNumber: event.phoneNumber,
+        note: event.note,
+        shippingAddress: event.shippingAddress,
+        provinceCode: event.provinceCode,
+        cityCode: event.cityCode,
+        districtCode: event.districtCode,
+        postalCode: event.postalCode,
+        courierId: event.courierId,
+        requiredDeliveryDate: event.requiredDeliveryDate,
+        items: event.items,
+      ),
+    );
+
+    result.fold(
+      (failure) {
+        debugPrint('[SalesOrderBloc] update error: ${failure.message}');
+        emit(SalesOrderError(failure.message));
+      },
+      (_) {
         debugPrint('[SalesOrderBloc] update success');
         emit(SalesOrderActionSuccess('Sales Order Saved'));
         add(GetSalesOrdersEvent());
-      } catch (e) {
-        debugPrint('[SalesOrderBloc] update error: $e');
-        emit(SalesOrderError(AppErrorHandler.extractMessage(e)));
-      }
-    });
+      },
+    );
+  }
 
-    on<UpdateSalesOrderLocalStatusEvent>((event, emit) {
-      debugPrint(
-        '[SalesOrderBloc] UpdateSalesOrderLocalStatusEvent id=${event.id} status=${event.status}',
-      );
+  void _onUpdateSalesOrderLocalStatus(
+    UpdateSalesOrderLocalStatusEvent event,
+    Emitter<SalesOrderState> emit,
+  ) {
+    debugPrint(
+      '[SalesOrderBloc] UpdateSalesOrderLocalStatusEvent id=${event.id} status=${event.status}',
+    );
 
-      final currentState = state;
-      if (currentState is! SalesOrderLoaded) return;
+    final currentState = state;
+    if (currentState is! SalesOrderLoaded) return;
 
-      final updatedOrders = _updatedOrders(
-        currentState.salesOrders,
-        id: event.id,
-        status: event.status,
-        trackingNumber: event.trackingNumber,
-        totalPickedItems: event.totalPickedItems,
-        totalVerifiedItems: event.totalVerifiedItems,
-        isCompleted: event.isCompleted,
-      );
+    final updatedOrders = _updatedOrders(
+      currentState.salesOrders,
+      id: event.id,
+      status: event.status,
+      trackingNumber: event.trackingNumber,
+      totalPickedItems: event.totalPickedItems,
+      totalVerifiedItems: event.totalVerifiedItems,
+      isCompleted: event.isCompleted,
+    );
 
-      emit(SalesOrderLoaded(updatedOrders));
-    });
+    emit(SalesOrderLoaded(updatedOrders));
+  }
 
-    on<UpdateSalesOrderTrackingEvent>((event, emit) async {
-      debugPrint(
-        '[SalesOrderBloc] UpdateSalesOrderTrackingEvent id=${event.id}',
-      );
+  Future<void> _onUpdateSalesOrderTracking(
+    UpdateSalesOrderTrackingEvent event,
+    Emitter<SalesOrderState> emit,
+  ) async {
+    debugPrint('[SalesOrderBloc] UpdateSalesOrderTrackingEvent id=${event.id}');
 
-      final currentState = state;
-      if (currentState is SalesOrderLoaded) {
-        emit(
-          SalesOrderLoaded(
-            _updatedOrders(
-              currentState.salesOrders,
-              id: event.id,
-              status: 'Active',
-              trackingNumber: event.trackingNumber,
-            ),
-          ),
-        );
-      }
-
-      try {
-        await updateSalesOrderTrackingUsecase(
-          UpdateSalesOrderTrackingParams(
+    final currentState = state;
+    if (currentState is SalesOrderLoaded) {
+      emit(
+        SalesOrderLoaded(
+          _updatedOrders(
+            currentState.salesOrders,
             id: event.id,
+            status: 'Active',
             trackingNumber: event.trackingNumber,
           ),
+        ),
+      );
+    }
+
+    final result = await updateSalesOrderTrackingUsecase(
+      UpdateSalesOrderTrackingParams(
+        id: event.id,
+        trackingNumber: event.trackingNumber,
+      ),
+    );
+
+    result.fold(
+      (failure) {
+        debugPrint(
+          '[SalesOrderBloc] tracking update error: ${failure.message}',
         );
+      },
+      (_) {
         debugPrint('[SalesOrderBloc] tracking update success');
         add(GetSalesOrdersEvent());
-      } catch (e) {
-        debugPrint('[SalesOrderBloc] tracking update error: $e');
-      }
-    });
+      },
+    );
   }
+
+  // --- Helper Methods ---
 
   List<SalesOrder> _updatedOrders(
     List<SalesOrder> orders, {

@@ -19,21 +19,12 @@ class AuthRemoteDatasourceImpl implements AuthRemoteDatasource {
     required String email,
     required String password,
   }) async {
-    try {
-      final response = await _apiClient.dio.post(
-        '/connect/token',
-        data: {'grant_type': 'password', 'email': email, 'password': password},
-        options: Options(contentType: Headers.formUrlEncodedContentType),
-      );
+    final response = await _apiClient.dio.post(
+      '/connect/token',
+      data: {'grant_type': 'password', 'email': email, 'password': password},
+      options: Options(contentType: Headers.formUrlEncodedContentType),
+    );
 
-      return TokenResponseModel.fromJson(response.data);
-    } on DioException catch (e) {
-      if (e.response?.statusCode == 400) {
-        throw const UnauthorizedException(
-          'email atau password yang Anda masukkan salah.',
-        );
-      }
-      throw const InternalServerException();
-    }
+    return TokenResponseModel.fromJson(response.data);
   }
 }

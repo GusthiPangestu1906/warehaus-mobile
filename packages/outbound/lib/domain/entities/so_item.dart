@@ -1,4 +1,6 @@
-class SoItem {
+import 'package:equatable/equatable.dart';
+
+class SoItem extends Equatable {
   final int? id;
   final int productId;
   final int qtyOrdered;
@@ -22,9 +24,23 @@ class SoItem {
     this.qtyVerified = 0,
     this.suggestedLocations = const [],
   });
+
+  @override
+  List<Object?> get props => [
+    id,
+    productId,
+    qtyOrdered,
+    productName,
+    sku,
+    barcode,
+    unitOfMeasure,
+    qtyPicked,
+    qtyVerified,
+    suggestedLocations,
+  ];
 }
 
-class SoItemSuggestedLocation {
+class SoItemSuggestedLocation extends Equatable {
   final int shelfId;
   final String shelfCode;
   final String zoneCode;
@@ -40,4 +56,14 @@ class SoItemSuggestedLocation {
     required this.aisle,
     required this.availableQuantity,
   });
+
+  @override
+  List<Object?> get props => [
+    shelfId,
+    shelfCode,
+    zoneCode,
+    zoneName,
+    aisle,
+    availableQuantity,
+  ];
 }

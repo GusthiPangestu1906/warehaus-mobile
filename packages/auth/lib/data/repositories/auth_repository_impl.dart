@@ -4,8 +4,9 @@ import 'package:auth/data/datasources/auth_remote_datasource.dart';
 import 'package:auth/domain/entities/user_session.dart';
 import 'package:auth/domain/repositories/auth_repository.dart';
 import 'package:core_services/core_services.dart';
+import 'package:dartz/dartz.dart';
 
-class AuthRepositoryImpl implements AuthRepository {
+class AuthRepositoryImpl with RepositoryHelper implements AuthRepository {
   final AuthRemoteDatasource _authRemoteDatasource;
   final AuthTokenStorage _authTokenStorage;
 
@@ -16,33 +17,47 @@ class AuthRepositoryImpl implements AuthRepository {
        _authTokenStorage = authTokenStorage;
 
   @override
-  Future<void> login({required String email, required String password}) async {
-    final tokenData = await _authRemoteDatasource.login(
-      email: email,
-      password: password,
-    );
-    await _authTokenStorage.saveTokens(
-      accessToken: tokenData.accessToken,
-      refreshToken: tokenData.refreshToken ?? '',
-    );
+  Future<Either<Failure, Unit>> login({
+    required String email,
+    required String password,
+  }) {
+    return execute(() async {
+      final tokenData = await _authRemoteDatasource.login(
+        email: email,
+        password: password,
+      );
+      await _authTokenStorage.saveTokens(
+        accessToken: tokenData.accessToken,
+        refreshToken: tokenData.refreshToken ?? '',
+      );
+
+      return unit;
+    });
   }
 
   @override
-  Future<void> logout() async {
-    await _authTokenStorage.clearTokens();
+  Future<Either<Failure, Unit>> logout() {
+    return execute(() async {
+      await _authTokenStorage.clearTokens();
+      return unit;
+    });
   }
 
   @override
-  Future<bool> isAuthenticated() async {
-    return await _authTokenStorage.hasToken();
+  Future<Either<Failure, bool>> isAuthenticated() {
+    return execute(() async {
+      return await _authTokenStorage.hasToken();
+    });
   }
 
   @override
-  Future<UserSession?> getCurrentUser() async {
-    final token = await _authTokenStorage.getAccessToken();
-    if (token == null || token.isEmpty) return null;
+  Future<Either<Failure, UserSession?>> getCurrentUser() {
+    return execute(() async {
+      final token = await _authTokenStorage.getAccessToken();
+      if (token == null || token.isEmpty) return null;
 
-    try {
+      // Hapus try-catch manual, karena execute() sudah menangani Exception
+      // Jika token korup (gagal di-decode), execute akan mengembalikan Left(ServerFailure)
       final parts = token.split('.');
       if (parts.length != 3) return null;
 
@@ -67,8 +82,6 @@ class AuthRepositoryImpl implements AuthRepository {
         roles: roles,
         permissions: permissions,
       );
-    } catch (_) {
-      return null;
-    }
+    });
   }
 }
