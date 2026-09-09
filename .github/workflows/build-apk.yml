@@ -57,12 +57,7 @@ jobs:
       - name: Run Unit & Widget Tests
         run: flutter test
 
-      # 8. Install Android SDK Platform 37 (required by flutter_secure_storage)
-      - name: Install Android SDK Platform 37
-        run: |
-          echo "y" | $ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager "platforms;android-37"
-
-      # 9. Build APK (Hanya jika lolos test & analisa kode)
+      # 8. Build APK (Hanya jika lolos test & analisa kode)
       - name: Build APK
         run: flutter build apk --debug
 
@@ -73,4 +68,3 @@ jobs:
           name: warehaus-mobile-develop-apk
           path: build/app/outputs/flutter-apk/app-debug.apk
           retention-days: 14
-
