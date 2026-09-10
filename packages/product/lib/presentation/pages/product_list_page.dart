@@ -1,3 +1,6 @@
+import 'package:auth/domain/entities/app_permissions.dart';
+import 'package:auth/presentation/bloc/login_bloc.dart';
+import 'package:auth/presentation/bloc/login_state.dart';
 import 'package:core_ui/core_ui.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -56,6 +59,15 @@ class _ProductListPageState extends State<ProductListPage> with RouteAware {
 
   @override
   Widget build(BuildContext context) {
+    // Baca session dari LoginBloc untuk permission check
+    final loginState = context.read<LoginBloc>().state;
+    final session =
+        loginState is AuthenticatedState ? loginState.session : null;
+
+    final canCreate = session?.hasPermission(AppPermissions.productCreate) ?? false;
+    final canEdit = session?.hasPermission(AppPermissions.productEdit) ?? false;
+    final canDelete = session?.hasPermission(AppPermissions.productDelete) ?? false;
+
     return Scaffold(
       backgroundColor: WHColors.background,
       appBar: WHAppbar(title: 'Product Management'),
@@ -167,8 +179,11 @@ class _ProductListPageState extends State<ProductListPage> with RouteAware {
                             onView: () async {
                               await Navigator.of(context).push(
                                 MaterialPageRoute(
-                                  builder: (_) =>
-                                      ProductDetailPage(productId: product.id),
+                                  builder: (_) => ProductDetailPage(
+                                    productId: product.id,
+                                    canEdit: canEdit,
+                                    canDelete: canDelete,
+                                  ),
                                 ),
                               );
                               if (!mounted) return;
@@ -188,24 +203,26 @@ class _ProductListPageState extends State<ProductListPage> with RouteAware {
           ],
         ),
       ),
-      floatingActionButton: FloatingActionButton(
-        heroTag: 'product-create-fab',
-        onPressed: () async {
-          await Navigator.of(context).push(
-            PageRouteBuilder(
-              pageBuilder: (_, _, _) => const CreateProductPage(),
-              transitionDuration: Duration.zero,
-              reverseTransitionDuration: Duration.zero,
-            ),
-          );
-          // NOTE: GetProductsEvent is already handled by two places:
-          // 1. ProductBloc fires it internally after CreateProductEvent succeeds.
-          // 2. didPopNext() fires it when this page comes back to the top.
-          // No need to fire it a third time here.
-        },
-        backgroundColor: WHColors.primary3,
-        child: const Icon(Icons.add, color: WHColors.surface),
-      ),
+      floatingActionButton: canCreate
+          ? FloatingActionButton(
+              heroTag: 'product-create-fab',
+              onPressed: () async {
+                await Navigator.of(context).push(
+                  PageRouteBuilder(
+                    pageBuilder: (_, _, _) => const CreateProductPage(),
+                    transitionDuration: Duration.zero,
+                    reverseTransitionDuration: Duration.zero,
+                  ),
+                );
+                // NOTE: GetProductsEvent is already handled by two places:
+                // 1. ProductBloc fires it internally after CreateProductEvent succeeds.
+                // 2. didPopNext() fires it when this page comes back to the top.
+                // No need to fire it a third time here.
+              },
+              backgroundColor: WHColors.primary3,
+              child: const Icon(Icons.add, color: WHColors.surface),
+            )
+          : null,
     );
   }
 }

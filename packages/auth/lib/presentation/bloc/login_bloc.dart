@@ -1,3 +1,4 @@
+import 'package:auth/domain/usecase/check_auth.dart';
 import 'package:auth/domain/usecase/login.dart';
 import 'package:auth/domain/usecase/logout.dart';
 import 'package:auth/presentation/bloc/login_event.dart';
@@ -8,14 +9,35 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 class LoginBloc extends Bloc<LoginEvent, LoginState> {
   final Login loginUsecase;
   final Logout logoutUsecase;
+  final CheckAuth checkAuthUsecase;
 
-  LoginBloc({required this.loginUsecase, required this.logoutUsecase})
-    : super(LoginInitialState()) {
+  LoginBloc({
+    required this.loginUsecase,
+    required this.logoutUsecase,
+    required this.checkAuthUsecase,
+  }) : super(LoginInitialState()) {
+    on<CheckAuthRequested>((event, emit) async {
+      emit(AuthCheckLoadingState());
+      final result = await checkAuthUsecase();
+      result.fold(
+        (_) => emit(UnauthenticatedState()),
+        (session) => session != null
+            ? emit(AuthenticatedState(session: session))
+            : emit(UnauthenticatedState()),
+      );
+    });
+
     on<LoginSubmitted>((event, emit) async {
       emit(LoginLoadingState());
       try {
         await loginUsecase(email: event.email, password: event.password);
-        emit(LoginSuccessState());
+        final result = await checkAuthUsecase();
+        result.fold(
+          (_) => emit(LoginErrorState(error: 'Gagal memuat data sesi.')),
+          (session) => session != null
+              ? emit(AuthenticatedState(session: session))
+              : emit(LoginErrorState(error: 'Sesi tidak ditemukan.')),
+        );
       } catch (e) {
         emit(LoginErrorState(error: AppErrorHandler.extractMessage(e)));
       }

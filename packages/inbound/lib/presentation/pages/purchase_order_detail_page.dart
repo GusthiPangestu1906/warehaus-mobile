@@ -343,17 +343,6 @@ class _PurchaseOrderDetailPageState extends State<PurchaseOrderDetailPage> {
     return '$day/$month/$year';
   }
 
-  String _qcStatusForIndex(int index) {
-    switch (index % 3) {
-      case 1:
-        return 'Damage';
-      case 2:
-        return 'Less';
-      default:
-        return 'Good';
-    }
-  }
-
   String _qcStatusLabel(String status) {
     switch (status.trim().toLowerCase()) {
       case 'damage':

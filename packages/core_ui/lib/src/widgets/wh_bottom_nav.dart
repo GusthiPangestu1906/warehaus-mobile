@@ -2,13 +2,28 @@ import 'package:flutter/material.dart';
 
 import '../colors.dart';
 
+/// Model data untuk satu item tab di bottom navigation bar.
+class WHBottomNavItem {
+  final IconData icon;
+  final IconData activeIcon;
+  final String label;
+
+  const WHBottomNavItem({
+    required this.icon,
+    required this.activeIcon,
+    required this.label,
+  });
+}
+
 class WHBottomNav extends StatelessWidget {
   final int currentIndex;
+  final List<WHBottomNavItem> items;
   final Function(int) onTap;
 
   const WHBottomNav({
     super.key,
     required this.currentIndex,
+    required this.items,
     required this.onTap,
   });
 
@@ -33,32 +48,9 @@ class WHBottomNav extends StatelessWidget {
           height: 65,
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
-            children: [
-              _buildNavItem(
-                icon: Icons.dashboard_outlined,
-                activeIcon: Icons.dashboard,
-                label: 'DASHBOARD',
-                index: 0,
-              ),
-              _buildNavItem(
-                icon: Icons.inventory_2_outlined,
-                activeIcon: Icons.inventory_2,
-                label: 'PRODUCTS',
-                index: 1,
-              ),
-              _buildNavItem(
-                icon: Icons.local_shipping_outlined,
-                activeIcon: Icons.local_shipping,
-                label: 'FLOWS',
-                index: 2,
-              ),
-              _buildNavItem(
-                icon: Icons.layers_outlined,
-                activeIcon: Icons.layers,
-                label: 'ZONES',
-                index: 3,
-              ),
-            ],
+            children: List.generate(items.length, (index) {
+              return _buildNavItem(item: items[index], index: index);
+            }),
           ),
         ),
       ),
@@ -66,9 +58,7 @@ class WHBottomNav extends StatelessWidget {
   }
 
   Widget _buildNavItem({
-    required IconData icon,
-    required IconData activeIcon,
-    required String label,
+    required WHBottomNavItem item,
     required int index,
   }) {
     final bool isSelected = currentIndex == index;
@@ -82,13 +72,13 @@ class WHBottomNav extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Icon(
-            isSelected ? activeIcon : icon,
+            isSelected ? item.activeIcon : item.icon,
             color: isSelected ? WHColors.secondary3 : WHColors.grey3,
             size: 26,
           ),
           const SizedBox(height: 4),
           Text(
-            label,
+            item.label,
             style: TextStyle(
               fontSize: 10,
               fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,

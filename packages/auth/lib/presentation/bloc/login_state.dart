@@ -1,6 +1,5 @@
+import 'package:auth/domain/entities/user_session.dart';
 import 'package:equatable/equatable.dart';
-
-enum LoginStatus { initial, loading, success, failure, logoutSuccess }
 
 class LoginState extends Equatable {
   @override
@@ -47,3 +46,16 @@ class LogoutErrorState extends LoginState {
   @override
   List<Object?> get props => [error];
 }
+
+class AuthCheckLoadingState extends LoginState {}
+
+class AuthenticatedState extends LoginState {
+  final UserSession session;
+
+  AuthenticatedState({required this.session});
+
+  @override
+  List<Object?> get props => [session];
+}
+
+class UnauthenticatedState extends LoginState {}
