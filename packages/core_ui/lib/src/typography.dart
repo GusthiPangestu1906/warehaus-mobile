@@ -4,7 +4,7 @@ import 'colors.dart';
 
 class WHTypography {
   static const TextStyle title = TextStyle(
-    fontSize: 28,
+    fontSize: 24,
     fontWeight: FontWeight.bold,
     color: WHColors.grey1,
   );
