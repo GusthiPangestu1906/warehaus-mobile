@@ -12,6 +12,7 @@ class PoDetailHeader extends StatelessWidget {
     required this.showActions,
     required this.onDelete,
     required this.onEdit,
+    required this.createdAt,
   });
 
   final String poNumber;
@@ -21,6 +22,8 @@ class PoDetailHeader extends StatelessWidget {
   final bool showActions;
   final VoidCallback onDelete;
   final VoidCallback onEdit;
+  final DateTime createdAt;
+
 
   @override
   Widget build(BuildContext context) {
@@ -45,7 +48,7 @@ class PoDetailHeader extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Created At ${DateFormat('dd/MM/yyyy').format(DateTime.now())}',
+                      'Created At ${DateFormat('dd MMM yyyy').format(createdAt)}',
                       style: WHTypography.caption,
                     ),
                     const SizedBox(height: 4),
