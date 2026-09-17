@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 class AuthTokenStorage {
@@ -5,6 +7,7 @@ class AuthTokenStorage {
 
   static const _keyAccessToken = 'warehaus_access_token';
   static const _keyRefreshToken = 'warehaus_refresh_token';
+  static const _keyUserProfile = 'warehaus_user_profile';
 
   AuthTokenStorage({FlutterSecureStorage? storage})
     : _secureStorage = storage ?? const FlutterSecureStorage();
@@ -15,6 +18,19 @@ class AuthTokenStorage {
   }) async {
     await _secureStorage.write(key: _keyAccessToken, value: accessToken);
     await _secureStorage.write(key: _keyRefreshToken, value: refreshToken);
+  }
+
+  Future<void> saveUserProfile(Map<String, dynamic> userJson) async {
+    await _secureStorage.write(
+      key: _keyUserProfile,
+      value: jsonEncode(userJson),
+    );
+  }
+
+  Future<Map<String, dynamic>?> getUserProfile() async {
+    final raw = await _secureStorage.read(key: _keyUserProfile);
+    if (raw == null || raw.isEmpty) return null;
+    return jsonDecode(raw) as Map<String, dynamic>;
   }
 
   Future<String?> getAccessToken() async {
@@ -28,6 +44,7 @@ class AuthTokenStorage {
   Future<void> clearTokens() async {
     await _secureStorage.delete(key: _keyAccessToken);
     await _secureStorage.delete(key: _keyRefreshToken);
+    await _secureStorage.delete(key: _keyUserProfile);
   }
 
   Future<bool> hasToken() async {

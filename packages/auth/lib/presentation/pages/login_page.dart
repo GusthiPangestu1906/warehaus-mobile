@@ -1,6 +1,7 @@
 import 'package:auth/presentation/bloc/login_bloc.dart';
 import 'package:auth/presentation/bloc/login_event.dart';
 import 'package:auth/presentation/bloc/login_state.dart';
+import 'package:auth/presentation/components/icon_hero.dart';
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -115,46 +116,7 @@ class _LoginPageState extends State<LoginPage> {
                 spacing: 0,
                 children: [
                   // icon + text
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Image.asset(
-                        'assets/icon/app_icon.png',
-                        width: 48,
-                        height: 48,
-                      ),
-                      const SizedBox(width: 10),
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            children: [
-                              Text(
-                                'Ware',
-                                style: TextStyle(
-                                  fontSize: 35,
-                                  fontWeight: FontWeight.bold,
-                                  color: WHColors.primary,
-                                ),
-                              ),
-                              Text(
-                                'Haus',
-                                style: TextStyle(
-                                  fontSize: 35,
-                                  fontWeight: FontWeight.bold,
-                                  color: WHColors.secondary,
-                                ),
-                              ),
-                            ],
-                          ),
-                          Text(
-                            'Warehouse Management System',
-                            style: WHTypography.caption,
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
+                  const IconHero(),
 
                   const SizedBox(height: 44),
 

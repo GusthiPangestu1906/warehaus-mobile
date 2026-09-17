@@ -1,22 +1,26 @@
+import 'package:auth/data/models/user_profile.dart';
+
 class TokenResponseModel {
   final String accessToken;
   final String? refreshToken;
-  final String tokenType;
-  final int expiresIn;
+  final DateTime? accessTokenExpiresAt;
+  final UserProfile user;
 
   TokenResponseModel({
     required this.accessToken,
     this.refreshToken,
-    required this.tokenType,
-    required this.expiresIn,
+    this.accessTokenExpiresAt,
+    required this.user,
   });
 
   factory TokenResponseModel.fromJson(Map<String, dynamic> json) {
     return TokenResponseModel(
-      accessToken: json['access_token'] as String? ?? '',
-      refreshToken: json['refresh_token'] as String? ?? '',
-      tokenType: json['token_type'] as String? ?? 'Bearer',
-      expiresIn: json['expires_in'] as int? ?? 3600,
+      accessToken: json['accessToken'] as String? ?? '',
+      refreshToken: json['refreshToken'] as String?,
+      accessTokenExpiresAt: json['accessTokenExpiresAt'] != null
+          ? DateTime.tryParse(json['accessTokenExpiresAt'] as String)
+          : null,
+      user: UserProfile.fromJson(json['user'] as Map<String, dynamic>),
     );
   }
 }

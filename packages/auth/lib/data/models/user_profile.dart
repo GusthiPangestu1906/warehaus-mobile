@@ -1,7 +1,7 @@
 import 'package:auth/domain/entities/user_session.dart';
 
 class UserProfile extends UserSession {
-  UserProfile({
+  const UserProfile({
     required super.id,
     required super.fullName,
     required super.email,

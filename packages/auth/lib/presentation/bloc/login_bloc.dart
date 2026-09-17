@@ -33,7 +33,7 @@ class LoginBloc extends Bloc<LoginEvent, LoginState> {
         await loginUsecase(email: event.email, password: event.password);
         final result = await checkAuthUsecase();
         result.fold(
-          (_) => emit(LoginErrorState(error: 'Gagal memuat data sesi.')),
+          (failure) => emit(LoginErrorState(error: failure.message)),
           (session) => session != null
               ? emit(AuthenticatedState(session: session))
               : emit(LoginErrorState(error: 'Sesi tidak ditemukan.')),

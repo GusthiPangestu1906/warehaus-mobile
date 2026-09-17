@@ -158,13 +158,16 @@ class _FlowManagementPageState extends State<FlowManagementPage>
   Widget build(BuildContext context) {
     // Baca session dari LoginBloc untuk permission check
     final loginState = context.read<LoginBloc>().state;
-    final session =
-        loginState is AuthenticatedState ? loginState.session : null;
+    final session = loginState is AuthenticatedState
+        ? loginState.session
+        : null;
 
     // Inbound tab (index 0) = PO, guard FAB dengan po:create
     // Outbound tab (index 1) = SO, guard FAB dengan so:create
-    final canCreatePo = session?.hasPermission(AppPermissions.poCreate) ?? false;
-    final canCreateSo = session?.hasPermission(AppPermissions.soCreate) ?? false;
+    final canCreatePo =
+        session?.hasPermission(AppPermissions.poCreate) ?? false;
+    final canCreateSo =
+        session?.hasPermission(AppPermissions.soCreate) ?? false;
     final isOutboundTab = _tabController.index == 1;
     final showFab = isOutboundTab ? canCreateSo : canCreatePo;
 
@@ -340,7 +343,9 @@ class _FlowManagementPageState extends State<FlowManagementPage>
                         }
 
                         if (state is SalesOrderLoading) {
-                          return const Center(child: CircularProgressIndicator());
+                          return const Center(
+                            child: CircularProgressIndicator(),
+                          );
                         }
                         if (state is SalesOrderError) {
                           return _RefreshableEmpty(
@@ -656,9 +661,12 @@ class _InboundTabContentState extends State<_InboundTabContent> {
       final status = _mapOrderStatus(order.status);
       final matchesFilter =
           widget.filter == _OrderFilter.all ||
-          (widget.filter == _OrderFilter.queued && status == OrderStatus.queued) ||
-          (widget.filter == _OrderFilter.active && status == OrderStatus.active) ||
-          (widget.filter == _OrderFilter.completed && status == OrderStatus.completed);
+          (widget.filter == _OrderFilter.queued &&
+              status == OrderStatus.queued) ||
+          (widget.filter == _OrderFilter.active &&
+              status == OrderStatus.active) ||
+          (widget.filter == _OrderFilter.completed &&
+              status == OrderStatus.completed);
 
       if (!matchesFilter) return false;
       if (query.isEmpty) return true;
