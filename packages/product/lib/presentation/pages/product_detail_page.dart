@@ -9,7 +9,15 @@ import 'package:product/presentation/pages/edit_product_page.dart';
 
 class ProductDetailPage extends StatefulWidget {
   final String productId;
-  const ProductDetailPage({super.key, required this.productId});
+  final bool canEdit;
+  final bool canDelete;
+
+  const ProductDetailPage({
+    super.key,
+    required this.productId,
+    this.canEdit = false,
+    this.canDelete = false,
+  });
 
   @override
   State<ProductDetailPage> createState() => _ProductDetailPageState();
@@ -245,70 +253,77 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                                 ),
                               ],
                             ),
-                            const SizedBox(height: 14),
-                            Row(
-                              children: [
-                                Expanded(
-                                  child: OutlinedButton.icon(
-                                    onPressed: () =>
-                                        _openEditProductPage(state),
-                                    icon: const Icon(
-                                      Icons.edit_outlined,
-                                      size: 16,
-                                      color: WHColors.primary3,
-                                    ),
-                                    label: Text(
-                                      'Edit',
-                                      style: WHTypography.bodyText.copyWith(
-                                        color: WHColors.primary3,
+                            // Tombol Edit/Delete hanya tampil jika user punya permission
+                            if (widget.canEdit || widget.canDelete) ...
+                              [
+                                const SizedBox(height: 14),
+                                Row(
+                                  children: [
+                                    if (widget.canEdit)
+                                      Expanded(
+                                        child: OutlinedButton.icon(
+                                          onPressed: () =>
+                                              _openEditProductPage(state),
+                                          icon: const Icon(
+                                            Icons.edit_outlined,
+                                            size: 16,
+                                            color: WHColors.primary3,
+                                          ),
+                                          label: Text(
+                                            'Edit',
+                                            style: WHTypography.bodyText.copyWith(
+                                              color: WHColors.primary3,
+                                            ),
+                                          ),
+                                          style: OutlinedButton.styleFrom(
+                                            side: const BorderSide(
+                                              color: WHColors.primary4,
+                                            ),
+                                            padding: const EdgeInsets.symmetric(
+                                              vertical: 10,
+                                            ),
+                                            shape: RoundedRectangleBorder(
+                                              borderRadius: BorderRadius.circular(12),
+                                            ),
+                                          ),
+                                        ),
                                       ),
-                                    ),
-                                    style: OutlinedButton.styleFrom(
-                                      side: const BorderSide(
-                                        color: WHColors.primary4,
+                                    if (widget.canEdit && widget.canDelete)
+                                      const SizedBox(width: 10),
+                                    if (widget.canDelete)
+                                      Expanded(
+                                        child: OutlinedButton.icon(
+                                          onPressed: () => _confirmDeleteProduct(
+                                            widget.productId,
+                                            product.sku,
+                                          ),
+                                          icon: const Icon(
+                                            Icons.delete_outline,
+                                            size: 16,
+                                            color: WHColors.error2,
+                                          ),
+                                          label: Text(
+                                            'Delete',
+                                            style: WHTypography.bodyText.copyWith(
+                                              color: WHColors.error2,
+                                            ),
+                                          ),
+                                          style: OutlinedButton.styleFrom(
+                                            side: const BorderSide(
+                                              color: WHColors.error3,
+                                            ),
+                                            padding: const EdgeInsets.symmetric(
+                                              vertical: 10,
+                                            ),
+                                            shape: RoundedRectangleBorder(
+                                              borderRadius: BorderRadius.circular(12),
+                                            ),
+                                          ),
+                                        ),
                                       ),
-                                      padding: const EdgeInsets.symmetric(
-                                        vertical: 10,
-                                      ),
-                                      shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(12),
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                                const SizedBox(width: 10),
-                                Expanded(
-                                  child: OutlinedButton.icon(
-                                    onPressed: () => _confirmDeleteProduct(
-                                      widget.productId,
-                                      product.sku,
-                                    ),
-                                    icon: const Icon(
-                                      Icons.delete_outline,
-                                      size: 16,
-                                      color: WHColors.error2,
-                                    ),
-                                    label: Text(
-                                      'Delete',
-                                      style: WHTypography.bodyText.copyWith(
-                                        color: WHColors.error2,
-                                      ),
-                                    ),
-                                    style: OutlinedButton.styleFrom(
-                                      side: const BorderSide(
-                                        color: WHColors.error3,
-                                      ),
-                                      padding: const EdgeInsets.symmetric(
-                                        vertical: 10,
-                                      ),
-                                      shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(12),
-                                      ),
-                                    ),
-                                  ),
+                                  ],
                                 ),
                               ],
-                            ),
                           ],
                         ),
                       ),

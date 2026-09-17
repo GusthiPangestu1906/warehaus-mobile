@@ -1,3 +1,6 @@
+import 'package:auth/domain/entities/app_permissions.dart';
+import 'package:auth/presentation/bloc/login_bloc.dart';
+import 'package:auth/presentation/bloc/login_state.dart';
 import 'package:core_ui/core_ui.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -164,6 +167,15 @@ class _ZoneListPageState extends State<ZoneListPage> with RouteAware {
 
   @override
   Widget build(BuildContext context) {
+    // Baca session dari LoginBloc untuk permission check
+    final loginState = context.read<LoginBloc>().state;
+    final session =
+        loginState is AuthenticatedState ? loginState.session : null;
+
+    final canCreate = session?.hasPermission(AppPermissions.zoneCreate) ?? false;
+    final canEdit = session?.hasPermission(AppPermissions.zoneEdit) ?? false;
+    final canDelete = session?.hasPermission(AppPermissions.zoneDelete) ?? false;
+
     return BlocListener<NavigationBloc, NavigationState>(
       listenWhen: (previous, current) =>
           previous.currentIndex != current.currentIndex,
@@ -257,21 +269,23 @@ class _ZoneListPageState extends State<ZoneListPage> with RouteAware {
                     ),
                   ],
                 ),
-                floatingActionButton: FloatingActionButton(
-                  heroTag: 'zone-create-fab',
-                  onPressed: () async {
-                    final navigator = Navigator.of(context);
-                    await navigator.push(
-                      PageRouteBuilder(
-                        pageBuilder: (_, _, _) => const CreateZonePage(),
-                        transitionDuration: Duration.zero,
-                        reverseTransitionDuration: Duration.zero,
-                      ),
-                    );
-                  },
-                  backgroundColor: WHColors.primary,
-                  child: const Icon(Icons.add, color: Colors.white),
-                ),
+                floatingActionButton: canCreate
+                    ? FloatingActionButton(
+                        heroTag: 'zone-create-fab',
+                        onPressed: () async {
+                          final navigator = Navigator.of(context);
+                          await navigator.push(
+                            PageRouteBuilder(
+                              pageBuilder: (_, _, _) => const CreateZonePage(),
+                              transitionDuration: Duration.zero,
+                              reverseTransitionDuration: Duration.zero,
+                            ),
+                          );
+                        },
+                        backgroundColor: WHColors.primary,
+                        child: const Icon(Icons.add, color: Colors.white),
+                      )
+                    : null,
               );
             }
 
@@ -303,10 +317,14 @@ class _ZoneListPageState extends State<ZoneListPage> with RouteAware {
                           itemBuilder: (context, index) {
                             return ZoneCard(
                               zone: zonesToRender[index],
-                              onEdit: () =>
-                                  _showEditZoneDialog(zonesToRender[index]),
-                              onDelete: () =>
-                                  _confirmDeleteZone(zonesToRender[index]),
+                              canEdit: canEdit,
+                              canDelete: canDelete,
+                              onEdit: canEdit
+                                  ? () => _showEditZoneDialog(zonesToRender[index])
+                                  : null,
+                              onDelete: canDelete
+                                  ? () => _confirmDeleteZone(zonesToRender[index])
+                                  : null,
                               onTap: () async {
                                 final navigator = Navigator.of(context);
                                 showDialog(

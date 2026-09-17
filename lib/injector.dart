@@ -1,3 +1,9 @@
+import 'package:auth/data/datasources/auth_remote_datasource.dart';
+import 'package:auth/data/repositories/auth_repository_impl.dart';
+import 'package:auth/domain/usecase/check_auth.dart';
+import 'package:auth/domain/usecase/login.dart';
+import 'package:auth/domain/usecase/logout.dart';
+import 'package:auth/presentation/bloc/login_bloc.dart';
 import 'package:core_services/api/api_client.dart';
 import 'package:core_services/storage/auth_token_storage.dart';
 import 'package:dashboard/services/dashboard_service.dart';
@@ -85,6 +91,29 @@ Future<void> setupInjector() async {
   getIt.registerLazySingleton<Dio>(() => getIt<ApiClient>().dio);
   getIt.registerLazySingleton<DashboardService>(
     () => DashboardService(getIt<Dio>()),
+  );
+
+  // ===========================================================================
+  // FEATURE: AUTH
+  // ===========================================================================
+  getIt.registerLazySingleton<AuthRemoteDatasource>(
+    () => AuthRemoteDatasourceImpl(getIt<ApiClient>()),
+  );
+  getIt.registerLazySingleton<AuthRepositoryImpl>(
+    () => AuthRepositoryImpl(
+      authRemoteDatasource: getIt<AuthRemoteDatasource>(),
+      authTokenStorage: getIt<AuthTokenStorage>(),
+    ),
+  );
+  getIt.registerLazySingleton(() => Login(getIt<AuthRepositoryImpl>()));
+  getIt.registerLazySingleton(() => Logout(getIt<AuthRepositoryImpl>()));
+  getIt.registerLazySingleton(() => CheckAuth(getIt<AuthRepositoryImpl>()));
+  getIt.registerFactory(
+    () => LoginBloc(
+      loginUsecase: getIt<Login>(),
+      logoutUsecase: getIt<Logout>(),
+      checkAuthUsecase: getIt<CheckAuth>(),
+    ),
   );
 
   // ===========================================================================

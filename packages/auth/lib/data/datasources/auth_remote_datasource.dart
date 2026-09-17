@@ -1,5 +1,4 @@
 import 'package:core_services/core_services.dart';
-import 'package:dio/dio.dart';
 import 'package:auth/data/models/token_response_model.dart';
 
 abstract class AuthRemoteDatasource {
@@ -20,9 +19,8 @@ class AuthRemoteDatasourceImpl implements AuthRemoteDatasource {
     required String password,
   }) async {
     final response = await _apiClient.dio.post(
-      '/connect/token',
-      data: {'grant_type': 'password', 'email': email, 'password': password},
-      options: Options(contentType: Headers.formUrlEncodedContentType),
+      '/auth/login',
+      data: {'email': email, 'password': password},
     );
 
     return TokenResponseModel.fromJson(response.data);

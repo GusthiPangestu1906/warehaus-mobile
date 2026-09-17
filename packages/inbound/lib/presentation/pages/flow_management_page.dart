@@ -1,3 +1,6 @@
+import 'package:auth/domain/entities/app_permissions.dart';
+import 'package:auth/presentation/bloc/login_bloc.dart';
+import 'package:auth/presentation/bloc/login_state.dart';
 import 'package:core_ui/core_ui.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -153,6 +156,21 @@ class _FlowManagementPageState extends State<FlowManagementPage>
 
   @override
   Widget build(BuildContext context) {
+    // Baca session dari LoginBloc untuk permission check
+    final loginState = context.read<LoginBloc>().state;
+    final session = loginState is AuthenticatedState
+        ? loginState.session
+        : null;
+
+    // Inbound tab (index 0) = PO, guard FAB dengan po:create
+    // Outbound tab (index 1) = SO, guard FAB dengan so:create
+    final canCreatePo =
+        session?.hasPermission(AppPermissions.poCreate) ?? false;
+    final canCreateSo =
+        session?.hasPermission(AppPermissions.soCreate) ?? false;
+    final isOutboundTab = _tabController.index == 1;
+    final showFab = isOutboundTab ? canCreateSo : canCreatePo;
+
     return MultiBlocProvider(
       providers: [
         BlocProvider.value(value: _salesOrderBloc),
@@ -325,7 +343,9 @@ class _FlowManagementPageState extends State<FlowManagementPage>
                         }
 
                         if (state is SalesOrderLoading) {
-                          return const Center(child: CircularProgressIndicator());
+                          return const Center(
+                            child: CircularProgressIndicator(),
+                          );
                         }
                         if (state is SalesOrderError) {
                           return _RefreshableEmpty(
@@ -345,12 +365,14 @@ class _FlowManagementPageState extends State<FlowManagementPage>
               ),
             ],
           ),
-          floatingActionButton: FloatingActionButton(
-            heroTag: 'flow-create-fab',
-            onPressed: _onFabPressed,
-            backgroundColor: WHColors.primary3,
-            child: const Icon(Icons.add, color: WHColors.surface),
-          ),
+          floatingActionButton: showFab
+              ? FloatingActionButton(
+                  heroTag: 'flow-create-fab',
+                  onPressed: _onFabPressed,
+                  backgroundColor: WHColors.primary3,
+                  child: const Icon(Icons.add, color: WHColors.surface),
+                )
+              : null,
         ),
       ),
     );
@@ -639,9 +661,12 @@ class _InboundTabContentState extends State<_InboundTabContent> {
       final status = _mapOrderStatus(order.status);
       final matchesFilter =
           widget.filter == _OrderFilter.all ||
-          (widget.filter == _OrderFilter.queued && status == OrderStatus.queued) ||
-          (widget.filter == _OrderFilter.active && status == OrderStatus.active) ||
-          (widget.filter == _OrderFilter.completed && status == OrderStatus.completed);
+          (widget.filter == _OrderFilter.queued &&
+              status == OrderStatus.queued) ||
+          (widget.filter == _OrderFilter.active &&
+              status == OrderStatus.active) ||
+          (widget.filter == _OrderFilter.completed &&
+              status == OrderStatus.completed);
 
       if (!matchesFilter) return false;
       if (query.isEmpty) return true;
