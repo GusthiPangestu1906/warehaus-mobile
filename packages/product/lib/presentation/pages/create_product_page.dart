@@ -20,17 +20,8 @@ class _CreateProductPageState extends State<CreateProductPage> {
   final _productNameController = TextEditingController();
   final _qrCodeController = TextEditingController();
   final _unitOfMeasureController = TextEditingController();
-  // local-only UI selection for category (not sent to backend in current model)
-  String? _selectedCategory;
   String? _selectedUnit;
   int? _selectedCategoryId;
-
-  // Use shared style tokens
-  static const _primaryOrange = WHStyles.primary;
-  static const _borderColor = WHStyles.border;
-  static const _hintColor = WHStyles.hint;
-
-  List<Category> _categories = [];
 
   final List<String> _unitOptions = ['PCS', 'BOX', 'KG', 'L'];
 
@@ -86,119 +77,6 @@ class _CreateProductPageState extends State<CreateProductPage> {
         categoryId: _selectedCategoryId,
         unitOfMeasure: _selectedUnit!.trim(),
       ),
-    );
-  }
-
-  // barcode scanner removed for this iteration
-
-  InputDecoration _inputDecoration(String hint) => InputDecoration(
-    hintText: hint,
-    hintStyle: TextStyle(color: _hintColor, fontSize: 13),
-    contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
-    filled: true,
-    fillColor: WHStyles.inputFill,
-    border: OutlineInputBorder(
-      borderRadius: BorderRadius.circular(WHStyles.inputRadius),
-      borderSide: BorderSide(color: _borderColor, width: 1.2),
-    ),
-    enabledBorder: OutlineInputBorder(
-      borderRadius: BorderRadius.circular(WHStyles.inputRadius),
-      borderSide: BorderSide(color: _borderColor, width: 1.2),
-    ),
-    focusedBorder: OutlineInputBorder(
-      borderRadius: BorderRadius.circular(WHStyles.inputRadius),
-      borderSide: BorderSide(color: _hintColor, width: 1.2),
-    ),
-  );
-
-  Widget _label(String text) => Padding(
-    padding: const EdgeInsets.only(bottom: 6),
-    child: Text(
-      text,
-      style: const TextStyle(
-        fontSize: 13,
-        fontWeight: FontWeight.w500,
-        color: WHColors.textPrimary,
-      ),
-    ),
-  );
-
-  Widget _buildField({
-    required String label,
-    required TextEditingController controller,
-    required String hint,
-    String? Function(String?)? validator,
-    Widget? suffixIcon,
-  }) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        _label(label),
-        Container(
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: _borderColor),
-          ),
-          padding: const EdgeInsets.all(10),
-          child: TextFormField(
-            controller: controller,
-            style: const TextStyle(fontSize: 13),
-            decoration: _inputDecoration(hint).copyWith(suffixIcon: suffixIcon),
-            validator: validator,
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildDropdownField({
-    required String label,
-    required String? value,
-    required List<String> items,
-    required void Function(String?) onChanged,
-    String? hint,
-  }) {
-    // Outer white rounded card and inner pale filled rounded pill to match
-    // the product screenshot. The inner container holds the dropdown.
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        _label(label),
-        const SizedBox(height: 6),
-        Container(
-          padding: const EdgeInsets.all(12),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: _borderColor, width: 1.0),
-          ),
-          child: Container(
-            decoration: BoxDecoration(
-              color: WHStyles.inputFill,
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: _borderColor, width: 1.0),
-            ),
-            padding: const EdgeInsets.symmetric(horizontal: 12),
-            child: DropdownButtonFormField<String>(
-              isExpanded: true,
-              value: value,
-              items: items
-                  .map((e) => DropdownMenuItem(value: e, child: Text(e)))
-                  .toList(),
-              onChanged: onChanged,
-              icon: Icon(Icons.keyboard_arrow_down, color: _hintColor),
-              hint: hint != null
-                  ? Text(hint, style: TextStyle(color: _hintColor))
-                  : null,
-              decoration: const InputDecoration(
-                border: InputBorder.none,
-                contentPadding: EdgeInsets.symmetric(vertical: 12),
-              ),
-            ),
-          ),
-        ),
-      ],
     );
   }
 
@@ -317,35 +195,22 @@ class _CreateProductPageState extends State<CreateProductPage> {
                 ),
               ),
             ),
-            Padding(
-              padding: const EdgeInsets.all(16),
-              child: SizedBox(
-                width: double.infinity,
-                child: ElevatedButton.icon(
-                  onPressed: _submit,
-                  icon: const Icon(
-                    Icons.check_circle_outline,
-                    size: 17,
-                    color: Colors.white,
-                  ),
-                  label: const Text(
-                    'Save Product',
-                    style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
-                      color: Colors.white,
+            BlocBuilder<ProductBloc, ProductState>(
+              builder: (context, state) {
+                return Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: SizedBox(
+                    width: double.infinity,
+                    child: WHButton(
+                      label: 'Save Product',
+                      icon: Icons.check_circle_outline,
+                      onPressed: state is ProductLoading ? null : _submit,
+                      backgroundColor: WHColors.secondary,
+                      isLoading: state is ProductLoading,
                     ),
                   ),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: _primaryOrange,
-                    padding: const EdgeInsets.symmetric(vertical: 14),
-                    shape: const RoundedRectangleBorder(
-                      borderRadius: BorderRadius.zero,
-                    ),
-                    elevation: 0,
-                  ),
-                ),
-              ),
+                );
+              },
             ),
           ],
         ),

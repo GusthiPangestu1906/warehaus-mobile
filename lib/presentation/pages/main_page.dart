@@ -2,6 +2,7 @@ import 'package:auth/domain/entities/app_permissions.dart';
 import 'package:auth/domain/entities/user_session.dart';
 import 'package:auth/presentation/bloc/login_bloc.dart';
 import 'package:auth/presentation/bloc/login_state.dart';
+import 'package:auth/presentation/pages/setting_page.dart';
 import 'package:core_ui/core_ui.dart';
 import 'package:dashboard/presentation/pages/dashboard_page.dart';
 import 'package:flutter/material.dart';
@@ -90,6 +91,18 @@ List<_TabEntry> _buildAllowedTabs(UserSession session) {
       ),
     );
   }
+
+  // Setting
+  tabs.add(
+    const _TabEntry(
+      page: SettingPage(),
+      navItem: WHBottomNavItem(
+        icon: Icons.settings_outlined,
+        activeIcon: Icons.settings,
+        label: 'SETTING',
+      ),
+    ),
+  );
 
   return tabs;
 }

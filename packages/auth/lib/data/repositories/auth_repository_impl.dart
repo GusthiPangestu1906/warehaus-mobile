@@ -48,6 +48,8 @@ class AuthRepositoryImpl with RepositoryHelper implements AuthRepository {
   @override
   Future<Either<Failure, Unit>> logout() {
     return execute(() async {
+      await _authRemoteDatasource.logout();
+
       await _authTokenStorage.clearTokens();
       return unit;
     });

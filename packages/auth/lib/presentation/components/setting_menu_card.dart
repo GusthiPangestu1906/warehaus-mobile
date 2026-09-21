@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:core_ui/core_ui.dart';
 
 class SettingMenuCard extends StatelessWidget {
   final IconData icon;
   final String title;
   final String? subtitle;
   final bool hasChevron;
-  final bool isDanger;
+  final bool? isTop;
+  final bool? isBottom;
   final VoidCallback? onTap;
 
   const SettingMenuCard({
@@ -14,55 +16,34 @@ class SettingMenuCard extends StatelessWidget {
     required this.title,
     this.subtitle,
     this.hasChevron = false,
-    this.isDanger = false,
+    this.isTop,
+    this.isBottom,
     this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
-    // Gaya khusus untuk tombol Keluar (Danger)
-    if (isDanger) {
-      return InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(12),
-        child: Container(
-          width: double.infinity,
-          padding: const EdgeInsets.symmetric(vertical: 16),
-          decoration: BoxDecoration(
-            color: const Color(0xFFFFEBEB), // Merah muda terang
-            borderRadius: BorderRadius.circular(12),
-          ),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(icon, color: const Color(0xFFB71C1C)),
-              const SizedBox(width: 8),
-              Text(
-                title,
-                style: const TextStyle(
-                  color: Color(0xFFB71C1C),
-                  fontWeight: FontWeight.bold,
-                  fontSize: 16,
-                ),
-              ),
-            ],
-          ),
-        ),
-      );
-    }
-
     // Gaya standar untuk List Item
     return InkWell(
       onTap: onTap,
-      child: Padding(
+      child: Container(
         padding: const EdgeInsets.all(16.0),
+        decoration: BoxDecoration(
+          color: WHColors.surface,
+          borderRadius: isTop == true || isBottom == true
+              ? BorderRadius.vertical(
+                  top: isTop == true ? Radius.circular(12) : Radius.zero,
+                  bottom: isBottom == true ? Radius.circular(12) : Radius.zero,
+                )
+              : BorderRadius.circular(12),
+        ),
         child: Row(
           children: [
             Container(
               width: 48,
               height: 48,
               decoration: BoxDecoration(
-                color: const Color(0xFFE8F0FE), // Biru muda terang
+                color: const Color(0xFFE8F0FE),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Icon(icon, color: const Color(0xFF1565C0)),

@@ -160,11 +160,15 @@ class _LoginPageState extends State<LoginPage> {
 
                   const SizedBox(height: 28),
 
-                  // button
-                  WHButton(
-                    label: 'Login',
-                    backgroundColor: WHColors.secondary,
-                    onPressed: handleLogin,
+                  BlocBuilder<LoginBloc, LoginState>(
+                    builder: (context, state) {
+                      return WHButton(
+                        label: 'Login',
+                        backgroundColor: WHColors.secondary,
+                        onPressed: handleLogin,
+                        isLoading: state is LoginLoadingState,
+                      );
+                    },
                   ),
 
                   const SizedBox(height: 16),

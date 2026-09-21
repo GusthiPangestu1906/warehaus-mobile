@@ -25,6 +25,7 @@ class SettingPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: WHAppbar(title: 'Settings'),
+      backgroundColor: WHColors.background,
       body: BlocListener<LoginBloc, LoginState>(
         listener: (context, state) {
           if (state is LogoutSuccessState) {
@@ -43,52 +44,61 @@ class SettingPage extends StatelessWidget {
               return const Center(child: CircularProgressIndicator());
             }
 
-            return Column(
-              spacing: 32,
-              children: [
-                // icon hero
-                SettingHero(
-                  fullName: session.fullName,
-                  email: session.email,
-                  status: session.status,
-                ),
+            return Padding(
+              padding: const EdgeInsets.all(16.0),
 
-                // setting list
-                Column(
-                  spacing: 24,
-                  children: [
-                    // phone
-                    SettingMenuCard(
-                      icon: Icons.phone,
-                      title: 'Phone Number',
-                      subtitle: session.phoneNumber,
-                    ),
+              child: Column(
+                spacing: 8,
+                children: [
+                  // icon hero
+                  SettingHero(
+                    fullName: session.fullName,
+                    email: session.email,
+                    status: session.status,
+                  ),
 
-                    // warehouse name
-                    SettingMenuCard(
-                      icon: Icons.warehouse,
-                      title: 'Warehouse Name',
-                      subtitle: session.warehouseName,
-                    ),
+                  // setting list
+                  Column(
+                    children: [
+                      // phone
+                      SettingMenuCard(
+                        icon: Icons.phone,
+                        title: 'Phone Number',
+                        subtitle: session.phoneNumber,
+                        isTop: true,
+                      ),
 
-                    // change password
-                    SettingMenuCard(
-                      icon: Icons.lock,
-                      title: 'Change Password',
-                      hasChevron: true,
-                      onTap: () => onChangePassword(context),
-                    ),
+                      // warehouse name
+                      SettingMenuCard(
+                        icon: Icons.warehouse,
+                        title: 'Warehouse Name',
+                        subtitle: session.warehouseName,
+                        isBottom: true,
+                      ),
 
-                    // logout
-                    SettingMenuCard(
-                      icon: Icons.logout,
-                      title: 'Logout',
-                      isDanger: true,
-                      onTap: () => handleLogout(context),
-                    ),
-                  ],
-                ),
-              ],
+                      const SizedBox(height: 16),
+
+                      // change password
+                      SettingMenuCard(
+                        icon: Icons.lock,
+                        title: 'Change Password',
+                        hasChevron: true,
+                        onTap: () => onChangePassword(context),
+                      ),
+
+                      const SizedBox(height: 8),
+
+                      // logout
+                      WHButton(
+                        label: "Logout",
+                        icon: Icons.logout,
+                        backgroundColor: WHColors.error,
+                        onPressed: () => handleLogout(context),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
             );
           },
         ),

@@ -6,6 +6,8 @@ abstract class AuthRemoteDatasource {
     required String email,
     required String password,
   });
+
+  Future<void> logout();
 }
 
 class AuthRemoteDatasourceImpl implements AuthRemoteDatasource {
@@ -24,5 +26,11 @@ class AuthRemoteDatasourceImpl implements AuthRemoteDatasource {
     );
 
     return TokenResponseModel.fromJson(response.data);
+  }
+
+  // Logout
+  @override
+  Future<void> logout() async {
+    await _apiClient.dio.post('/auth/logout');
   }
 }

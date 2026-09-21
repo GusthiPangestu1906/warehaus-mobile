@@ -1,4 +1,3 @@
-import 'package:auth/presentation/components/icon_hero.dart';
 import 'package:core_ui/core_ui.dart';
 import 'package:flutter/material.dart';
 
@@ -16,14 +15,16 @@ class SettingHero extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
+    return Container(
+      width: double.infinity,
       padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 32.0),
+      decoration: const BoxDecoration(
+        color: WHColors.surface,
+        borderRadius: BorderRadius.all(Radius.circular(16)),
+      ),
       child: Column(
         spacing: 16,
         children: [
-          // icon hero
-          const IconHero(),
-
           // fullName and email
           Column(
             mainAxisAlignment: MainAxisAlignment.center,
@@ -42,9 +43,9 @@ class SettingHero extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 decoration: BoxDecoration(
-                  color: status == 'active'
-                      ? WHColors.success.withValues(alpha: 0.1)
-                      : WHColors.error.withValues(alpha: 0.1),
+                  color: status == 'Active'
+                      ? WHColors.success3
+                      : WHColors.error3,
                   borderRadius: BorderRadius.circular(4),
                 ),
                 child: Text(status, style: WHTypography.bodyText),
