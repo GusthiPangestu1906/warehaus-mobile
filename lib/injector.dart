@@ -37,10 +37,14 @@ import 'package:outbound/data/repositories/sales_order_repository_impl.dart';
 import 'package:outbound/domain/usecases/create_sales_order.dart';
 import 'package:outbound/domain/usecases/delete_sales_order.dart';
 import 'package:outbound/domain/usecases/form/get_cities.dart' as outbound_form;
-import 'package:outbound/domain/usecases/form/get_couriers.dart' as outbound_form;
-import 'package:outbound/domain/usecases/form/get_districts.dart' as outbound_form;
-import 'package:outbound/domain/usecases/form/get_products.dart' as outbound_form;
-import 'package:outbound/domain/usecases/form/get_provinces.dart' as outbound_form;
+import 'package:outbound/domain/usecases/form/get_couriers.dart'
+    as outbound_form;
+import 'package:outbound/domain/usecases/form/get_districts.dart'
+    as outbound_form;
+import 'package:outbound/domain/usecases/form/get_products.dart'
+    as outbound_form;
+import 'package:outbound/domain/usecases/form/get_provinces.dart'
+    as outbound_form;
 import 'package:outbound/domain/usecases/get_sales_orders.dart';
 import 'package:outbound/domain/usecases/update_sales_order.dart';
 import 'package:outbound/domain/usecases/update_sales_order_tracking.dart';
@@ -65,6 +69,7 @@ import 'package:zone/domain/usecases/create_zone.dart';
 import 'package:zone/domain/usecases/delete_zone.dart';
 import 'package:zone/domain/usecases/download_aisle_qr.dart';
 import 'package:zone/domain/usecases/download_shelf_qr.dart';
+import 'package:zone/presentation/widgets/download_qr.dart';
 import 'package:zone/domain/usecases/get_shelf_details.dart';
 import 'package:zone/domain/usecases/get_zone_by_aisle.dart';
 import 'package:zone/domain/usecases/get_zone_details.dart';
@@ -147,6 +152,7 @@ Future<void> setupInjector() async {
   getIt.registerLazySingleton(
     () => DownloadShelfQr(getIt<ZoneRepositoryImpl>()),
   );
+  getIt.registerLazySingleton(() => QRDownloader());
 
   // BLoC
   getIt.registerFactory(
@@ -249,9 +255,7 @@ Future<void> setupInjector() async {
   getIt.registerLazySingleton(
     () => DeletePurchaseOrder(getIt<PurchaseOrderRepositoryImpl>()),
   );
-  getIt.registerLazySingleton<LocalFileService>(
-    () => LocalFileServiceImpl(),
-  );
+  getIt.registerLazySingleton<LocalFileService>(() => LocalFileServiceImpl());
   getIt.registerLazySingleton(
     () => DownloadPurchaseOrderPdf(
       getIt<PurchaseOrderRepositoryImpl>(),
@@ -354,11 +358,19 @@ Future<void> setupInjector() async {
 
   getIt.registerFactory(
     () => SalesOrderFormCubit(
-      getProductsUseCase: outbound_form.GetProducts(getIt<FormRepositoryImpl>()),
-      getCouriersUseCase: outbound_form.GetCouriers(getIt<FormRepositoryImpl>()),
-      getProvincesUseCase: outbound_form.GetProvinces(getIt<FormRepositoryImpl>()),
+      getProductsUseCase: outbound_form.GetProducts(
+        getIt<FormRepositoryImpl>(),
+      ),
+      getCouriersUseCase: outbound_form.GetCouriers(
+        getIt<FormRepositoryImpl>(),
+      ),
+      getProvincesUseCase: outbound_form.GetProvinces(
+        getIt<FormRepositoryImpl>(),
+      ),
       getCitiesUseCase: outbound_form.GetCities(getIt<FormRepositoryImpl>()),
-      getDistrictsUseCase: outbound_form.GetDistricts(getIt<FormRepositoryImpl>()),
+      getDistrictsUseCase: outbound_form.GetDistricts(
+        getIt<FormRepositoryImpl>(),
+      ),
     ),
   );
 }
