@@ -229,7 +229,7 @@ class _InboundOrderListPageState extends State<InboundOrderListPage>
             if (_selectedDate != null) ...[
               const SizedBox(height: 10),
               _DateFilterSummary(
-                label: DateFormat('dd/MM/yyyy').format(_selectedDate!),
+                label: DateFormat('dd MMM yyyy').format(_selectedDate!),
                 onClear: _clearFilterDate,
               ),
             ],
@@ -309,7 +309,7 @@ class _InboundOrderListPageState extends State<InboundOrderListPage>
                         itemBuilder: (context, index) {
                           final order = filteredOrders[index];
                           final String formattedDate = DateFormat(
-                            'dd/MM/yyyy',
+                            'dd MMM yyyy',
                           ).format(order.createdAt);
 
                           return OrderCard(

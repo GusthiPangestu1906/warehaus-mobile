@@ -102,18 +102,6 @@ class _CreateSalesOrderViewState extends State<_CreateSalesOrderView> {
     super.dispose();
   }
 
-  Future<void> _pickDate() async {
-    final picked = await showDatePicker(
-      context: context,
-      initialDate: _requiredDeliveryDate ?? _today.add(const Duration(days: 1)),
-      firstDate: _today,
-      lastDate: _today.add(const Duration(days: 365)),
-    );
-    if (picked != null) {
-      setState(() => _requiredDeliveryDate = picked);
-    }
-  }
-
   void _refreshNoteCounter() {
     if (mounted) setState(() {});
   }
@@ -314,19 +302,12 @@ class _CreateSalesOrderViewState extends State<_CreateSalesOrderView> {
 
   List<Map<String, dynamic>> _couriersToMaps(List<Courier> couriers) {
     return couriers
-        .map(
-          (c) => {
-            'id': c.code.hashCode,
-            'name': c.name,
-          },
-        )
+        .map((c) => {'id': c.code.hashCode, 'name': c.name})
         .toList();
   }
 
   List<Map<String, dynamic>> _regionsToMaps(List<Region> regions) {
-    return regions
-        .map((r) => {'code': r.code, 'name': r.name})
-        .toList();
+    return regions.map((r) => {'code': r.code, 'name': r.name}).toList();
   }
 
   String _toUtcDateString(DateTime date) {
@@ -343,7 +324,9 @@ class _CreateSalesOrderViewState extends State<_CreateSalesOrderView> {
               previous.errorMessage != current.errorMessage,
           listener: (context, state) {
             if (_selectedCourierId == null && state.couriers.isNotEmpty) {
-              setState(() => _selectedCourierId = _firstCourierId(state.couriers));
+              setState(
+                () => _selectedCourierId = _firstCourierId(state.couriers),
+              );
             }
 
             final errorMessage = state.errorMessage;
@@ -403,7 +386,9 @@ class _CreateSalesOrderViewState extends State<_CreateSalesOrderView> {
       lines: _productLines,
       products: _productsToMaps(formState.products),
       isLoadingProducts: formState.isLoadingProducts,
-      onPickDate: _pickDate,
+      onDateSelected: (date) {
+        setState(() => _requiredDeliveryDate = date);
+      },
       onAddProduct: _addProductLine,
       onDeleteProduct: _deleteProductLine,
       onProductChanged: _setProduct,

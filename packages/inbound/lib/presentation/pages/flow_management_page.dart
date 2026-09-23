@@ -485,9 +485,7 @@ class _FlowManagementPageState extends State<FlowManagementPage>
     final parsed = DateTime.tryParse(value);
     if (parsed == null) return '-';
     final local = parsed.toLocal();
-    final day = local.day.toString().padLeft(2, '0');
-    final month = local.month.toString().padLeft(2, '0');
-    return '$day/$month/${local.year}';
+    return DateFormat('dd MMM yyyy').format(local);
   }
 
   String _shortCourierName(String? value) {

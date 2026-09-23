@@ -1,13 +1,13 @@
+import 'package:auth/presentation/bloc/auth_bloc.dart';
 import 'package:auth/presentation/bloc/auth_event.dart';
+import 'package:auth/presentation/bloc/auth_state.dart';
 import 'package:auth/presentation/components/setting_hero.dart';
 import 'package:auth/presentation/components/setting_menu_card.dart';
-import 'package:auth/presentation/bloc/auth_bloc.dart';
-import 'package:auth/presentation/bloc/auth_state.dart';
-import 'package:auth/presentation/pages/login_page.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:flutter/material.dart';
-import 'package:core_ui/core_ui.dart';
 import 'package:auth/presentation/pages/change_password.dart';
+import 'package:auth/presentation/pages/login_page.dart';
+import 'package:core_ui/core_ui.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 
 class SettingPage extends StatefulWidget {
   const SettingPage({super.key});
@@ -20,9 +20,9 @@ class _SettingPageState extends State<SettingPage> {
   bool _isLoggingOut = false;
 
   void _onChangePassword() {
-    Navigator.of(context).push(
-      MaterialPageRoute<void>(builder: (_) => const ChangePassword()),
-    );
+    Navigator.of(
+      context,
+    ).push(MaterialPageRoute<void>(builder: (_) => const ChangePassword()));
   }
 
   void _handleLogout() {
@@ -60,8 +60,7 @@ class _SettingPageState extends State<SettingPage> {
           (prev is AuthenticatedState && curr is! AuthenticatedState),
       builder: (context, state) {
         // Simpan session dari last AuthenticatedState
-        final session =
-            state is AuthenticatedState ? state.session : null;
+        final session = state is AuthenticatedState ? state.session : null;
 
         if (session == null) {
           // Hanya tampil saat pertama kali load (belum ada session sama sekali)
@@ -104,14 +103,13 @@ class _SettingPageState extends State<SettingPage> {
 
                     const SizedBox(height: 16),
 
-                    // change password
-                    SettingMenuCard(
-                      icon: Icons.lock,
-                      title: 'Change Password',
-                      hasChevron: true,
-                      onTap: _onChangePassword,
-                    ),
-
+                    // deleted change password
+                    // SettingMenuCard(
+                    //   icon: Icons.lock,
+                    //   title: 'Change Password',
+                    //   hasChevron: true,
+                    //   onTap: _onChangePassword,
+                    // ),
                     const SizedBox(height: 8),
 
                     // logout — loading hanya pada tombol

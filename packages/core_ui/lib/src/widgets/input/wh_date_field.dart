@@ -9,8 +9,9 @@ class WHDateField extends StatefulWidget {
     this.onDateSelected,
     this.errorText,
     this.helperText,
-    this.hintText = 'dd/mm/yyyy',
+    this.hintText = 'dd MMM yyyy',
     this.isDisabled = false,
+    this.isPast = false,
     this.firstDate,
     this.lastDate,
     this.dateFormat,
@@ -24,11 +25,13 @@ class WHDateField extends StatefulWidget {
   final String? helperText;
   final String hintText;
   final bool isDisabled;
+
+  /// Whether dates before today can be selected.
+  final bool isPast;
   final DateTime? firstDate;
   final DateTime? lastDate;
 
-  /// Custom formatter. Default: dd/MM/yyyy
-  /// Contoh: (date) => '${date.day} ${_monthName(date.month)} ${date.year}'
+  /// Custom formatter. Default: dd MMM yyyy.
   final String Function(DateTime)? dateFormat;
   final bool flat;
 
@@ -99,10 +102,22 @@ class _WHDateFieldState extends State<WHDateField> {
 
   String _formatDate(DateTime date) {
     if (widget.dateFormat != null) return widget.dateFormat!(date);
-    final d = date.day.toString().padLeft(2, '0');
-    final m = date.month.toString().padLeft(2, '0');
-    final y = date.year.toString();
-    return '$d/$m/$y';
+    const months = [
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec',
+    ];
+    final day = date.day.toString().padLeft(2, '0');
+    return '$day ${months[date.month - 1]} ${date.year}';
   }
 
   Future<void> _pickDate() async {
@@ -110,12 +125,32 @@ class _WHDateFieldState extends State<WHDateField> {
 
     setState(() => _isFocused = true);
 
-    final now = DateTime.now();
+    final today = DateUtils.dateOnly(DateTime.now());
+    final configuredFirstDate = DateUtils.dateOnly(
+      widget.firstDate ?? DateTime(2000),
+    );
+    final firstDate = !widget.isPast && configuredFirstDate.isBefore(today)
+        ? today
+        : configuredFirstDate;
+    final lastDate = DateUtils.dateOnly(widget.lastDate ?? DateTime(2100));
+
+    assert(
+      !lastDate.isBefore(firstDate),
+      'WHDateField.lastDate must not be before the effective firstDate.',
+    );
+
+    final selectedDate = DateUtils.dateOnly(widget.selectedDate ?? today);
+    final initialDate = selectedDate.isBefore(firstDate)
+        ? firstDate
+        : selectedDate.isAfter(lastDate)
+        ? lastDate
+        : selectedDate;
+
     final picked = await showDatePicker(
       context: context,
-      initialDate: widget.selectedDate ?? now,
-      firstDate: widget.firstDate ?? DateTime(2000),
-      lastDate: widget.lastDate ?? DateTime(2100),
+      initialDate: initialDate,
+      firstDate: firstDate,
+      lastDate: lastDate,
       builder: (context, child) {
         return Theme(
           data: Theme.of(context).copyWith(
@@ -139,6 +174,7 @@ class _WHDateFieldState extends State<WHDateField> {
       },
     );
 
+    if (!mounted) return;
     setState(() => _isFocused = false);
 
     if (picked != null) {
@@ -164,13 +200,10 @@ class _WHDateFieldState extends State<WHDateField> {
         child: InkWell(
           onTap: widget.isDisabled ? null : _pickDate,
           borderRadius: BorderRadius.circular(_borderRadius),
-          splashColor: WHColors.primary6.withOpacity(0.3),
-          highlightColor: WHColors.primary6.withOpacity(0.15),
+          splashColor: WHColors.primary6.withValues(alpha: 0.3),
+          highlightColor: WHColors.primary6.withValues(alpha: 0.15),
           child: Padding(
-            padding: const EdgeInsets.symmetric(
-              horizontal: 14,
-              vertical: 13,
-            ),
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 13),
             child: Row(
               children: [
                 // Calendar icon

@@ -103,11 +103,22 @@ class _ProductTile extends StatelessWidget {
                 children: [
                   Text('Qty', style: WHTypography.caption),
                   const SizedBox(height: 4),
-                  Text(
-                    product.qtyExpected.toString(),
-                    style: WHTypography.bodyText.copyWith(
-                      fontWeight: FontWeight.w700,
-                    ),
+                  Row(
+                    children: [
+                      Text(
+                        product.qtyExpected.toString(),
+                        style: WHTypography.bodyText.copyWith(
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                      const SizedBox(width: 4),
+                      Text(
+                        product.productDetail?.unitOfMeasure ?? '',
+                        style: WHTypography.caption.copyWith(
+                          color: WHColors.grey2,
+                        ),
+                      ),
+                    ],
                   ),
                 ],
               ),

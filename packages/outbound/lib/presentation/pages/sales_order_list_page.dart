@@ -194,7 +194,7 @@ class _SalesOrderListPageState extends State<SalesOrderListPage> {
     final parsed = DateTime.tryParse(value);
     if (parsed == null) return '-';
     final local = parsed.toLocal();
-    return DateFormat('dd MMMM yyyy').format(local);
+    return DateFormat('dd MMM yyyy').format(local);
   }
 
   String _formatSalesOrderNumber(SalesOrder order) {

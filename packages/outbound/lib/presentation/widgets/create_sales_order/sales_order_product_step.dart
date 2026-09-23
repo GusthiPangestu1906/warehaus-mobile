@@ -1,6 +1,5 @@
 import 'package:core_ui/core_ui.dart';
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
 import 'package:outbound/presentation/models/sales_order_product_line.dart';
 import 'package:outbound/presentation/widgets/create_sales_order/sales_order_form_styles.dart';
 
@@ -9,7 +8,7 @@ class SalesOrderProductStep extends StatelessWidget {
   final List<SalesOrderProductLine> lines;
   final List<Map<String, dynamic>> products;
   final bool isLoadingProducts;
-  final VoidCallback onPickDate;
+  final ValueChanged<DateTime> onDateSelected;
   final VoidCallback onAddProduct;
   final void Function(int index) onDeleteProduct;
   final void Function(int index, int? productId) onProductChanged;
@@ -21,7 +20,7 @@ class SalesOrderProductStep extends StatelessWidget {
     required this.lines,
     required this.products,
     required this.isLoadingProducts,
-    required this.onPickDate,
+    required this.onDateSelected,
     required this.onAddProduct,
     required this.onDeleteProduct,
     required this.onProductChanged,
@@ -33,7 +32,7 @@ class SalesOrderProductStep extends StatelessWidget {
     return ListView(
       padding: const EdgeInsets.fromLTRB(24, 24, 24, 24),
       children: [
-        _DateCard(value: requiredDeliveryDate, onTap: onPickDate),
+        _DateCard(value: requiredDeliveryDate, onDateSelected: onDateSelected),
         const SizedBox(height: 20),
         const Text(
           'Product List',
@@ -57,34 +56,22 @@ class SalesOrderProductStep extends StatelessWidget {
       ],
     );
   }
-
-  String _formatDate(DateTime date) {
-    final day = date.day.toString().padLeft(2, '0');
-    final month = date.month.toString().padLeft(2, '0');
-    return '$day/$month/${date.year}';
-  }
 }
 
 class _DateCard extends StatelessWidget {
   final DateTime? value;
-  final VoidCallback onTap;
+  final ValueChanged<DateTime> onDateSelected;
 
-  const _DateCard({required this.value, required this.onTap});
-
-  String _formatDate(DateTime date) {
-    final day = date.day.toString().padLeft(2, '0');
-    final month = date.month.toString().padLeft(2, '0');
-    return '$day/$month/${date.year}';
-  }
+  const _DateCard({required this.value, required this.onDateSelected});
 
   @override
   Widget build(BuildContext context) {
     return WHDateField(
       label: 'Required Delivery Date / SLA',
       selectedDate: value,
-      onDateSelected: (date) => onTap(),
-      hintText: 'Select Date',
-      dateFormat: (date) => DateFormat('dd MMMM yyyy').format(date),
+      onDateSelected: onDateSelected,
+      isPast: false,
+      lastDate: DateTime.now().add(const Duration(days: 365)),
     );
   }
 }

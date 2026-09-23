@@ -51,7 +51,7 @@ class _QualityControlPageState extends State<QualityControlPage> {
       item.id,
       () => QcFormData(
         receivedQty: item.qtyReceived,
-        expiryDate: DateTime(2025, 12, 31),
+        expiryDate: DateUtils.dateOnly(DateTime.now()),
       ),
     );
   }

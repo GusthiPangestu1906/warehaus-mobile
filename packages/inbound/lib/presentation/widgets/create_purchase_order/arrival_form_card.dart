@@ -4,7 +4,6 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:inbound/domain/entities/carrier.dart';
 import 'package:inbound/presentation/bloc/carrier/carrier_cubit.dart';
 import 'package:inbound/presentation/bloc/carrier/carrier_state.dart';
-import 'package:intl/intl.dart';
 
 class ArrivalFormCard extends StatefulWidget {
   const ArrivalFormCard({
@@ -85,8 +84,7 @@ class _ArrivalFormCardState extends State<ArrivalFormCard> {
                         const SizedBox(height: 16),
                         WHDateField(
                           label: 'Expected Arrival Date (ETA):',
-                          hintText: 'dd mmm yyyy',
-                          dateFormat: (date) => DateFormat('dd MMM yyyy').format(date),
+                          isPast: false,
                           selectedDate: etaText.isEmpty
                               ? null
                               : DateTime.tryParse(etaText),

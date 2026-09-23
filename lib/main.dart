@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:inbound/presentation/bloc/carrier/carrier_cubit.dart';
+import 'package:inbound/presentation/bloc/inbound/inbound_bloc.dart';
 import 'package:inbound/presentation/bloc/purchase_order/purchase_order_bloc.dart';
 import 'package:mobile/presentation/bloc/navigation_bloc.dart';
 import 'package:mobile/presentation/pages/splash_page.dart';
@@ -31,6 +32,7 @@ class MyApp extends StatelessWidget {
         BlocProvider<PurchaseOrderBloc>(
           create: (context) => getIt<PurchaseOrderBloc>(),
         ),
+        BlocProvider<InboundBloc>(create: (context) => getIt<InboundBloc>()),
         BlocProvider<ProductBloc>(create: (context) => getIt<ProductBloc>()),
         BlocProvider<ZoneBloc>(create: (context) => getIt<ZoneBloc>()),
         BlocProvider<CarrierCubit>(create: (context) => getIt<CarrierCubit>()),

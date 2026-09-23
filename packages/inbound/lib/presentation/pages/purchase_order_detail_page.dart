@@ -16,6 +16,7 @@ import 'package:inbound/presentation/widgets/purchase_order_detail/po_detail_hea
 import 'package:inbound/presentation/widgets/purchase_order_detail/po_info_cards.dart';
 import 'package:inbound/presentation/widgets/purchase_order_detail/po_invoice_input_card.dart';
 import 'package:inbound/presentation/widgets/purchase_order_detail/po_product_list_section.dart';
+import 'package:intl/intl.dart';
 
 enum PurchaseOrderDetailResult { deleted, invoiceUpdated }
 
@@ -121,9 +122,9 @@ class _PurchaseOrderDetailPageState extends State<PurchaseOrderDetailPage> {
   @override
   Widget build(BuildContext context) {
     // Permission check – ikuti pola product_list_page
-    final AuthState = context.read<AuthBloc>().state;
+    final authState = context.read<AuthBloc>().state;
     final session =
-        AuthState is AuthenticatedState ? AuthState.session : null;
+        authState is AuthenticatedState ? authState.session : null;
 
     final canEdit    = session?.hasPermission(AppPermissions.poEdit)    ?? false;
     final canDelete  = session?.hasPermission(AppPermissions.poDelete)  ?? false;
@@ -310,7 +311,7 @@ class _PurchaseOrderDetailPageState extends State<PurchaseOrderDetailPage> {
                     ),
                   )
                   .then((_) {
-                    if (!context.mounted) return;
+                    if (!mounted) return;
                     context.read<PurchaseOrderBloc>().add(
                       GetPurchaseOrderDetailEvent(purchaseOrder.id),
                     );
@@ -335,7 +336,7 @@ class _PurchaseOrderDetailPageState extends State<PurchaseOrderDetailPage> {
                     ),
                   )
                   .then((_) {
-                    if (!context.mounted) return;
+                    if (!mounted) return;
                     context.read<PurchaseOrderBloc>().add(
                       GetPurchaseOrderDetailEvent(purchaseOrder.id),
                     );
@@ -376,14 +377,7 @@ class _PurchaseOrderDetailPageState extends State<PurchaseOrderDetailPage> {
   }
 
   String _formatDate(DateTime value) {
-    const months = [
-      'January', 'February', 'March', 'April', 'May', 'Juny', 'July',
-      'August', 'September', 'October', 'November', 'December'
-    ];
-    final day = value.day.toString().padLeft(2, '0');
-    final month = months[value.month - 1];
-    final year = value.year.toString().substring(2);
-    return '$day $month $year';
+    return DateFormat('dd MMM yyyy').format(value);
   }
 
   String _qcStatusLabel(String status) {

@@ -9,6 +9,7 @@ class PoDetailHeader extends StatelessWidget {
     required this.status,
     required this.supplierName,
     required this.carrier,
+    required this.createdAt,
     required this.showActions,
     required this.onDelete,
     required this.onEdit,
@@ -20,6 +21,7 @@ class PoDetailHeader extends StatelessWidget {
   final String status;
   final String supplierName;
   final String carrier;
+  final DateTime createdAt;
   final bool showActions;
   final VoidCallback onDelete;
   final VoidCallback onEdit;
@@ -122,30 +124,6 @@ class _HeaderOutlineButton extends StatelessWidget {
           fontWeight: FontWeight.w700,
         ),
       ),
-    );
-  }
-}
-
-class _InfoText extends StatelessWidget {
-  const _InfoText({required this.label, required this.value});
-
-  final String label;
-  final String value;
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(label, style: WHTypography.caption),
-        const SizedBox(height: 4),
-        Text(
-          value,
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-          style: WHTypography.bodyText.copyWith(fontWeight: FontWeight.w600),
-        ),
-      ],
     );
   }
 }

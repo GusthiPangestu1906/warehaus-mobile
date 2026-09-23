@@ -590,7 +590,7 @@ String _formatDate(String value) {
   final parsed = DateTime.tryParse(value);
   if (parsed == null) return '-';
   final local = parsed.toLocal();
-  return DateFormat('dd MMMM yyyy').format(local);
+  return DateFormat('dd MMM yyyy').format(local);
 }
 
 String _address(SalesOrder order) {

@@ -86,31 +86,6 @@ class _QcFormCardState extends State<QcFormCard> {
     widget.onChanged?.call(updated);
   }
 
-  Future<void> _pickExpiryDate() async {
-    final picked = await showDatePicker(
-      context: context,
-      initialDate: _data.expiryDate ?? DateTime(2025, 12, 31),
-      firstDate: DateTime(2000),
-      lastDate: DateTime(2100),
-      builder: (context, child) {
-        return Theme(
-          data: Theme.of(context).copyWith(
-            colorScheme: const ColorScheme.light(
-              primary: WHColors.primary3,
-              onPrimary: WHColors.surface,
-              onSurface: WHColors.textPrimary,
-            ),
-          ),
-          child: child!,
-        );
-      },
-    );
-
-    if (picked != null) {
-      _emit(_data.copyWith(expiryDate: picked));
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     return _QcCard(
@@ -167,9 +142,14 @@ class _QcFormCardState extends State<QcFormCard> {
           const SizedBox(height: 14),
           const _SectionLabel('EXPIRY DATE'),
           const SizedBox(height: 8),
-          _ExpiryDateField(
-            value: _data.expiryDate ?? DateTime(2025, 12, 31),
-            onTap: _pickExpiryDate,
+          WHDateField(
+            label: 'Expiry Date',
+            flat: true,
+            isPast: false,
+            selectedDate: _data.expiryDate,
+            onDateSelected: (date) {
+              _emit(_data.copyWith(expiryDate: date));
+            },
           ),
         ],
       ),
@@ -522,49 +502,5 @@ class _ReceivedQtyField extends StatelessWidget {
       minValue: 0,
       allowManualInput: true,
     );
-  }
-}
-
-class _ExpiryDateField extends StatelessWidget {
-  const _ExpiryDateField({required this.value, required this.onTap});
-
-  final DateTime value;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return InkWell(
-      onTap: onTap,
-      child: Container(
-        height: 48,
-        padding: const EdgeInsets.symmetric(horizontal: 12),
-        decoration: BoxDecoration(
-          color: WHColors.surface,
-          border: Border.all(color: WHColors.grey2),
-        ),
-        child: Row(
-          children: [
-            const Icon(
-              Icons.calendar_today_outlined,
-              color: WHColors.grey2,
-              size: 22,
-            ),
-            const SizedBox(width: 12),
-            Text(
-              _formatDate(value),
-              style: WHTypography.bodyText.copyWith(
-                color: WHColors.textSecondary,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  String _formatDate(DateTime date) {
-    final month = date.month.toString().padLeft(2, '0');
-    final day = date.day.toString().padLeft(2, '0');
-    return '$month/$day/${date.year}';
   }
 }
