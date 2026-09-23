@@ -1,6 +1,6 @@
-import 'package:auth/presentation/bloc/login_bloc.dart';
-import 'package:auth/presentation/bloc/login_event.dart';
-import 'package:auth/presentation/bloc/login_state.dart';
+import 'package:auth/presentation/bloc/auth_bloc.dart';
+import 'package:auth/presentation/bloc/auth_event.dart';
+import 'package:auth/presentation/bloc/auth_state.dart';
 import 'package:auth/presentation/pages/login_page.dart';
 import 'package:core_ui/core_ui.dart';
 import 'package:flutter/material.dart';
@@ -26,7 +26,7 @@ class _SplashPageState extends State<SplashPage> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) setState(() => _isVisible = true);
       // Dispatch pengecekan auth setelah splash terlihat
-      context.read<LoginBloc>().add(CheckAuthRequested());
+      context.read<AuthBloc>().add(CheckAuthRequested());
     });
   }
 
@@ -56,7 +56,7 @@ class _SplashPageState extends State<SplashPage> {
 
   @override
   Widget build(BuildContext context) {
-    return BlocListener<LoginBloc, LoginState>(
+    return BlocListener<AuthBloc, AuthState>(
       listener: (context, state) {
         if (state is AuthenticatedState) {
           _goToMain();

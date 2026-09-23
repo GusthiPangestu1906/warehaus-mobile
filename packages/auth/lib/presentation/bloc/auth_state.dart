@@ -1,19 +1,19 @@
 import 'package:auth/domain/entities/user_session.dart';
 import 'package:equatable/equatable.dart';
 
-class LoginState extends Equatable {
+class AuthState extends Equatable {
   @override
   List<Object?> get props => [];
 }
 
-class LoginInitialState extends LoginState {}
+class LoginInitialState extends AuthState {}
 
-class LoginLoadingState extends LoginState {
+class LoginLoadingState extends AuthState {
   @override
   List<Object?> get props => [];
 }
 
-class LoginSubmittedState extends LoginState {
+class LoginSubmittedState extends AuthState {
   final String email;
   final String password;
 
@@ -23,9 +23,9 @@ class LoginSubmittedState extends LoginState {
   List<Object?> get props => [email, password];
 }
 
-class LoginSuccessState extends LoginState {}
+class LoginSuccessState extends AuthState {}
 
-class LoginErrorState extends LoginState {
+class LoginErrorState extends AuthState {
   final String error;
 
   LoginErrorState({required this.error});
@@ -34,11 +34,11 @@ class LoginErrorState extends LoginState {
   List<Object?> get props => [error];
 }
 
-class LogoutLoadingState extends LoginState {}
+class LogoutLoadingState extends AuthState {}
 
-class LogoutSuccessState extends LoginState {}
+class LogoutSuccessState extends AuthState {}
 
-class LogoutErrorState extends LoginState {
+class LogoutErrorState extends AuthState {
   final String error;
 
   LogoutErrorState({required this.error});
@@ -47,9 +47,9 @@ class LogoutErrorState extends LoginState {
   List<Object?> get props => [error];
 }
 
-class AuthCheckLoadingState extends LoginState {}
+class AuthCheckLoadingState extends AuthState {}
 
-class AuthenticatedState extends LoginState {
+class AuthenticatedState extends AuthState {
   final UserSession session;
 
   AuthenticatedState({required this.session});
@@ -58,4 +58,4 @@ class AuthenticatedState extends LoginState {
   List<Object?> get props => [session];
 }
 
-class UnauthenticatedState extends LoginState {}
+class UnauthenticatedState extends AuthState {}

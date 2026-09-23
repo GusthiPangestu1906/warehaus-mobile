@@ -1,6 +1,6 @@
-import 'package:auth/domain/entities/app_permissions.dart';
-import 'package:auth/presentation/bloc/login_bloc.dart';
-import 'package:auth/presentation/bloc/login_state.dart';
+﻿import 'package:auth/domain/entities/app_permissions.dart';
+import 'package:auth/presentation/bloc/auth_bloc.dart';
+import 'package:auth/presentation/bloc/auth_state.dart';
 import 'package:core_ui/core_ui.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -27,7 +27,7 @@ class FlowManagementPage extends StatefulWidget {
 }
 
 class _FlowManagementPageState extends State<FlowManagementPage>
-    with SingleTickerProviderStateMixin, RouteAware {
+    with TickerProviderStateMixin, RouteAware {
   late TabController _tabController;
   late SalesOrderBloc _salesOrderBloc;
   late PurchaseOrderBloc _purchaseOrderBloc;
@@ -39,16 +39,24 @@ class _FlowManagementPageState extends State<FlowManagementPage>
 
   List<SalesOrder>? _lastSalesOrders;
 
+  // Daftar tab yang diizinkan — dihitung di didChangeDependencies,
+  // digunakan di build() agar TabController.length selalu sinkron.
+  List<({String label, bool isOutbound})> _allowedTabs = [
+    (label: 'INBOUND',  isOutbound: false),
+    (label: 'OUTBOUND', isOutbound: true),
+  ];
+
   @override
   void initState() {
     super.initState();
+    // Mulai dengan 2 tab; didChangeDependencies() akan menyesuaikan sebelum build pertama
     _tabController = TabController(length: 2, vsync: this);
     _salesOrderBloc = GetIt.instance<SalesOrderBloc>()
       ..add(GetSalesOrdersEvent());
     _purchaseOrderBloc = GetIt.instance<PurchaseOrderBloc>()
       ..add(GetPurchaseOrdersEvent(date: _selectedDate));
 
-    _tabController.addListener(() => setState(() {}));
+    _tabController.addListener(_onTabChanged);
   }
 
   @override
@@ -58,7 +66,39 @@ class _FlowManagementPageState extends State<FlowManagementPage>
     if (modalRoute != null) {
       routeObserver.subscribe(this, modalRoute);
     }
+
+    // Hitung tab yang diizinkan berdasarkan permission
+    final AuthState = context.read<AuthBloc>().state;
+    final session =
+        AuthState is AuthenticatedState ? AuthState.session : null;
+
+    final newTabs = <({String label, bool isOutbound})>[];
+    if (session?.hasPermission(AppPermissions.poView) ?? false) {
+      newTabs.add((label: 'INBOUND',  isOutbound: false));
+    }
+    if (session?.hasPermission(AppPermissions.soView) ?? false) {
+      newTabs.add((label: 'OUTBOUND', isOutbound: true));
+    }
+
+    final newLength = newTabs.isEmpty ? 1 : newTabs.length;
+
+    // Recreate TabController hanya jika panjang berubah
+    if (_tabController.length != newLength) {
+      final clampedIndex = _tabController.index.clamp(0, newLength - 1);
+      _tabController.removeListener(_onTabChanged);
+      _tabController.dispose();
+      _tabController = TabController(
+        length: newLength,
+        vsync: this,
+        initialIndex: clampedIndex,
+      )..addListener(_onTabChanged);
+    }
+
+    // Simpan hasil agar build() pakai nilai yang sama persis
+    _allowedTabs = newTabs;
   }
+
+  void _onTabChanged() => setState(() {});
 
   @override
   void dispose() {
@@ -156,20 +196,26 @@ class _FlowManagementPageState extends State<FlowManagementPage>
 
   @override
   Widget build(BuildContext context) {
-    // Baca session dari LoginBloc untuk permission check
-    final loginState = context.read<LoginBloc>().state;
-    final session = loginState is AuthenticatedState
-        ? loginState.session
-        : null;
+    // Gunakan _allowedTabs yang sudah dihitung di didChangeDependencies
+    // agar selalu sinkron dengan _tabController.length
+    final allowedTabs = _allowedTabs;
 
-    // Inbound tab (index 0) = PO, guard FAB dengan po:create
-    // Outbound tab (index 1) = SO, guard FAB dengan so:create
-    final canCreatePo =
-        session?.hasPermission(AppPermissions.poCreate) ?? false;
-    final canCreateSo =
-        session?.hasPermission(AppPermissions.soCreate) ?? false;
-    final isOutboundTab = _tabController.index == 1;
-    final showFab = isOutboundTab ? canCreateSo : canCreatePo;
+    if (allowedTabs.isEmpty) {
+      return const Scaffold(
+        body: Center(child: Text('Tidak ada akses halaman Flow.')),
+      );
+    }
+
+    // Guard FAB berdasarkan permission session
+    final AuthState = context.read<AuthBloc>().state;
+    final session =
+        AuthState is AuthenticatedState ? AuthState.session : null;
+    final canCreatePo = session?.hasPermission(AppPermissions.poCreate) ?? false;
+    final canCreateSo = session?.hasPermission(AppPermissions.soCreate) ?? false;
+    final currentTabIsOutbound = _tabController.index < allowedTabs.length
+        ? allowedTabs[_tabController.index].isOutbound
+        : false;
+    final showFab = currentTabIsOutbound ? canCreateSo : canCreatePo;
 
     return MultiBlocProvider(
       providers: [
@@ -187,29 +233,29 @@ class _FlowManagementPageState extends State<FlowManagementPage>
           appBar: const WHAppbar(title: 'FLOW MANAGEMENT'),
           body: Column(
             children: [
-              // Tab Bar INBOUND / OUTBOUND
-              Container(
-                color: WHColors.surface,
-                child: TabBar(
-                  controller: _tabController,
-                  indicatorColor: WHColors.secondary3,
-                  indicatorWeight: 3,
-                  labelColor: WHColors.grey1,
-                  unselectedLabelColor: WHColors.grey1,
-                  labelStyle: const TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w700,
+              // Tab Bar — sembunyikan jika hanya ada 1 tab
+              if (allowedTabs.length > 1)
+                Container(
+                  color: WHColors.surface,
+                  child: TabBar(
+                    controller: _tabController,
+                    indicatorColor: WHColors.secondary3,
+                    indicatorWeight: 3,
+                    labelColor: WHColors.grey1,
+                    unselectedLabelColor: WHColors.grey1,
+                    labelStyle: const TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w700,
+                    ),
+                    unselectedLabelStyle: const TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w400,
+                    ),
+                    tabs: allowedTabs
+                        .map((t) => Tab(text: t.label))
+                        .toList(),
                   ),
-                  unselectedLabelStyle: const TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w400,
-                  ),
-                  tabs: const [
-                    Tab(text: 'INBOUND'),
-                    Tab(text: 'OUTBOUND'),
-                  ],
                 ),
-              ),
 
               // Search Bar with Date Filter
               Padding(
@@ -272,95 +318,98 @@ class _FlowManagementPageState extends State<FlowManagementPage>
 
               const SizedBox(height: 16),
 
-              // Tab Content
+              // Tab Content — render hanya tab yang diizinkan
               Expanded(
                 child: TabBarView(
                   controller: _tabController,
-                  children: [
-                    // INBOUND TAB
-                    _InboundTabContent(
-                      searchQuery: _searchQuery,
-                      filter: _filter,
-                      selectedDate: _selectedDate,
-                      onRefresh: _fetchOrders,
-                    ),
-                    // OUTBOUND TAB
-                    BlocBuilder<SalesOrderBloc, SalesOrderState>(
-                      builder: (context, state) {
-                        if (state is SalesOrderLoaded) {
-                          _lastSalesOrders = state.salesOrders;
-                        }
-
-                        final salesOrdersToShow = _lastSalesOrders;
-                        if (salesOrdersToShow != null) {
-                          final orders = _filteredOutboundOrders(
-                            salesOrdersToShow,
-                          );
-
-                          if (salesOrdersToShow.isEmpty) {
-                            return _RefreshableEmpty(
-                              onRefresh: () => _fetchOrders(),
-                              message:
-                                  'Belum ada Sales Order.\nTap + untuk membuat baru.',
-                            );
+                  children: allowedTabs.map((tab) {
+                    if (!tab.isOutbound) {
+                      // INBOUND tab
+                      return _InboundTabContent(
+                        searchQuery: _searchQuery,
+                        filter: _filter,
+                        selectedDate: _selectedDate,
+                        onRefresh: _fetchOrders,
+                      );
+                    } else {
+                      // OUTBOUND tab
+                      return BlocBuilder<SalesOrderBloc, SalesOrderState>(
+                        builder: (context, state) {
+                          if (state is SalesOrderLoaded) {
+                            _lastSalesOrders = state.salesOrders;
                           }
 
-                          if (orders.isEmpty) {
-                            return _RefreshableEmpty(
-                              onRefresh: () => _fetchOrders(),
-                              message: 'Sales Order tidak ditemukan.',
+                          final salesOrdersToShow = _lastSalesOrders;
+                          if (salesOrdersToShow != null) {
+                            final orders = _filteredOutboundOrders(
+                              salesOrdersToShow,
                             );
-                          }
 
-                          return WHRefresh(
-                            onRefresh: () => _fetchOrders(),
-                            child: ListView.separated(
-                              physics: const AlwaysScrollableScrollPhysics(),
-                              padding: const EdgeInsets.fromLTRB(16, 0, 16, 96),
-                              itemCount: orders.length,
-                              separatorBuilder: (_, _) =>
-                                  const SizedBox(height: 12),
-                              itemBuilder: (context, index) {
-                                final order = orders[index];
-                                return OrderCard(
-                                  data: _toOutboundCardData(order),
-                                  onTap: () {
-                                    Navigator.of(context).push(
-                                      MaterialPageRoute(
-                                        builder: (_) => BlocProvider.value(
-                                          value: _salesOrderBloc,
-                                          child: SalesOrderDetailPage(
-                                            order: order,
+                            if (salesOrdersToShow.isEmpty) {
+                              return _RefreshableEmpty(
+                                onRefresh: () => _fetchOrders(),
+                                message:
+                                    'Belum ada Sales Order.\nTap + untuk membuat baru.',
+                              );
+                            }
+
+                            if (orders.isEmpty) {
+                              return _RefreshableEmpty(
+                                onRefresh: () => _fetchOrders(),
+                                message: 'Sales Order tidak ditemukan.',
+                              );
+                            }
+
+                            return WHRefresh(
+                              onRefresh: () => _fetchOrders(),
+                              child: ListView.separated(
+                                physics: const AlwaysScrollableScrollPhysics(),
+                                padding: const EdgeInsets.fromLTRB(16, 0, 16, 96),
+                                itemCount: orders.length,
+                                separatorBuilder: (_, _) =>
+                                    const SizedBox(height: 12),
+                                itemBuilder: (context, index) {
+                                  final order = orders[index];
+                                  return OrderCard(
+                                    data: _toOutboundCardData(order),
+                                    onTap: () {
+                                      Navigator.of(context).push(
+                                        MaterialPageRoute(
+                                          builder: (_) => BlocProvider.value(
+                                            value: _salesOrderBloc,
+                                            child: SalesOrderDetailPage(
+                                              order: order,
+                                            ),
                                           ),
                                         ),
-                                      ),
-                                    );
-                                  },
-                                );
-                              },
-                            ),
-                          );
-                        }
+                                      );
+                                    },
+                                  );
+                                },
+                              ),
+                            );
+                          }
 
-                        if (state is SalesOrderLoading) {
-                          return const Center(
-                            child: CircularProgressIndicator(),
-                          );
-                        }
-                        if (state is SalesOrderError) {
+                          if (state is SalesOrderLoading) {
+                            return const Center(
+                              child: CircularProgressIndicator(),
+                            );
+                          }
+                          if (state is SalesOrderError) {
+                            return _RefreshableEmpty(
+                              onRefresh: () => _fetchOrders(),
+                              message: state.message,
+                            );
+                          }
                           return _RefreshableEmpty(
                             onRefresh: () => _fetchOrders(),
-                            message: state.message,
+                            message:
+                                'Belum ada Sales Order.\nTap + untuk membuat baru.',
                           );
-                        }
-                        return _RefreshableEmpty(
-                          onRefresh: () => _fetchOrders(),
-                          message:
-                              'Belum ada Sales Order.\nTap + untuk membuat baru.',
-                        );
-                      },
-                    ),
-                  ],
+                        },
+                      );
+                    }
+                  }).toList(),
                 ),
               ),
             ],

@@ -73,7 +73,7 @@ class SalesOrderModel extends SalesOrder {
       isCompleted: json['isCompleted'] as bool? ?? false,
       items:
           (json['items'] as List<dynamic>?)
-              ?.map((e) => (e as SoItemModel))
+              ?.map((e) => SoItemModel.fromJson(e as Map<String, dynamic>))
               .toList() ??
           [],
     );

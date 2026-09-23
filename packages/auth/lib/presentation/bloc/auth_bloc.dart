@@ -1,17 +1,17 @@
 import 'package:auth/domain/usecase/check_auth.dart';
 import 'package:auth/domain/usecase/login.dart';
 import 'package:auth/domain/usecase/logout.dart';
-import 'package:auth/presentation/bloc/login_event.dart';
-import 'package:auth/presentation/bloc/login_state.dart';
+import 'package:auth/presentation/bloc/auth_event.dart';
+import 'package:auth/presentation/bloc/auth_state.dart';
 import 'package:core_services/interceptors/error/app_error_handler.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
-class LoginBloc extends Bloc<LoginEvent, LoginState> {
+class AuthBloc extends Bloc<AuthEvent, AuthState> {
   final Login loginUsecase;
   final Logout logoutUsecase;
   final CheckAuth checkAuthUsecase;
 
-  LoginBloc({
+  AuthBloc({
     required this.loginUsecase,
     required this.logoutUsecase,
     required this.checkAuthUsecase,
@@ -48,6 +48,7 @@ class LoginBloc extends Bloc<LoginEvent, LoginState> {
       try {
         await logoutUsecase();
         emit(LogoutSuccessState());
+        emit(UnauthenticatedState());
       } catch (e) {
         emit(LogoutErrorState(error: AppErrorHandler.extractMessage(e)));
       }

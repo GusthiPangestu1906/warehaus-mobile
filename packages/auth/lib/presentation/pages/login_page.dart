@@ -1,6 +1,6 @@
-import 'package:auth/presentation/bloc/login_bloc.dart';
-import 'package:auth/presentation/bloc/login_event.dart';
-import 'package:auth/presentation/bloc/login_state.dart';
+import 'package:auth/presentation/bloc/auth_bloc.dart';
+import 'package:auth/presentation/bloc/auth_event.dart';
+import 'package:auth/presentation/bloc/auth_state.dart';
 import 'package:auth/presentation/components/icon_hero.dart';
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -68,7 +68,7 @@ class _LoginPageState extends State<LoginPage> {
     }
 
     if (isValid) {
-      context.read<LoginBloc>().add(
+      context.read<AuthBloc>().add(
         LoginSubmitted(email: email, password: password),
       );
     }
@@ -87,7 +87,7 @@ class _LoginPageState extends State<LoginPage> {
 
   @override
   Widget build(BuildContext context) {
-    return BlocListener<LoginBloc, LoginState>(
+    return BlocListener<AuthBloc, AuthState>(
       listener: (context, state) {
         if (state is AuthenticatedState) {
           Navigator.of(context).pushAndRemoveUntil(
@@ -160,11 +160,15 @@ class _LoginPageState extends State<LoginPage> {
 
                   const SizedBox(height: 28),
 
-                  // button
-                  WHButton(
-                    label: 'Login',
-                    backgroundColor: WHColors.secondary,
-                    onPressed: handleLogin,
+                  BlocBuilder<AuthBloc, AuthState>(
+                    builder: (context, state) {
+                      return WHButton(
+                        label: 'Login',
+                        backgroundColor: WHColors.secondary,
+                        onPressed: handleLogin,
+                        isLoading: state is LoginLoadingState,
+                      );
+                    },
                   ),
 
                   const SizedBox(height: 16),

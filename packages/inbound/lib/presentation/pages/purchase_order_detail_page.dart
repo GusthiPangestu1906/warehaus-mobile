@@ -1,3 +1,6 @@
+﻿import 'package:auth/domain/entities/app_permissions.dart';
+import 'package:auth/presentation/bloc/auth_bloc.dart';
+import 'package:auth/presentation/bloc/auth_state.dart';
 import 'package:core_ui/core_ui.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -117,6 +120,17 @@ class _PurchaseOrderDetailPageState extends State<PurchaseOrderDetailPage> {
 
   @override
   Widget build(BuildContext context) {
+    // Permission check – ikuti pola product_list_page
+    final AuthState = context.read<AuthBloc>().state;
+    final session =
+        AuthState is AuthenticatedState ? AuthState.session : null;
+
+    final canEdit    = session?.hasPermission(AppPermissions.poEdit)    ?? false;
+    final canDelete  = session?.hasPermission(AppPermissions.poDelete)  ?? false;
+    final canInvoice = session?.hasPermission(AppPermissions.poEdit)    ?? false;
+    final canQc      = session?.hasPermission(AppPermissions.qcExecute) ?? false;
+    final canPutAway = session?.hasPermission(AppPermissions.putExecute) ?? false;
+
     return BlocListener<PurchaseOrderBloc, PurchaseOrderState>(
       listener: (context, state) {
         if (state is DeletePurchaseOrderSuccess) {
@@ -160,11 +174,19 @@ class _PurchaseOrderDetailPageState extends State<PurchaseOrderDetailPage> {
               if (state is PurchaseOrderDetailLoaded) {
                 final purchaseOrder = state.purchaseOrder;
                 _lastPurchaseOrder = purchaseOrder;
-                return _buildDetailContent(purchaseOrder);
+                return _buildDetailContent(
+                  purchaseOrder,
+                  canEdit: canEdit,
+                  canDelete: canDelete,
+                );
               }
 
               if (_lastPurchaseOrder != null) {
-                return _buildDetailContent(_lastPurchaseOrder!);
+                return _buildDetailContent(
+                  _lastPurchaseOrder!,
+                  canEdit: canEdit,
+                  canDelete: canDelete,
+                );
               }
 
               return const SizedBox.shrink();
@@ -176,14 +198,23 @@ class _PurchaseOrderDetailPageState extends State<PurchaseOrderDetailPage> {
             if (state is! PurchaseOrderDetailLoaded) {
               return const SizedBox.shrink();
             }
-            return _buildBottomAction(state.purchaseOrder);
+            return _buildBottomAction(
+              state.purchaseOrder,
+              canInvoice: canInvoice,
+              canQc: canQc,
+              canPutAway: canPutAway,
+            );
           },
         ),
       ),
     );
   }
 
-  Widget _buildDetailContent(PurchaseOrder purchaseOrder) {
+  Widget _buildDetailContent(
+    PurchaseOrder purchaseOrder, {
+    bool canEdit = true,
+    bool canDelete = true,
+  }) {
     final status = _effectiveStatus(purchaseOrder);
     final isQueued = _isQueued(status);
     final isCompleted = _isCompleted(status);
@@ -199,6 +230,8 @@ class _PurchaseOrderDetailPageState extends State<PurchaseOrderDetailPage> {
           supplierName: purchaseOrder.supplierName,
           carrier: purchaseOrder.carrier,
           showActions: isQueued && !_isInvoiceInputVisible,
+          canEdit: canEdit,
+          canDelete: canDelete,
           onDelete: () => _showDeleteModal(purchaseOrder),
           onEdit: () => _openEditForm(purchaseOrder),
           createdAt: purchaseOrder.createdAt,
@@ -240,10 +273,15 @@ class _PurchaseOrderDetailPageState extends State<PurchaseOrderDetailPage> {
     );
   }
 
-  Widget _buildBottomAction(PurchaseOrder purchaseOrder) {
+  Widget _buildBottomAction(
+    PurchaseOrder purchaseOrder, {
+    bool canInvoice = true,
+    bool canQc = true,
+    bool canPutAway = true,
+  }) {
     final status = _effectiveStatus(purchaseOrder);
 
-    if (_isQueued(status) && !_isInvoiceInputVisible) {
+    if (_isQueued(status) && !_isInvoiceInputVisible && canInvoice) {
       return _BottomAction(
         child: WHButton(
           label: 'Arrived',
@@ -255,7 +293,7 @@ class _PurchaseOrderDetailPageState extends State<PurchaseOrderDetailPage> {
     }
 
     if (_isActive(status)) {
-      if (!purchaseOrder.isQcCompleted) {
+      if (!purchaseOrder.isQcCompleted && canQc) {
         return _BottomAction(
           child: WHButton(
             label: 'Start Quality Control',
@@ -280,7 +318,7 @@ class _PurchaseOrderDetailPageState extends State<PurchaseOrderDetailPage> {
             },
           ),
         );
-      } else {
+      } else if (purchaseOrder.isQcCompleted && canPutAway) {
         return _BottomAction(
           child: WHButton(
             label: 'Start Put Away',

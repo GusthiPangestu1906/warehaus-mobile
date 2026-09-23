@@ -1,3 +1,6 @@
+﻿import 'package:auth/domain/entities/app_permissions.dart';
+import 'package:auth/presentation/bloc/auth_bloc.dart';
+import 'package:auth/presentation/bloc/auth_state.dart';
 import 'package:core_ui/core_ui.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -34,6 +37,12 @@ class _OutboundListPageState extends State<OutboundListPage> {
 
   @override
   Widget build(BuildContext context) {
+    // Permission check – ikuti pola product_list_page
+    final AuthState = context.read<AuthBloc>().state;
+    final session =
+        AuthState is AuthenticatedState ? AuthState.session : null;
+    final canCreate = session?.hasPermission(AppPermissions.soCreate) ?? false;
+
     return BlocProvider.value(
       value: _bloc,
       child: BlocListener<SalesOrderBloc, SalesOrderState>(
@@ -53,29 +62,31 @@ class _OutboundListPageState extends State<OutboundListPage> {
           backgroundColor: WHColors.background,
           appBar: const WHAppbar(title: 'OUTBOUND'),
           body: const SalesOrderListPage(),
-          floatingActionButton: FloatingActionButton(
-            heroTag: 'outbound-create-so-fab',
-            onPressed: () async {
-              final saved = await Navigator.of(context).push<bool>(
-                PageRouteBuilder(
-                  pageBuilder: (_, _, _) => BlocProvider.value(
-                    value: _bloc,
-                    child: const CreateSalesOrderPage(),
-                  ),
-                  transitionDuration: Duration.zero,
-                  reverseTransitionDuration: Duration.zero,
-                ),
-              );
-              if (!context.mounted || saved != true) return;
-              _showSalesOrderNotice(
-                context,
-                message: 'Sales Order Saved',
-                backgroundColor: const Color(0xFF27C46A),
-              );
-            },
-            backgroundColor: WHColors.primary3,
-            child: const Icon(Icons.add, color: WHColors.surface),
-          ),
+          floatingActionButton: canCreate
+              ? FloatingActionButton(
+                  heroTag: 'outbound-create-so-fab',
+                  onPressed: () async {
+                    final saved = await Navigator.of(context).push<bool>(
+                      PageRouteBuilder(
+                        pageBuilder: (_, _, _) => BlocProvider.value(
+                          value: _bloc,
+                          child: const CreateSalesOrderPage(),
+                        ),
+                        transitionDuration: Duration.zero,
+                        reverseTransitionDuration: Duration.zero,
+                      ),
+                    );
+                    if (!context.mounted || saved != true) return;
+                    _showSalesOrderNotice(
+                      context,
+                      message: 'Sales Order Saved',
+                      backgroundColor: const Color(0xFF27C46A),
+                    );
+                  },
+                  backgroundColor: WHColors.primary3,
+                  child: const Icon(Icons.add, color: WHColors.surface),
+                )
+              : null,
         ),
       ),
     );
