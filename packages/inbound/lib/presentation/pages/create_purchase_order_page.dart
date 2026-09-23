@@ -1,11 +1,14 @@
-import 'package:core_ui/core_ui.dart';
+  import 'package:core_ui/core_ui.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:get_it/get_it.dart';
+import 'package:inbound/domain/entities/carrier.dart';
 import 'package:inbound/domain/entities/purchase_order.dart';
 import 'package:inbound/domain/params/create_po_params.dart';
 import 'package:inbound/presentation/bloc/purchase_order/purchase_order_bloc.dart';
 import 'package:inbound/presentation/bloc/purchase_order/purchase_order_event.dart';
 import 'package:inbound/presentation/bloc/purchase_order/purchase_order_state.dart';
+import 'package:inbound/presentation/bloc/carrier/carrier_cubit.dart';
 import 'package:inbound/presentation/widgets/create_purchase_order/arrival_form_card.dart';
 import 'package:inbound/presentation/widgets/create_purchase_order/product_form_card.dart';
 import 'package:product/domain/entities/product.dart';
@@ -151,119 +154,123 @@ class _CreatePurchaseOrderPageState extends State<CreatePurchaseOrderPage> {
       builder: (context, state) {
         final isLoading = state is PurchaseOrderLoading && _isSubmittingPo;
 
-        return Scaffold(
-          backgroundColor: WHColors.background,
-          appBar: WHAppbar(
-            title: _isEditMode ? 'EDIT PURCHASE ORDER' : 'PURCHASE ORDER FORM',
-          ),
+        return BlocProvider(
+          create: (context) => GetIt.instance<CarrierCubit>(),
+          child: Scaffold(
 
-          bottomNavigationBar: Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: WHButton(
-              label: _isEditMode ? 'Update Form' : 'Submit Form',
-              icon: Icons.check_circle_outline,
-              backgroundColor: WHColors.secondary,
-              isLoading: isLoading,
-              onPressed: isLoading ? null : _onSubmit,
+            backgroundColor: WHColors.background,
+            appBar: WHAppbar(
+              title: _isEditMode ? 'EDIT PURCHASE ORDER' : 'PURCHASE ORDER FORM',
             ),
-          ),
 
-          body: AbsorbPointer(
-            absorbing: isLoading,
-            child: Form(
-              key: _formKey,
-              child: ListView(
-                padding: const EdgeInsets.all(16),
-                children: [
-                  ArrivalFormCard(
-                    supplierNameController: _supplierName,
-                    etaController: _eta,
-                    carrierController: _carrier,
-                  ),
-                  const SizedBox(height: 24),
+            bottomNavigationBar: Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: WHButton(
+                label: _isEditMode ? 'Update Form' : 'Submit Form',
+                icon: Icons.check_circle_outline,
+                backgroundColor: WHColors.secondary,
+                isLoading: isLoading,
+                onPressed: isLoading ? null : _onSubmit,
+              ),
+            ),
 
-                  // Header List Produk
-                  const Text(
-                    'Product List',
-                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                  ),
-                  const SizedBox(height: 8),
+            body: AbsorbPointer(
+              absorbing: isLoading,
+              child: Form(
+                key: _formKey,
+                child: ListView(
+                  padding: const EdgeInsets.all(16),
+                  children: [
+                    ArrivalFormCard(
+                      supplierNameController: _supplierName,
+                      etaController: _eta,
+                      carrierController: _carrier,
+                    ),
+                    const SizedBox(height: 24),
 
-                  BlocBuilder<ProductBloc, ProductState>(
-                    builder: (context, productState) {
-                      final masterProducts = productState is ProductLoaded
-                          ? productState.products
-                          : const <Product>[];
+                    // Header List Produk
+                    const Text(
+                      'Product List',
+                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                    ),
+                    const SizedBox(height: 8),
 
-                      return Column(
-                        children: [
-                          if (productState is ProductLoading)
-                            const Padding(
-                              padding: EdgeInsets.only(bottom: 12),
-                              child: LinearProgressIndicator(),
-                            ),
-                          if (productState is ProductError)
-                            Padding(
-                              padding: const EdgeInsets.only(bottom: 12),
-                              child: WHError(message: productState.message),
-                            ),
-                          ListView.builder(
-                            shrinkWrap: true,
-                            physics: const NeverScrollableScrollPhysics(),
-                            itemCount: _selectedItems.length,
-                            itemBuilder: (context, index) {
-                              final currentItem = _selectedItems[index];
+                    BlocBuilder<ProductBloc, ProductState>(
+                      builder: (context, productState) {
+                        final masterProducts = productState is ProductLoaded
+                            ? productState.products
+                            : const <Product>[];
 
-                              return ProductFormCard(
-                                masterProducts: masterProducts,
-                                selectedProductId: currentItem.productId == 0
-                                    ? null
-                                    : currentItem.productId,
-                                quantity: currentItem.qtyExpected,
-                                onProductChanged: (productId) {
-                                  setState(() {
-                                    _selectedItems[index] = CreatePoItemParams(
-                                      productId: productId ?? 0,
-                                      qtyExpected: currentItem.qtyExpected,
-                                    );
-                                  });
-                                },
-                                onQtyChanged: (value) {
-                                  setState(() {
-                                    _selectedItems[index] = CreatePoItemParams(
-                                      productId: currentItem.productId,
-                                      qtyExpected: value,
-                                    );
-                                  });
-                                },
-                                onDelete: () {
-                                  setState(() {
-                                    _selectedItems.removeAt(index);
-                                  });
-                                },
-                              );
-                            },
-                          ),
-                          const SizedBox(height: 8),
-                          WHOutlinedButton(
-                            label: 'Product',
-                            icon: Icons.add,
-                            onPressed: () {
-                              setState(() {
-                                _selectedItems.add(
-                                  CreatePoItemParams(
-                                    productId: 0,
-                                    qtyExpected: 0,
-                                  ),
+                        return Column(
+                          children: [
+                            if (productState is ProductLoading)
+                              const Padding(
+                                padding: EdgeInsets.only(bottom: 12),
+                                child: LinearProgressIndicator(),
+                              ),
+                            if (productState is ProductError)
+                              Padding(
+                                padding: const EdgeInsets.only(bottom: 12),
+                                child: WHError(message: productState.message),
+                              ),
+                            ListView.builder(
+                              shrinkWrap: true,
+                              physics: const NeverScrollableScrollPhysics(),
+                              itemCount: _selectedItems.length,
+                              itemBuilder: (context, index) {
+                                final currentItem = _selectedItems[index];
+
+                                return ProductFormCard(
+                                  masterProducts: masterProducts,
+                                  selectedProductId: currentItem.productId == 0
+                                      ? null
+                                      : currentItem.productId,
+                                  quantity: currentItem.qtyExpected,
+                                  onProductChanged: (productId) {
+                                    setState(() {
+                                      _selectedItems[index] = CreatePoItemParams(
+                                        productId: productId ?? 0,
+                                        qtyExpected: currentItem.qtyExpected,
+                                      );
+                                    });
+                                  },
+                                  onQtyChanged: (value) {
+                                    setState(() {
+                                      _selectedItems[index] = CreatePoItemParams(
+                                        productId: currentItem.productId,
+                                        qtyExpected: value,
+                                      );
+                                    });
+                                  },
+                                  onDelete: () {
+                                    setState(() {
+                                      _selectedItems.removeAt(index);
+                                    });
+                                  },
                                 );
-                              });
-                            },
-                          ),
-                        ],
-                      );
-                    },
-                  ),
-                ],
+                              },
+                            ),
+                            const SizedBox(height: 8),
+                            WHOutlinedButton(
+                              label: 'Product',
+                              icon: Icons.add,
+                              onPressed: () {
+                                setState(() {
+                                  _selectedItems.add(
+                                    CreatePoItemParams(
+                                      productId: 0,
+                                      qtyExpected: 0,
+                                    ),
+                                  );
+                                });
+                              },
+                            ),
+                          ],
+                        );
+                      },
+                    ),
+                  ],
+                ),
               ),
             ),
           ),

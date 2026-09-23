@@ -289,7 +289,7 @@ class _FlowManagementPageState extends State<FlowManagementPage>
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 16),
                   child: _DateFilterSummary(
-                    label: DateFormat('dd/MM/yyyy').format(_selectedDate!),
+                    label: DateFormat('dd MMM yyyy').format(_selectedDate!),
                     onClear: _clearFilterDate,
                   ),
                 ),
@@ -734,7 +734,7 @@ class _InboundTabContentState extends State<_InboundTabContent> {
 
   OrderCardData _toInboundCardData(PurchaseOrder order) {
     final status = _mapOrderStatus(order.status);
-    final formattedDate = DateFormat('dd/MM/yyyy').format(order.createdAt);
+    final formattedDate = DateFormat('dd MMM yyyy').format(order.createdAt);
 
     return OrderCardData(
       orderNumber: order.poNumber,

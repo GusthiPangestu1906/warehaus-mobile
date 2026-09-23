@@ -49,7 +49,7 @@ class PoDetailHeader extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Created At ${DateFormat('dd/MM/yyyy').format(DateTime.now())}',
+                      'Created At ${DateFormat('dd MMM yyyy').format(createdAt)}',
                       style: WHTypography.caption,
                     ),
                     const SizedBox(height: 4),

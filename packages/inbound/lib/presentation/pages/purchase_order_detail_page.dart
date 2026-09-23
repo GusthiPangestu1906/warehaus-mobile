@@ -234,6 +234,7 @@ class _PurchaseOrderDetailPageState extends State<PurchaseOrderDetailPage> {
           canDelete: canDelete,
           onDelete: () => _showDeleteModal(purchaseOrder),
           onEdit: () => _openEditForm(purchaseOrder),
+          createdAt: purchaseOrder.createdAt,
         ),
         const SizedBox(height: 12),
         if (_isInvoiceInputVisible) ...[
@@ -375,10 +376,14 @@ class _PurchaseOrderDetailPageState extends State<PurchaseOrderDetailPage> {
   }
 
   String _formatDate(DateTime value) {
+    const months = [
+      'January', 'February', 'March', 'April', 'May', 'Juny', 'July',
+      'August', 'September', 'October', 'November', 'December'
+    ];
     final day = value.day.toString().padLeft(2, '0');
-    final month = value.month.toString().padLeft(2, '0');
-    final year = value.year.toString();
-    return '$day/$month/$year';
+    final month = months[value.month - 1];
+    final year = value.year.toString().substring(2);
+    return '$day $month $year';
   }
 
   String _qcStatusLabel(String status) {

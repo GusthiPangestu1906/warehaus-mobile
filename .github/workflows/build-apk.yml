@@ -61,10 +61,12 @@ jobs:
       - name: Build APK
         run: flutter build apk --debug
 
-      # 9. Upload APK sebagai GitHub Actions Artifact
+      # 9. Upload APK sebagai GitHub Actions Artifact (continue-on-error jika kuota storage GitHub Actions penuh)
       - name: Upload APK Artifact
         uses: actions/upload-artifact@v4
+        continue-on-error: true
         with:
           name: warehaus-mobile-develop-apk
           path: build/app/outputs/flutter-apk/app-debug.apk
-          retention-days: 14
+          retention-days: 3
+
