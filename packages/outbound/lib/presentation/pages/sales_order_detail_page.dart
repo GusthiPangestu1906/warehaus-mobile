@@ -8,6 +8,7 @@ import 'package:get_it/get_it.dart';
 import 'package:outbound/data/datasources/region_api_datasource.dart';
 import 'package:outbound/data/datasources/sales_order_api_datasource.dart';
 import 'package:outbound/domain/entities/sales_order.dart';
+import 'package:intl/intl.dart';
 import 'package:outbound/presentation/bloc/sales_order_bloc.dart';
 import 'package:outbound/presentation/bloc/sales_order_event.dart';
 import 'package:outbound/presentation/models/pick_flow_item.dart';
@@ -589,9 +590,7 @@ String _formatDate(String value) {
   final parsed = DateTime.tryParse(value);
   if (parsed == null) return '-';
   final local = parsed.toLocal();
-  final day = local.day.toString().padLeft(2, '0');
-  final month = local.month.toString().padLeft(2, '0');
-  return '$day/$month/${local.year}';
+  return DateFormat('dd MMMM yyyy').format(local);
 }
 
 String _address(SalesOrder order) {

@@ -1,5 +1,6 @@
 import 'package:core_ui/core_ui.dart';
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:outbound/presentation/models/sales_order_product_line.dart';
 import 'package:outbound/presentation/widgets/create_sales_order/sales_order_form_styles.dart';
 
@@ -83,6 +84,7 @@ class _DateCard extends StatelessWidget {
       selectedDate: value,
       onDateSelected: (date) => onTap(),
       hintText: 'Select Date',
+      dateFormat: (date) => DateFormat('dd MMMM yyyy').format(date),
     );
   }
 }

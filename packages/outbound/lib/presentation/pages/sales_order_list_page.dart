@@ -1,6 +1,7 @@
 import 'package:core_ui/core_ui.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:intl/intl.dart';
 import 'package:outbound/domain/entities/sales_order.dart';
 import 'package:outbound/presentation/bloc/sales_order_bloc.dart';
 import 'package:outbound/presentation/bloc/sales_order_event.dart';
@@ -193,9 +194,7 @@ class _SalesOrderListPageState extends State<SalesOrderListPage> {
     final parsed = DateTime.tryParse(value);
     if (parsed == null) return '-';
     final local = parsed.toLocal();
-    final day = local.day.toString().padLeft(2, '0');
-    final month = local.month.toString().padLeft(2, '0');
-    return '$day/$month/${local.year}';
+    return DateFormat('dd MMMM yyyy').format(local);
   }
 
   String _formatSalesOrderNumber(SalesOrder order) {
