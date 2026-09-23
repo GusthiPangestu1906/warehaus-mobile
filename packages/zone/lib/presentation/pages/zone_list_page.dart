@@ -1,6 +1,6 @@
-import 'package:auth/domain/entities/app_permissions.dart';
-import 'package:auth/presentation/bloc/login_bloc.dart';
-import 'package:auth/presentation/bloc/login_state.dart';
+﻿import 'package:auth/domain/entities/app_permissions.dart';
+import 'package:auth/presentation/bloc/auth_bloc.dart';
+import 'package:auth/presentation/bloc/auth_state.dart';
 import 'package:core_ui/core_ui.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -167,10 +167,10 @@ class _ZoneListPageState extends State<ZoneListPage> with RouteAware {
 
   @override
   Widget build(BuildContext context) {
-    // Baca session dari LoginBloc untuk permission check
-    final loginState = context.read<LoginBloc>().state;
+    // Baca session dari AuthBloc untuk permission check
+    final AuthState = context.read<AuthBloc>().state;
     final session =
-        loginState is AuthenticatedState ? loginState.session : null;
+        AuthState is AuthenticatedState ? AuthState.session : null;
 
     final canCreate = session?.hasPermission(AppPermissions.zoneCreate) ?? false;
     final canEdit = session?.hasPermission(AppPermissions.zoneEdit) ?? false;

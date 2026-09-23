@@ -1,4 +1,4 @@
-import 'package:auth/presentation/bloc/login_bloc.dart';
+import 'package:auth/presentation/bloc/auth_bloc.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
@@ -26,7 +26,7 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MultiBlocProvider(
       providers: [
-        BlocProvider<LoginBloc>(create: (context) => getIt<LoginBloc>()),
+        BlocProvider<AuthBloc>(create: (context) => getIt<AuthBloc>()),
         BlocProvider<NavigationBloc>(create: (context) => NavigationBloc()),
         BlocProvider<PurchaseOrderBloc>(
           create: (context) => getIt<PurchaseOrderBloc>(),
@@ -48,3 +48,4 @@ class MyApp extends StatelessWidget {
     );
   }
 }
+

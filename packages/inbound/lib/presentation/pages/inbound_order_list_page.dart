@@ -1,3 +1,6 @@
+﻿import 'package:auth/domain/entities/app_permissions.dart';
+import 'package:auth/presentation/bloc/auth_bloc.dart';
+import 'package:auth/presentation/bloc/auth_state.dart';
 import 'package:core_ui/core_ui.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -187,6 +190,12 @@ class _InboundOrderListPageState extends State<InboundOrderListPage>
 
   @override
   Widget build(BuildContext context) {
+    // Permission check – ikuti pola product_list_page
+    final AuthState = context.read<AuthBloc>().state;
+    final session =
+        AuthState is AuthenticatedState ? AuthState.session : null;
+    final canCreate = session?.hasPermission(AppPermissions.poCreate) ?? false;
+
     return Scaffold(
       backgroundColor: WHColors.background,
       appBar: WHAppbar(title: 'FLOW MANAGEMENT'),
@@ -355,20 +364,22 @@ class _InboundOrderListPageState extends State<InboundOrderListPage>
           ],
         ),
       ),
-      floatingActionButton: FloatingActionButton(
-        heroTag: 'inbound-create-po-fab',
-        onPressed: () async {
-          await Navigator.of(context).push(
-            PageRouteBuilder(
-              pageBuilder: (_, _, _) => const CreatePurchaseOrderPage(),
-              transitionDuration: Duration.zero,
-              reverseTransitionDuration: Duration.zero,
-            ),
-          );
-        },
-        backgroundColor: WHColors.primary3,
-        child: const Icon(Icons.add, color: WHColors.surface),
-      ),
+      floatingActionButton: canCreate
+          ? FloatingActionButton(
+              heroTag: 'inbound-create-po-fab',
+              onPressed: () async {
+                await Navigator.of(context).push(
+                  PageRouteBuilder(
+                    pageBuilder: (_, _, _) => const CreatePurchaseOrderPage(),
+                    transitionDuration: Duration.zero,
+                    reverseTransitionDuration: Duration.zero,
+                  ),
+                );
+              },
+              backgroundColor: WHColors.primary3,
+              child: const Icon(Icons.add, color: WHColors.surface),
+            )
+          : null,
     );
   }
 

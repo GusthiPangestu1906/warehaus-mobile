@@ -1,7 +1,7 @@
-import 'package:auth/domain/entities/app_permissions.dart';
+﻿import 'package:auth/domain/entities/app_permissions.dart';
 import 'package:auth/domain/entities/user_session.dart';
-import 'package:auth/presentation/bloc/login_bloc.dart';
-import 'package:auth/presentation/bloc/login_state.dart';
+import 'package:auth/presentation/bloc/auth_bloc.dart';
+import 'package:auth/presentation/bloc/auth_state.dart';
 import 'package:auth/presentation/pages/setting_page.dart';
 import 'package:core_ui/core_ui.dart';
 import 'package:dashboard/presentation/pages/dashboard_page.dart';
@@ -56,12 +56,12 @@ List<_TabEntry> _buildAllowedTabs(UserSession session) {
 
   // Flows (Inbound + Outbound) — tampil jika bisa akses inbound ATAU outbound
   final canViewInbound =
-      session.hasPermission(AppPermissions.soView) ||
+      session.hasPermission(AppPermissions.poView) ||
       session.hasPermission(AppPermissions.qcExecute) ||
       session.hasPermission(AppPermissions.putExecute);
 
   final canViewOutbound =
-      session.hasPermission(AppPermissions.poView) ||
+      session.hasPermission(AppPermissions.soView) ||
       session.hasPermission(AppPermissions.pickExecute) ||
       session.hasPermission(AppPermissions.packExecute);
 
@@ -112,12 +112,12 @@ class MainPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final loginState = context.read<LoginBloc>().state;
+    final AuthState = context.read<AuthBloc>().state;
 
     // Jika session tidak tersedia (seharusnya tidak terjadi karena MainPage
     // hanya dibuka dari AuthenticatedState), tampilkan semua tab sebagai fallback.
-    final UserSession? session = loginState is AuthenticatedState
-        ? loginState.session
+    final UserSession? session = AuthState is AuthenticatedState
+        ? AuthState.session
         : null;
 
     final tabs = session != null

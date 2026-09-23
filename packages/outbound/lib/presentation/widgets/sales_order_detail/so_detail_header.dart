@@ -10,6 +10,8 @@ class SoDetailHeader extends StatelessWidget {
     required this.showActions,
     required this.onDelete,
     required this.onEdit,
+    this.canEdit = true,
+    this.canDelete = true,
   });
 
   final String soNumber;
@@ -18,6 +20,8 @@ class SoDetailHeader extends StatelessWidget {
   final bool showActions;
   final VoidCallback onDelete;
   final VoidCallback onEdit;
+  final bool canEdit;
+  final bool canDelete;
 
   @override
   Widget build(BuildContext context) {
@@ -51,27 +55,30 @@ class SoDetailHeader extends StatelessWidget {
               _StatusBadge(style: badgeStyle),
             ],
           ),
-          if (showActions) ...[
+          if (showActions && (canDelete || canEdit)) ...[
             const SizedBox(height: 8),
             Row(
               children: [
-                Expanded(
-                  child: _HeaderOutlineButton(
-                    label: 'Delete',
-                    icon: Icons.delete_outline,
-                    color: WHColors.error2,
-                    onPressed: onDelete,
+                if (canDelete) ...[
+                  Expanded(
+                    child: _HeaderOutlineButton(
+                      label: 'Delete',
+                      icon: Icons.delete_outline,
+                      color: WHColors.error2,
+                      onPressed: onDelete,
+                    ),
                   ),
-                ),
-                const SizedBox(width: 6),
-                Expanded(
-                  child: _HeaderOutlineButton(
-                    label: 'Edit',
-                    icon: Icons.edit_outlined,
-                    color: WHColors.primary3,
-                    onPressed: onEdit,
+                  if (canEdit) const SizedBox(width: 6),
+                ],
+                if (canEdit)
+                  Expanded(
+                    child: _HeaderOutlineButton(
+                      label: 'Edit',
+                      icon: Icons.edit_outlined,
+                      color: WHColors.primary3,
+                      onPressed: onEdit,
+                    ),
                   ),
-                ),
               ],
             ),
           ],

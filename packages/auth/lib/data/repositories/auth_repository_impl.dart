@@ -48,9 +48,17 @@ class AuthRepositoryImpl with RepositoryHelper implements AuthRepository {
   @override
   Future<Either<Failure, Unit>> logout() {
     return execute(() async {
-      await _authRemoteDatasource.logout();
-
+      // Hapus token lokal DULU agar logout selalu berhasil
+      // walaupun API call gagal atau timeout
       await _authTokenStorage.clearTokens();
+
+      // Fire-and-forget: coba beritahu server, tapi tidak blokir logout
+      try {
+        await _authRemoteDatasource.logout();
+      } catch (_) {
+        // Abaikan error API — token sudah dihapus secara lokal
+      }
+
       return unit;
     });
   }

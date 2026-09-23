@@ -1,3 +1,6 @@
+﻿import 'package:auth/domain/entities/app_permissions.dart';
+import 'package:auth/presentation/bloc/auth_bloc.dart';
+import 'package:auth/presentation/bloc/auth_state.dart';
 import 'package:core_ui/core_ui.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -216,7 +219,17 @@ class _SalesOrderDetailPageState extends State<SalesOrderDetailPage> {
 
   @override
   Widget build(BuildContext context) {
-    final bottomAction = _bottomAction();
+    // Permission check – ikuti pola product_list_page
+    final AuthState = context.read<AuthBloc>().state;
+    final session =
+        AuthState is AuthenticatedState ? AuthState.session : null;
+
+    final canEdit     = session?.hasPermission(AppPermissions.soEdit)      ?? false;
+    final canDelete   = session?.hasPermission(AppPermissions.soDelete)    ?? false;
+    final canTracking = session?.hasPermission(AppPermissions.soInvoice)   ?? false;
+    final canPick     = session?.hasPermission(AppPermissions.pickExecute) ?? false;
+
+    final bottomAction = _bottomAction(canPick: canPick);
 
     return Scaffold(
       backgroundColor: const Color(0xFFF0F0F0),
@@ -254,6 +267,8 @@ class _SalesOrderDetailPageState extends State<SalesOrderDetailPage> {
             createdAt: _formatDate(widget.order.orderDate),
             status: _status,
             showActions: _isQueued && !_isEditingTracking && !_hasTracking,
+            canEdit: canEdit,
+            canDelete: canDelete,
             onDelete: _confirmDeleteSalesOrder,
             onEdit: _editSalesOrder,
           ),
@@ -278,7 +293,7 @@ class _SalesOrderDetailPageState extends State<SalesOrderDetailPage> {
           ),
           const SizedBox(height: 8),
           _NoteCard(note: widget.order.note),
-          if (!_hasTracking) ...[
+          if (!_hasTracking && canTracking) ...[
             const SizedBox(height: 6),
             SoTrackingInputCard(
               controller: _trackingController,
@@ -302,8 +317,8 @@ class _SalesOrderDetailPageState extends State<SalesOrderDetailPage> {
     );
   }
 
-  Widget? _bottomAction() {
-    if (_isActive) {
+  Widget? _bottomAction({bool canPick = true}) {
+    if (_isActive && canPick) {
       return _StickyActionButton(
         label: 'Start Picking',
         icon: Icons.check_circle_outline,
