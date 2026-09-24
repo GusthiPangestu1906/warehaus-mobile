@@ -1,10 +1,14 @@
+import 'package:auth/auth.dart';
 import 'package:core_ui/core_ui.dart';
-import 'package:flutter/material.dart';
-import 'package:zone/presentation/pages/create_zone_page.dart';
-import 'package:product/presentation/pages/create_product_page.dart';
-import 'package:get_it/get_it.dart';
-import 'package:dio/dio.dart';
 import 'package:dashboard/services/dashboard_service.dart';
+import 'package:dio/dio.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:get_it/get_it.dart';
+import 'package:inbound/presentation/pages/create_purchase_order_page.dart';
+import 'package:outbound/presentation/pages/create_sales_order_page.dart';
+import 'package:product/presentation/pages/create_product_page.dart';
+import 'package:zone/presentation/pages/create_zone_page.dart';
 
 class DashboardPage extends StatefulWidget {
   const DashboardPage({super.key});
@@ -44,12 +48,92 @@ class _DashboardPageState extends State<DashboardPage> {
 
   @override
   Widget build(BuildContext context) {
+    final authState = context.read<AuthBloc>().state;
+    final session = authState is AuthenticatedState ? authState.session : null;
+
+    final canCreateProduct =
+        session?.hasPermission(AppPermissions.productCreate) ?? false;
+    final canCreateZone =
+        session?.hasPermission(AppPermissions.zoneCreate) ?? false;
+    final canCreatePO =
+        session?.hasPermission(AppPermissions.poCreate) ?? false;
+    final canCreateSO =
+        session?.hasPermission(AppPermissions.soCreate) ?? false;
+
+    // Kumpulkan operations
+    final availableOps = <Map<String, dynamic>>[];
+    if (canCreatePO) {
+      availableOps.add({
+        'title': 'Create PO',
+        'icon': Icons.description_outlined,
+        'page': const CreatePurchaseOrderPage(),
+      });
+    }
+    if (canCreateZone) {
+      availableOps.add({
+        'title': 'Add Zone',
+        'icon': Icons.layers_outlined,
+        'page': const CreateZonePage(),
+      });
+    }
+    if (canCreateProduct) {
+      availableOps.add({
+        'title': 'Add Product',
+        'icon': Icons.add_box_outlined,
+        'page': const CreateProductPage(),
+      });
+    }
+    if (canCreateSO) {
+      availableOps.add({
+        'title': 'Create SO',
+        'icon': Icons.shopping_cart_outlined,
+        'page': const CreateSalesOrderPage(),
+      });
+    }
+
+    // Penyesuaian list warna
+    List<Color> bgColors = [];
+    switch (availableOps.length) {
+      case 4:
+        bgColors = [
+          WHColors.secondary4,
+          WHColors.surface,
+          WHColors.surface,
+          WHColors.secondary4,
+        ];
+        break;
+      case 3:
+        bgColors = [WHColors.surface, WHColors.surface, WHColors.surface];
+        break;
+      case 2:
+        bgColors = [WHColors.surface, WHColors.surface];
+        break;
+      case 1:
+        bgColors = [WHColors.surface];
+        break;
+    }
+
+    // Helper untuk membuat card dan men-wrapnya dengan Expanded
+    Widget buildOpCard(int index) {
+      return Expanded(
+        child: _buildOperationCard(
+          title: availableOps[index]['title'],
+          icon: availableOps[index]['icon'],
+          bgColor: bgColors[index],
+          onTap: () => Navigator.of(context).push(
+            MaterialPageRoute(
+              builder: (context) => availableOps[index]['page'],
+            ),
+          ),
+        ),
+      );
+    }
+
     return Scaffold(
       backgroundColor: WHColors.background,
       appBar: const WHAppbar(title: 'WAREHAUS'),
       body: WHRefresh(
         onRefresh: () async {
-          // Placeholder for refresh logic
           await _fetchDashboardData();
         },
         child: SingleChildScrollView(
@@ -58,7 +142,7 @@ class _DashboardPageState extends State<DashboardPage> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Stats Cards
+              // --- Stats Cards ---
               if (_isLoading)
                 const Center(child: CircularProgressIndicator())
               else if (_error != null)
@@ -113,6 +197,7 @@ class _DashboardPageState extends State<DashboardPage> {
                 ),
               const SizedBox(height: 24),
 
+              // --- Operations Header ---
               Text(
                 'OPERATIONS',
                 style: WHTypography.caption.copyWith(
@@ -123,80 +208,52 @@ class _DashboardPageState extends State<DashboardPage> {
               ),
               const SizedBox(height: 12),
 
-              Row(
-                children: [
-                  Expanded(
-                    child: _buildOperationCard(
-                      title: 'Create PO',
-                      icon: Icons.description_outlined,
-                      color: WHColors.surface,
-                      bgColor: WHColors.secondary4,
-                      onTap: () {
-                        Navigator.of(context).push(
-                          MaterialPageRoute(
-                            builder: (context) => const CreateZonePage(),
-                          ),
-                        );
-                      },
+              // --- Operations Grid/Row ---
+              if (availableOps.isEmpty)
+                const Center(
+                  child: Padding(
+                    padding: EdgeInsets.symmetric(vertical: 12),
+                    child: Text(
+                      'No operations available.',
+                      style: WHTypography.caption,
                     ),
                   ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: _buildOperationCard(
-                      title: 'Add Zone',
-                      icon: Icons.layers_outlined,
-                      color: WHColors.secondary3,
-                      bgColor: WHColors.surface,
-                      onTap: () {
-                        Navigator.of(context).push(
-                          MaterialPageRoute(
-                            builder: (context) => const CreateZonePage(),
-                          ),
-                        );
-                      },
+                )
+              else if (availableOps.length == 4)
+                // Jika 4 item -> Jadi Grid 2x2
+                Column(
+                  children: [
+                    Row(
+                      children: [
+                        buildOpCard(0),
+                        const SizedBox(width: 12),
+                        buildOpCard(1),
+                      ],
                     ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 12),
-              Row(
-                children: [
-                  Expanded(
-                    child: _buildOperationCard(
-                      title: 'Add Product',
-                      icon: Icons.inventory_2_outlined,
-                      color: WHColors.secondary3,
-                      bgColor: WHColors.surface,
-                      onTap: () {
-                        Navigator.of(context).push(
-                          MaterialPageRoute(
-                            builder: (context) => const CreateProductPage(),
-                          ),
-                        );
-                      },
+                    const SizedBox(height: 12),
+                    Row(
+                      children: [
+                        buildOpCard(2),
+                        const SizedBox(width: 12),
+                        buildOpCard(3),
+                      ],
                     ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: _buildOperationCard(
-                      title: 'Create SO',
-                      icon: Icons.description_outlined,
-                      color: WHColors.surface,
-                      bgColor: WHColors.secondary4,
-                      onTap: () {
-                        Navigator.of(context).push(
-                          MaterialPageRoute(
-                            builder: (context) => const CreateZonePage(),
-                          ),
-                        );
-                      },
-                    ),
-                  ),
-                ],
-              ),
+                  ],
+                )
+              else
+                // Jika 1, 2, atau 3 item -> Jadi 1 Baris Penuh
+                Row(
+                  children: [
+                    for (int i = 0; i < availableOps.length; i++) ...[
+                      buildOpCard(i),
+                      if (i < availableOps.length - 1)
+                        const SizedBox(width: 12),
+                    ],
+                  ],
+                ),
 
               const SizedBox(height: 24),
-              // Recent Activity Header
+              // --- Recent Activity Header ---
               Text(
                 'RECENT LOGS',
                 style: WHTypography.caption.copyWith(
@@ -253,7 +310,7 @@ class _DashboardPageState extends State<DashboardPage> {
               Text(
                 value,
                 style: WHTypography.heading1.copyWith(
-                  color: WHColors.secondary3,
+                  color: WHColors.secondary,
                   fontWeight: FontWeight.w700,
                 ),
               ),
@@ -300,10 +357,10 @@ class _DashboardPageState extends State<DashboardPage> {
   Widget _buildOperationCard({
     required String title,
     required IconData icon,
-    required Color color,
     required Color bgColor,
     VoidCallback? onTap,
   }) {
+    Color textColor = WHColors.textPrimary;
     return Material(
       color: Colors.transparent,
       child: InkWell(
@@ -319,16 +376,17 @@ class _DashboardPageState extends State<DashboardPage> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(icon, color: WHColors.textPrimary, size: 28),
+              Icon(icon, color: textColor, size: 28),
               const SizedBox(height: 8),
               Text(
                 title,
                 style: WHTypography.caption.copyWith(
-                  color: WHColors.grey1,
+                  color: textColor,
                   fontWeight: FontWeight.w700,
                   fontSize: 10,
                   letterSpacing: 0.5,
                 ),
+                textAlign: TextAlign.center,
               ),
             ],
           ),
@@ -338,7 +396,7 @@ class _DashboardPageState extends State<DashboardPage> {
   }
 
   Widget _buildLogItem(ActivityLog log) {
-    final color = log.isStockIn ? WHColors.primary3 : WHColors.secondary3;
+    final color = log.isStockIn ? WHColors.primary : WHColors.secondary;
     final icon = log.isStockIn ? Icons.login_rounded : Icons.logout_rounded;
 
     return Container(
@@ -381,7 +439,7 @@ class _DashboardPageState extends State<DashboardPage> {
             ),
           ),
           Text(
-            'log.time',
+            'log.time', // Mungkin harus diubah ke log.time.toString() atau format helper
             style: WHTypography.caption.copyWith(color: WHColors.grey2),
           ),
         ],
