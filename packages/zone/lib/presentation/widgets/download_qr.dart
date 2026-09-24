@@ -86,14 +86,50 @@ class QRDownloader {
     final ext = option.toLowerCase() == 'pdf' ? 'pdf' : 'zip';
     final fileName = '$code.$ext';
 
-    // Target directory on Android
-    final targetDir = Directory('/storage/emulated/0/Download/WareHaus');
-    if (!await targetDir.exists()) {
-      await targetDir.create(recursive: true);
+    Directory? targetDir;
+    if (Platform.isAndroid) {
+      try {
+        final externalDirs = await getExternalStorageDirectories(
+          type: StorageDirectory.downloads,
+        );
+        if (externalDirs != null && externalDirs.isNotEmpty) {
+          final dir = externalDirs.first;
+          if (!await dir.exists()) await dir.create(recursive: true);
+          targetDir = dir;
+        }
+      } catch (_) {}
+
+      if (targetDir == null) {
+        try {
+          final publicDownload = Directory('/storage/emulated/0/Download/WareHaus');
+          if (!await publicDownload.exists()) {
+            await publicDownload.create(recursive: true);
+          }
+          targetDir = publicDownload;
+        } catch (_) {}
+      }
+    } else {
+      try {
+        final dir = await getDownloadsDirectory();
+        if (dir != null) {
+          if (!await dir.exists()) await dir.create(recursive: true);
+          targetDir = dir;
+        }
+      } catch (_) {}
     }
 
+    if (targetDir == null) {
+      try {
+        final dir = await getApplicationDocumentsDirectory();
+        if (!await dir.exists()) await dir.create(recursive: true);
+        targetDir = dir;
+      } catch (_) {}
+    }
+
+    targetDir ??= Directory.systemTemp;
+
     final file = File('${targetDir.path}/$fileName');
-    await file.writeAsBytes(bytes);
+    await file.writeAsBytes(bytes, flush: true);
 
     return file.path;
   }

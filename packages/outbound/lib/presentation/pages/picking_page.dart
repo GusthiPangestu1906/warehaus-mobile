@@ -1,9 +1,11 @@
 import 'package:core_ui/core_ui.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:get_it/get_it.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:outbound/data/datasources/sales_order_api_datasource.dart';
+import 'package:outbound/presentation/bloc/sales_order_bloc.dart';
 import 'package:outbound/presentation/models/pick_flow_item.dart';
 import 'package:outbound/presentation/pages/packing_page.dart';
 
@@ -258,6 +260,7 @@ class _PickingPageState extends State<PickingPage> {
         salesOrderItemId: task.salesOrderItemId,
         shelfId: task.shelfId,
         pickedQty: task.requiredQty,
+        scannedShelfQrCode: task.shelfQrCode,
       );
     } on DioException catch (error) {
       if (!_isPickingTaskMissing(error)) rethrow;
@@ -269,6 +272,7 @@ class _PickingPageState extends State<PickingPage> {
         salesOrderItemId: task.salesOrderItemId,
         shelfId: task.shelfId,
         pickedQty: task.requiredQty,
+        scannedShelfQrCode: task.shelfQrCode,
       );
     }
   }
@@ -368,29 +372,56 @@ class _PickingPageState extends State<PickingPage> {
   String _friendlyError(Object error) {
     if (error is DioException) {
       final statusCode = error.response?.statusCode;
-      final responseText = error.response?.data?.toString() ?? '';
+      final data = error.response?.data;
+      String? backendMessage;
+
+      if (data is Map<String, dynamic>) {
+        final errors = data['errors'];
+        String? validationMsg;
+        if (errors is Map<String, dynamic>) {
+          final firstVal = errors.values.firstOrNull;
+          if (firstVal is List && firstVal.isNotEmpty) {
+            validationMsg = firstVal.first.toString();
+          } else if (firstVal != null) {
+            validationMsg = firstVal.toString();
+          }
+        } else if (errors is List && errors.isNotEmpty) {
+          validationMsg = errors.first.toString();
+        }
+
+        backendMessage = (data['message'] ??
+                data['detail'] ??
+                validationMsg ??
+                data['title'])
+            ?.toString();
+      } else if (data is String && data.trim().isNotEmpty) {
+        backendMessage = data.trim();
+      }
+
       debugPrint(
-        '[PickingPage] dio error status=$statusCode body=$responseText',
+        '[PickingPage] dio error status=$statusCode msg=$backendMessage data=$data',
       );
 
+      if (backendMessage != null && backendMessage.isNotEmpty) {
+        return backendMessage;
+      }
+
       if (statusCode == 404) {
-        return 'Endpoint picking belum ditemukan di backend.';
+        return 'Task picking atau Sales Order tidak ditemukan.';
       }
       if (statusCode == 400 || statusCode == 409) {
-        if (responseText.isNotEmpty) return responseText;
         return 'Backend menolak picking. Periksa item, shelf, dan stok.';
+      }
+      if (statusCode == 403) {
+        return 'Anda tidak memiliki izin untuk melakukan picking.';
       }
       if (statusCode != null && statusCode >= 500) {
         return 'Backend error HTTP $statusCode saat picking.';
       }
-      if (responseText.isNotEmpty) return responseText;
     }
 
     final text = error.toString();
-    if (text.contains('404')) {
-      return 'Task picking belum tersedia untuk Sales Order ini.';
-    }
-    return text;
+    return text.isNotEmpty ? text : 'Terjadi kesalahan saat memproses picking.';
   }
 
   _PickingTask? _completedDisplayTask() {
@@ -407,13 +438,27 @@ class _PickingPageState extends State<PickingPage> {
   }
 
   void _goToPacking() {
+    SalesOrderBloc? bloc;
+    try {
+      bloc = context.read<SalesOrderBloc>();
+    } catch (_) {}
+
     Navigator.of(context).pushReplacement(
       PageRouteBuilder(
-        pageBuilder: (_, _, _) => PackingPage(
-          orderId: widget.orderId,
-          orderNumber: widget.soNumber,
-          items: widget.items,
-        ),
+        pageBuilder: (_, _, _) => bloc != null
+            ? BlocProvider.value(
+                value: bloc,
+                child: PackingPage(
+                  orderId: widget.orderId,
+                  orderNumber: widget.soNumber,
+                  items: widget.items,
+                ),
+              )
+            : PackingPage(
+                orderId: widget.orderId,
+                orderNumber: widget.soNumber,
+                items: widget.items,
+              ),
         transitionDuration: Duration.zero,
         reverseTransitionDuration: Duration.zero,
       ),

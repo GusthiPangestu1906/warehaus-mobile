@@ -3,6 +3,7 @@ description: "A new Flutter package project."
 version: 0.0.1
 resolution: workspace
 homepage:
+publish_to: "none"
 
 environment:
   sdk: ^3.8.1
@@ -20,6 +21,9 @@ dependencies:
   get_it: ^9.2.1
   intl: ^0.20.2
   mobile_scanner: ^7.2.0
+  pdf: ^3.12.0
+  printing: ^5.14.3
+  path_provider: ^2.1.5
   outbound:
     path: ../outbound
   product:

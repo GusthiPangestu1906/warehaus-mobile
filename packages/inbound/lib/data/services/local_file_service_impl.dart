@@ -1,7 +1,7 @@
-// data/services/local_file_service_impl.dart
 import 'dart:io';
-import 'package:dartz/dartz.dart';
 import 'package:core_services/core_services.dart';
+import 'package:dartz/dartz.dart';
+import 'package:path_provider/path_provider.dart';
 import '../../domain/services/local_file_service.dart';
 
 class LocalFileServiceImpl implements LocalFileService {
@@ -24,22 +24,52 @@ class LocalFileServiceImpl implements LocalFileService {
   }
 
   String _sanitizeFileName(String value) {
-    return value.replaceAll(RegExp(r'[\\/:*?"<>|]'), '_');
+    final clean = value.endsWith('.pdf') ? value.substring(0, value.length - 4) : value;
+    return clean.replaceAll(RegExp(r'[\\/:*?"<>|]'), '_');
   }
 
   Future<Directory> _resolveDownloadDirectory() async {
-    final downloadDir = Directory('/storage/emulated/0/Download/WareHaus');
-    try {
-      if (!await downloadDir.exists()) {
-        await downloadDir.create(recursive: true);
-      }
-      return downloadDir;
-    } catch (_) {
-      final fallbackDir = Directory('${Directory.systemTemp.path}/WareHaus');
-      if (!await fallbackDir.exists()) {
-        await fallbackDir.create(recursive: true);
-      }
-      return fallbackDir;
+    if (Platform.isAndroid) {
+      try {
+        final externalDirs = await getExternalStorageDirectories(
+          type: StorageDirectory.downloads,
+        );
+        if (externalDirs != null && externalDirs.isNotEmpty) {
+          final dir = externalDirs.first;
+          if (!await dir.exists()) await dir.create(recursive: true);
+          return dir;
+        }
+      } catch (_) {}
+
+      try {
+        final publicDownload = Directory('/storage/emulated/0/Download/WareHaus');
+        if (!await publicDownload.exists()) {
+          await publicDownload.create(recursive: true);
+        }
+        return publicDownload;
+      } catch (_) {}
+    } else {
+      try {
+        final dir = await getDownloadsDirectory();
+        if (dir != null) {
+          if (!await dir.exists()) await dir.create(recursive: true);
+          return dir;
+        }
+      } catch (_) {}
     }
+
+    try {
+      final dir = await getApplicationDocumentsDirectory();
+      if (!await dir.exists()) await dir.create(recursive: true);
+      return dir;
+    } catch (_) {}
+
+    try {
+      final dir = await getTemporaryDirectory();
+      if (!await dir.exists()) await dir.create(recursive: true);
+      return dir;
+    } catch (_) {}
+
+    return Directory.systemTemp;
   }
 }

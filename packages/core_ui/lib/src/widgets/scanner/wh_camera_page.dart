@@ -92,6 +92,7 @@ class _WhCameraPageState extends State<WhCameraPage>
   bool _isFrontCamera = false;
   bool _isTorchOn = false;
   bool _showReview = false;
+  bool _isSwitching = false;
   String? _cameraError;
 
   final List<File> _capturedFiles = [];
@@ -105,55 +106,92 @@ class _WhCameraPageState extends State<WhCameraPage>
   }
 
   Future<void> _initCamera({bool useFront = false}) async {
+    _isSwitching = true;
     setState(() {
       _isInitialized = false;
       _cameraError = null;
     });
 
     try {
-      _cameras = await availableCameras();
+      // 1. Dispose controller lama sebelum inisialisasi controller baru
+      // untuk melepas lock hardware kamera pada platform Android/iOS
+      final oldController = _controller;
+      _controller = null;
+      if (oldController != null) {
+        await oldController.dispose();
+      }
+
+      if (_cameras.isEmpty) {
+        _cameras = await availableCameras();
+      }
       if (_cameras.isEmpty) {
         if (!mounted) return;
-        setState(() => _cameraError = 'No camera available on this device.');
+        setState(() {
+          _cameraError = 'No camera available on this device.';
+          _isSwitching = false;
+        });
         return;
       }
 
-      final description = useFront && _cameras.length > 1
-          ? _cameras.firstWhere(
-              (c) => c.lensDirection == CameraLensDirection.front,
-              orElse: () => _cameras.first,
-            )
-          : _cameras.firstWhere(
-              (c) => c.lensDirection == CameraLensDirection.back,
-              orElse: () => _cameras.first,
-            );
+      CameraDescription targetCamera;
+      if (useFront) {
+        final frontCameras = _cameras
+            .where((c) => c.lensDirection == CameraLensDirection.front)
+            .toList();
+        if (frontCameras.isNotEmpty) {
+          targetCamera = frontCameras.first;
+          _isFrontCamera = true;
+        } else {
+          targetCamera = _cameras.first;
+          _isFrontCamera = targetCamera.lensDirection == CameraLensDirection.front;
+        }
+      } else {
+        final backCameras = _cameras
+            .where((c) => c.lensDirection == CameraLensDirection.back)
+            .toList();
+        if (backCameras.isNotEmpty) {
+          targetCamera = backCameras.first;
+          _isFrontCamera = false;
+        } else {
+          targetCamera = _cameras.first;
+          _isFrontCamera = targetCamera.lensDirection == CameraLensDirection.front;
+        }
+      }
 
+      // Jangan paksakan imageFormatGroup: ImageFormatGroup.jpeg pada preview
+      // karena pada beberapa sensor depan Android ini menyebabkan preview blank/hitam
       final controller = CameraController(
-        description,
+        targetCamera,
         ResolutionPreset.high,
         enableAudio: false,
-        imageFormatGroup: ImageFormatGroup.jpeg,
       );
 
       await controller.initialize();
-      await controller.lockCaptureOrientation(DeviceOrientation.portraitUp);
 
-      if (!mounted) return;
+      try {
+        await controller.lockCaptureOrientation(DeviceOrientation.portraitUp);
+      } catch (e) {
+        debugPrint('Camera orientation lock not supported: $e');
+      }
 
-      // Dispose controller lama jika ada
-      await _controller?.dispose();
+      if (!mounted) {
+        await controller.dispose();
+        return;
+      }
 
       setState(() {
         _controller = controller;
         _isInitialized = true;
         _isTorchOn = false;
         _cameraError = null;
+        _isSwitching = false;
       });
     } on CameraException catch (e) {
       if (!mounted) return;
       setState(() {
         _isInitialized = false;
         _cameraError = _cameraErrorMessage(e);
+        _isSwitching = false;
       });
       debugPrint('Camera init error: ${e.code} ${e.description}');
     } catch (e) {
@@ -161,6 +199,7 @@ class _WhCameraPageState extends State<WhCameraPage>
       setState(() {
         _isInitialized = false;
         _cameraError = 'Unable to start camera. Please try again.';
+        _isSwitching = false;
       });
       debugPrint('Camera init error: $e');
     }
@@ -245,11 +284,9 @@ class _WhCameraPageState extends State<WhCameraPage>
 
   // ── Switch camera ─────────────────────────────────────────────
   Future<void> _switchCamera() async {
-    setState(() {
-      _isInitialized = false;
-      _isFrontCamera = !_isFrontCamera;
-    });
-    await _initCamera(useFront: _isFrontCamera);
+    if (_isSwitching || _cameras.length <= 1) return;
+    final nextUseFront = !_isFrontCamera;
+    await _initCamera(useFront: nextUseFront);
   }
 
   // ── Hapus foto terakhir ───────────────────────────────────────
@@ -369,8 +406,17 @@ class _CameraView extends StatelessWidget {
             onRetry: onRetry,
             onBack: onBack,
           )
-        else if (isInitialized && controller != null)
-          Center(child: CameraPreview(controller!))
+        else if (isInitialized &&
+            controller != null &&
+            controller!.value.isInitialized)
+          Center(
+            child: CameraPreview(
+              controller!,
+              key: ValueKey(
+                'camera_preview_${controller!.description.name}_${controller!.cameraId}_${controller!.description.lensDirection}',
+              ),
+            ),
+          )
         else
           const Center(
             child: CircularProgressIndicator(color: WHColors.secondary3),
@@ -439,7 +485,7 @@ class _CameraView extends StatelessWidget {
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
               decoration: BoxDecoration(
-                color: WHColors.warning2.withOpacity(0.9),
+                color: WHColors.warning2.withValues(alpha: 0.9),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Text(
@@ -706,7 +752,7 @@ class _IconBtn extends StatelessWidget {
         height: 44,
         decoration: BoxDecoration(
           color: activeColor != null
-              ? activeColor!.withOpacity(0.85)
+              ? activeColor!.withValues(alpha: 0.85)
               : Colors.black45,
           borderRadius: BorderRadius.circular(12),
         ),
@@ -748,7 +794,7 @@ class _ShutterButton extends StatelessWidget {
           decoration: BoxDecoration(
             shape: BoxShape.circle,
             color: isCapturing
-                ? WHColors.secondary3.withOpacity(0.7)
+                ? WHColors.secondary3.withValues(alpha: 0.7)
                 : isDisabled
                 ? Colors.white24
                 : Colors.white,
@@ -896,7 +942,7 @@ class _AddMoreTile extends StatelessWidget {
       onTap: onTap,
       child: Container(
         decoration: BoxDecoration(
-          color: WHColors.grey5.withOpacity(0.5),
+          color: WHColors.grey5.withValues(alpha: 0.5),
           borderRadius: BorderRadius.circular(10),
           border: Border.all(color: WHColors.grey5, style: BorderStyle.solid),
         ),

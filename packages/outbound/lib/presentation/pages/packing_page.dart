@@ -163,21 +163,28 @@ class _PackingPageState extends State<PackingPage> {
   }
 
   void _showCompleteSuccess(int orderId) {
-    context.read<SalesOrderBloc>().add(
-      UpdateSalesOrderLocalStatusEvent(
-        id: orderId,
-        status: 'Completed',
-        totalPickedItems: _totalQuantity,
-        totalVerifiedItems: _totalQuantity,
-        isCompleted: true,
-      ),
-    );
+    if (mounted) {
+      setState(() => _isCompleting = false);
+    }
 
-    setState(() => _isCompleting = false);
+    try {
+      context.read<SalesOrderBloc>().add(
+        UpdateSalesOrderLocalStatusEvent(
+          id: orderId,
+          status: 'Completed',
+          totalPickedItems: _totalQuantity,
+          totalVerifiedItems: _totalQuantity,
+          isCompleted: true,
+        ),
+      );
+      context.read<SalesOrderBloc>().add(GetSalesOrdersEvent());
+    } catch (e) {
+      debugPrint('[PackingPage] SalesOrderBloc dispatch note: $e');
+    }
 
     showWhPopUpDone(
       context: context,
-      nextStepLabel: 'Label printed. Sales Order is ready for delivery.',
+      nextStepLabel: 'Packing completed. Sales Order is ready for delivery.',
       onBackToFlow: () {
         Navigator.of(context).popUntil((route) => route.isFirst);
       },
@@ -263,30 +270,45 @@ class _PackingPageState extends State<PackingPage> {
 String _friendlyError(Object error) {
   if (error is DioException) {
     final statusCode = error.response?.statusCode;
-    final responseText = error.response?.data?.toString() ?? '';
+    final data = error.response?.data;
+    String? backendMessage;
+
+    if (data is Map<String, dynamic>) {
+      backendMessage = (data['message'] ??
+              data['detail'] ??
+              (data['errors'] is List
+                  ? (data['errors'] as List).firstOrNull
+                  : null) ??
+              data['title'])
+          ?.toString();
+    } else if (data is String && data.trim().isNotEmpty) {
+      backendMessage = data.trim();
+    }
+
     debugPrint(
-      '[PackingPage] complete packing response status=$statusCode body=$responseText',
+      '[PackingPage] dio error status=$statusCode msg=$backendMessage data=$data',
     );
 
-    if (statusCode == 409 || statusCode == 400) {
-      return 'Backend menolak complete. Pastikan endpoint complete menerima verifiedItems.';
+    if (backendMessage != null && backendMessage.isNotEmpty) {
+      return backendMessage;
     }
+
     if (statusCode == 404) {
-      return 'Endpoint packing complete belum ditemukan di backend.';
+      return 'Data Sales Order atau packing task tidak ditemukan (404).';
     }
-    if (responseText.isNotEmpty) {
-      return responseText;
+    if (statusCode == 409 || statusCode == 400) {
+      return 'Backend menolak complete packing. Pastikan item telah terverifikasi.';
+    }
+    if (statusCode == 403) {
+      return 'Anda tidak memiliki izin untuk menyelesaikan packing.';
+    }
+    if (statusCode != null && statusCode >= 500) {
+      return 'Terjadi kesalahan pada server (HTTP $statusCode).';
     }
   }
 
   final message = error.toString();
-  if (message.contains('409')) {
-    return 'Backend menolak complete. Pastikan endpoint complete menerima verifiedItems.';
-  }
-  if (message.contains('404')) {
-    return 'Endpoint packing complete belum ditemukan di backend.';
-  }
-  return 'Gagal complete packing. Coba lagi.';
+  return message.isNotEmpty ? message : 'Gagal complete packing. Coba lagi.';
 }
 
 class _PackingOrderCard extends StatelessWidget {

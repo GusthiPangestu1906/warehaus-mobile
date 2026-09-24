@@ -28,21 +28,24 @@ class ApiClient {
     dio = Dio(baseOptions);
     refreshDio = Dio(baseOptions);
 
-    dio.interceptors.add(
-      InterceptorsWrapper(
-        onRequest: (options, handler) {
+    final pathInterceptor = InterceptorsWrapper(
+      onRequest: (options, handler) {
+        if (!options.path.startsWith('http://') &&
+            !options.path.startsWith('https://')) {
           if (!options.path.startsWith('/api/') &&
               !options.path.startsWith('api/')) {
-            if (options.path.startsWith('/')) {
-              options.path = options.path;
-            } else {
-              options.path = options.path;
-            }
+            final cleanPath = options.path.startsWith('/')
+                ? options.path.substring(1)
+                : options.path;
+            options.path = '/api/$cleanPath';
           }
-          return handler.next(options);
-        },
-      ),
+        }
+        return handler.next(options);
+      },
     );
+
+    dio.interceptors.add(pathInterceptor);
+    refreshDio.interceptors.add(pathInterceptor);
 
     dio.interceptors.add(
       AuthInterceptor(
@@ -57,15 +60,25 @@ class ApiClient {
   }
 
   String _resolveBaseUrl(String configuredBaseUrl) {
-    final uri = Uri.tryParse(configuredBaseUrl);
+    var url = configuredBaseUrl.trim();
+    if (url.endsWith('/api')) {
+      url = url.substring(0, url.length - 4);
+    } else if (url.endsWith('/api/')) {
+      url = url.substring(0, url.length - 5);
+    }
+    if (url.endsWith('/')) {
+      url = url.substring(0, url.length - 1);
+    }
+
+    final uri = Uri.tryParse(url);
     if (uri == null) {
-      return configuredBaseUrl;
+      return url;
     }
 
     if (kIsWeb && uri.scheme == 'https' && uri.host == 'localhost') {
       return uri.replace(scheme: 'http').toString();
     }
 
-    return configuredBaseUrl;
+    return url;
   }
 }

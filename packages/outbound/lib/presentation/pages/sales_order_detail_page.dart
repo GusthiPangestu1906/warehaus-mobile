@@ -1,4 +1,4 @@
-﻿import 'package:auth/domain/entities/app_permissions.dart';
+import 'package:auth/domain/entities/app_permissions.dart';
 import 'package:auth/presentation/bloc/auth_bloc.dart';
 import 'package:auth/presentation/bloc/auth_state.dart';
 import 'package:core_ui/core_ui.dart';
@@ -6,7 +6,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:get_it/get_it.dart';
 import 'package:outbound/data/datasources/region_api_datasource.dart';
-import 'package:outbound/data/datasources/sales_order_api_datasource.dart';
 import 'package:outbound/domain/entities/sales_order.dart';
 import 'package:intl/intl.dart';
 import 'package:outbound/presentation/bloc/sales_order_bloc.dart';
@@ -38,8 +37,6 @@ class _SalesOrderDetailPageState extends State<SalesOrderDetailPage> {
   bool _startedFromTracking = false;
   bool _isPrintingLabel = false;
   RegionApiDatasource get _regionApi => GetIt.instance<RegionApiDatasource>();
-  SalesOrderApiDatasource get _salesOrderApi =>
-      GetIt.instance<SalesOrderApiDatasource>();
 
   @override
   void initState() {
@@ -120,21 +117,79 @@ class _SalesOrderDetailPageState extends State<SalesOrderDetailPage> {
     Navigator.of(context).pop();
   }
 
+  String _formatDateString(String dateStr) {
+    try {
+      final parsed = DateTime.parse(dateStr);
+      return DateFormat('d MMMM yyyy').format(parsed);
+    } catch (_) {
+      return dateStr;
+    }
+  }
+
   Future<void> _printLabel() async {
     if (_isPrintingLabel) return;
 
     setState(() => _isPrintingLabel = true);
     try {
-      final path = await _salesOrderApi.downloadLabelPdf(
-        widget.order.id,
-        soNumber: widget.order.soNumber,
+      final order = widget.order;
+      final fullAddress = [
+        order.shippingAddress,
+        order.districtName,
+        _cityName ?? order.cityName,
+        _provinceName ?? order.provinceName,
+        order.postalCode,
+      ].where((part) => part != null && part.trim().isNotEmpty).join(', ');
+
+      final leftDetails = [
+        MapEntry('Created at', _formatDateString(order.orderDate)),
+        MapEntry('Customer', order.customerName),
+        MapEntry('Company', order.companyName?.isNotEmpty == true ? order.companyName! : '—'),
+        const MapEntry('PIC Picking', '—'),
+        MapEntry(
+          'Contact Person',
+          order.contactPerson != null && order.contactPerson!.isNotEmpty
+              ? '${order.contactPerson} (${order.phoneNumber ?? '-'})'
+              : '—',
+        ),
+      ];
+
+      final rightDetails = [
+        MapEntry('SLA Date', _formatDateString(order.requiredDeliveryDate)),
+        MapEntry('Courier', order.courierName?.isNotEmpty == true ? order.courierName! : '—'),
+        MapEntry('Tracking Number', _trackingNumber ?? order.trackingNumber ?? '—'),
+        const MapEntry('PIC Packing', '—'),
+        MapEntry('Address', fullAddress.isNotEmpty ? fullAddress : '—'),
+      ];
+
+      final items = order.items.map((item) {
+        final qty = item.qtyVerified > 0 ? item.qtyVerified : item.qtyOrdered;
+        final uom = item.unitOfMeasure?.isNotEmpty == true ? item.unitOfMeasure! : 'Pcs';
+        return OrderLabelItem(
+          sku: item.sku?.isNotEmpty == true ? item.sku! : '—',
+          productName: item.productName?.isNotEmpty == true ? item.productName! : '—',
+          quantity: '$qty $uom',
+        );
+      }).toList();
+
+      final labelData = OrderLabelData(
+        documentType: 'Sales Order',
+        status: 'Completed',
+        orderNumber: order.soNumber,
+        leftDetails: leftDetails,
+        rightDetails: rightDetails,
+        items: items,
       );
+
       if (!mounted) return;
-      WHSnackBar.showSuccess(context, 'Label berhasil diunduh: $path');
+      await OrderLabelPdfService.showLabelActionModal(
+        context: context,
+        orderNumber: order.soNumber,
+        data: labelData,
+      );
     } catch (e) {
       if (!mounted) return;
-      debugPrint('[SalesOrderDetailPage] failed to download label PDF: $e');
-      WHSnackBar.showError(context, 'Gagal print label Sales Order.');
+      debugPrint('[SalesOrderDetailPage] failed to handle label PDF: $e');
+      WHSnackBar.showError(context, 'Gagal memproses label Sales Order: $e');
     } finally {
       if (mounted) setState(() => _isPrintingLabel = false);
     }
@@ -221,9 +276,9 @@ class _SalesOrderDetailPageState extends State<SalesOrderDetailPage> {
   @override
   Widget build(BuildContext context) {
     // Permission check – ikuti pola product_list_page
-    final AuthState = context.read<AuthBloc>().state;
+    final authState = context.read<AuthBloc>().state;
     final session =
-        AuthState is AuthenticatedState ? AuthState.session : null;
+        authState is AuthenticatedState ? authState.session : null;
 
     final canEdit     = session?.hasPermission(AppPermissions.soEdit)      ?? false;
     final canDelete   = session?.hasPermission(AppPermissions.soDelete)    ?? false;
@@ -324,13 +379,27 @@ class _SalesOrderDetailPageState extends State<SalesOrderDetailPage> {
         label: 'Start Picking',
         icon: Icons.check_circle_outline,
         onPressed: () {
+          SalesOrderBloc? bloc;
+          try {
+            bloc = context.read<SalesOrderBloc>();
+          } catch (_) {}
+
           Navigator.of(context).push(
             PageRouteBuilder(
-              pageBuilder: (_, _, _) => PickingPage(
-                orderId: widget.order.id,
-                soNumber: widget.order.soNumber,
-                items: _pickItems(widget.order),
-              ),
+              pageBuilder: (_, _, _) => bloc != null
+                  ? BlocProvider.value(
+                      value: bloc,
+                      child: PickingPage(
+                        orderId: widget.order.id,
+                        soNumber: widget.order.soNumber,
+                        items: _pickItems(widget.order),
+                      ),
+                    )
+                  : PickingPage(
+                      orderId: widget.order.id,
+                      soNumber: widget.order.soNumber,
+                      items: _pickItems(widget.order),
+                    ),
               transitionDuration: Duration.zero,
               reverseTransitionDuration: Duration.zero,
             ),

@@ -1,4 +1,4 @@
-﻿import 'package:auth/domain/entities/app_permissions.dart';
+import 'package:auth/domain/entities/app_permissions.dart';
 import 'package:auth/presentation/bloc/auth_bloc.dart';
 import 'package:auth/presentation/bloc/auth_state.dart';
 import 'package:core_ui/core_ui.dart';
@@ -110,13 +110,57 @@ class _PurchaseOrderDetailPageState extends State<PurchaseOrderDetailPage> {
     );
   }
 
-  void _downloadPurchaseOrderPdf(PurchaseOrder purchaseOrder) {
+  Future<void> _downloadPurchaseOrderPdf(PurchaseOrder purchaseOrder) async {
     if (_isDownloadingPdf) return;
 
     setState(() => _isDownloadingPdf = true);
-    context.read<PurchaseOrderBloc>().add(
-      DownloadPurchaseOrderPdfEvent(purchaseOrder.id, purchaseOrder.poNumber),
-    );
+    try {
+      final items = purchaseOrder.items.map((item) {
+        final uom = item.productDetail?.unitOfMeasure.isNotEmpty == true
+            ? item.productDetail!.unitOfMeasure
+            : 'Pcs';
+        return OrderLabelItem(
+          sku: item.sku ?? item.productDetail?.sku ?? item.productCode ?? '—',
+          productName: item.productName ?? item.productDetail?.productName ?? '—',
+          quantity: '${item.qtyExpected} $uom',
+        );
+      }).toList();
+
+      final leftDetails = [
+        MapEntry('Created at', _formatDate(purchaseOrder.createdAt)),
+        MapEntry('Supplier', purchaseOrder.supplierName),
+        const MapEntry('PIC Quality Control', '—'),
+      ];
+
+      final rightDetails = [
+        MapEntry('ETA', _formatDate(purchaseOrder.eta)),
+        MapEntry('Carrier', purchaseOrder.carrier),
+        MapEntry('Invoice Number', purchaseOrder.invoiceNumber ?? '—'),
+        const MapEntry('PIC Put-Away', '—'),
+      ];
+
+      final labelData = OrderLabelData(
+        documentType: 'Purchase Order',
+        status: 'Completed',
+        orderNumber: purchaseOrder.poNumber,
+        leftDetails: leftDetails,
+        rightDetails: rightDetails,
+        items: items,
+      );
+
+      if (!mounted) return;
+      await OrderLabelPdfService.showLabelActionModal(
+        context: context,
+        orderNumber: purchaseOrder.poNumber,
+        data: labelData,
+      );
+    } catch (e) {
+      if (!mounted) return;
+      debugPrint('[PurchaseOrderDetailPage] failed to handle label PDF: $e');
+      WHSnackBar.showError(context, 'Gagal memproses label Purchase Order: $e');
+    } finally {
+      if (mounted) setState(() => _isDownloadingPdf = false);
+    }
   }
 
   @override
@@ -128,7 +172,7 @@ class _PurchaseOrderDetailPageState extends State<PurchaseOrderDetailPage> {
 
     final canEdit    = session?.hasPermission(AppPermissions.poEdit)    ?? false;
     final canDelete  = session?.hasPermission(AppPermissions.poDelete)  ?? false;
-    final canInvoice = session?.hasPermission(AppPermissions.poEdit)    ?? false;
+    final canInvoice = session?.hasPermission(AppPermissions.soInvoice) ?? false;
     final canQc      = session?.hasPermission(AppPermissions.qcExecute) ?? false;
     final canPutAway = session?.hasPermission(AppPermissions.putExecute) ?? false;
 
@@ -257,7 +301,7 @@ class _PurchaseOrderDetailPageState extends State<PurchaseOrderDetailPage> {
           WHButton(
             label: 'Print Label Purchase Order',
             icon: Icons.print_outlined,
-            backgroundColor: WHColors.primary3,
+            backgroundColor: WHColors.secondary3,
             isLoading: _isDownloadingPdf,
             onPressed: _isDownloadingPdf
                 ? null
@@ -377,7 +421,7 @@ class _PurchaseOrderDetailPageState extends State<PurchaseOrderDetailPage> {
   }
 
   String _formatDate(DateTime value) {
-    return DateFormat('dd MMM yyyy').format(value);
+    return DateFormat('d MMMM yyyy').format(value);
   }
 
   String _qcStatusLabel(String status) {

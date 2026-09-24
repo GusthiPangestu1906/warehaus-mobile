@@ -35,7 +35,7 @@ class AppPermissions {
   static const String poEdit = 'po:edit';
   static const String poDelete = 'po:delete';
   static const String poAssign = 'po:assign';
-  static const String poTracking = 'po:tracking';
+  static const String poTracking = 'shipment:execute';
   static const String qcExecute = 'qc:execute';
   static const String putExecute = 'put:execute';
 
@@ -47,7 +47,7 @@ class AppPermissions {
   static const String soEdit = 'so:edit';
   static const String soDelete = 'so:delete';
   static const String soAssign = 'so:assign';
-  static const String soInvoice = 'so:invoice';
+  static const String soInvoice = 'shipment:execute';
   static const String pickExecute = 'pick:execute';
   static const String packExecute = 'pack:execute';
 }

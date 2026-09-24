@@ -75,11 +75,7 @@ class SalesOrderApiDatasource {
   }
 
   Future<Map<String, dynamic>> startPicking(int id) async {
-    final response = await dio.post(
-      '$_salesOrderPath/$id/picking/start',
-      data: const <String, dynamic>{},
-      options: Options(contentType: Headers.jsonContentType),
-    );
+    final response = await dio.post('$_salesOrderPath/$id/picking/start');
     return response.data as Map<String, dynamic>;
   }
 
@@ -88,10 +84,16 @@ class SalesOrderApiDatasource {
     required int salesOrderItemId,
     required int shelfId,
     required int pickedQty,
+    String? scannedShelfQrCode,
   }) async {
     final response = await dio.post(
       '$_salesOrderPath/$salesOrderId/picking/items/$salesOrderItemId/complete',
-      data: {'shelfId': shelfId, 'pickedQty': pickedQty},
+      data: {
+        'shelfId': shelfId,
+        'pickedQty': pickedQty,
+        if (scannedShelfQrCode != null && scannedShelfQrCode.isNotEmpty)
+          'scannedShelfQrCode': scannedShelfQrCode,
+      },
     );
     return response.data as Map<String, dynamic>;
   }

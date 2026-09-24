@@ -1,4 +1,4 @@
-﻿import 'package:auth/domain/entities/app_permissions.dart';
+import 'package:auth/domain/entities/app_permissions.dart';
 import 'package:auth/presentation/bloc/auth_bloc.dart';
 import 'package:auth/presentation/bloc/auth_state.dart';
 import 'package:core_ui/core_ui.dart';
@@ -68,9 +68,9 @@ class _FlowManagementPageState extends State<FlowManagementPage>
     }
 
     // Hitung tab yang diizinkan berdasarkan permission
-    final AuthState = context.read<AuthBloc>().state;
+    final authState = context.read<AuthBloc>().state;
     final session =
-        AuthState is AuthenticatedState ? AuthState.session : null;
+        authState is AuthenticatedState ? authState.session : null;
 
     final newTabs = <({String label, bool isOutbound})>[];
     if (session?.hasPermission(AppPermissions.poView) ?? false) {
@@ -111,10 +111,7 @@ class _FlowManagementPageState extends State<FlowManagementPage>
 
   @override
   void didPopNext() {
-    final navigationState = context.read<NavigationBloc>().state;
-    if (navigationState.currentIndex == 2) {
-      _fetchOrders();
-    }
+    _fetchOrders();
   }
 
   void _onFabPressed() {
@@ -207,9 +204,9 @@ class _FlowManagementPageState extends State<FlowManagementPage>
     }
 
     // Guard FAB berdasarkan permission session
-    final AuthState = context.read<AuthBloc>().state;
+    final authState = context.read<AuthBloc>().state;
     final session =
-        AuthState is AuthenticatedState ? AuthState.session : null;
+        authState is AuthenticatedState ? authState.session : null;
     final canCreatePo = session?.hasPermission(AppPermissions.poCreate) ?? false;
     final canCreateSo = session?.hasPermission(AppPermissions.soCreate) ?? false;
     final currentTabIsOutbound = _tabController.index < allowedTabs.length

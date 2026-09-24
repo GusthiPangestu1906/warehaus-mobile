@@ -16,7 +16,11 @@ class SoItemModel extends SoItem {
 
   factory SoItemModel.fromJson(Map<String, dynamic> json) {
     return SoItemModel(
-      id: json['id'] == null ? null : _asInt(json['id']),
+      id: json['id'] != null
+          ? _asInt(json['id'])
+          : (json['salesOrderItemId'] != null
+              ? _asInt(json['salesOrderItemId'])
+              : null),
       productId: _asInt(json['productId']),
       qtyOrdered: _asInt(json['qtyOrdered']),
       productName: json['productName']?.toString(),
